@@ -1,36 +1,18 @@
-%-----------------------------------------------------------------------------
-%
-%               Template for sigplanconf LaTeX Class
-%
-% Name:         sigplanconf-template.tex
-%
-% Purpose:      A template for sigplanconf.cls, which is a LaTeX 2e class
-%               file for SIGPLAN conference proceedings.
-%
-% Guide:        Refer to "Author's Guide to the ACM SIGPLAN Class,"
-%               sigplanconf-guide.pdf
-%
-% Author:       Paul C. Anagnostopoulos
-%               Windfall Software
-%               978 371-2316
-%               paul@windfall.com
-%
-% Created:      15 February 2005
-%
-%-----------------------------------------------------------------------------
-
-
 \documentclass[preprint]{sigplanconf}
 
-% The following \documentclass options may be useful:
-
-% preprint      Remove this option only once the paper is in final form.
-% 10pt          To set in 10-point type instead of 9-point.
-% 11pt          To set in 11-point type instead of 9-point.
-% numbers       To obtain numeric citation style instead of author/year.
-
 \usepackage{amsmath}
-\usepackage{lipsum} 
+\usepackage{lipsum}
+
+\usepackage{amsfonts,amssymb,textgreek,stmaryrd}
+\usepackage{bbm}
+\usepackage[greek,english]{babel}
+\usepackage{ucs}
+\usepackage[utf8x]{inputenc}
+\usepackage{autofe}
+
+\usepackage{agda}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \newcommand{\cL}{{\cal L}}
 
@@ -39,6 +21,7 @@
 \special{papersize=8.5in,11in}
 \setlength{\pdfpageheight}{\paperheight}
 \setlength{\pdfpagewidth}{\paperwidth}
+%% \setlength{\mathindent}{\parindent}
 
 \conferenceinfo{CONF 'yy}{Month d--d, 20yy, City, ST, Country}
 \copyrightyear{20yy}
@@ -72,13 +55,43 @@
 
 \category{D.3}{Software}{Programming Languages}.
 
-
 \keywords
 Dependent types; induction-recursion; generic programming.
 
 \section{Introduction}
 
+%% modeling univeres, modeling arithmetic summations and products,
+%% modeling file formats
+
+\AgdaHide{
+\begin{code}
+module _ where
+open import Data.Nat
+\end{code}}
+
 The text of the paper begins here.
+
+\begin{code}
+NumArgs : ℕ → Set
+NumArgs zero = ℕ
+NumArgs (suc n) = ℕ → NumArgs n
+\end{code}
+
+\noindent
+bla blah
+
+\begin{code}
+data Type : Set
+⟦_⟧ : Type → Set
+
+data Type where
+  `ℕ : Type
+  `Π : (A : Type) (B : ⟦ A ⟧ → Type) → Type
+
+⟦ `ℕ ⟧ = ℕ
+⟦ `Π A B ⟧ = (a : ⟦ A ⟧) → ⟦ B a ⟧
+\end{code}
+
 
 \appendix
 \section{Appendix Title}
