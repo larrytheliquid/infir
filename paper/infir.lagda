@@ -225,6 +225,11 @@ arrived at the subtree we would like to visit. The
 turn at a \AgdaInductiveConstructor{branch}, while
 \AgdaInductiveConstructor{there₂} tells us to take a right turn.
 
+Once we have defined \AgdaDatatype{Path}s into a \AgdaDatatype{Tree},
+it is straightforward to defined \AgdaFunction{lookup} by following
+the \AgdaDatatype{Path} until we arrive at the type appearing
+\AgdaInductiveConstructor{here}.
+
 \begin{code}
 lookup : (A : Tree) → Path A → Tree
 lookup A here = A
