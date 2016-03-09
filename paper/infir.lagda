@@ -179,6 +179,61 @@ to successfully write InfIR functions.
 
 \subsection{Background}
 
+Instead of diving directly into the complexity of writing functions
+like \AgdaFunction{lookup} for the InfIR universe \AgdaDatatype{Type},
+let us first consider writing \AgdaFunction{lookup} for a binary
+\AgdaDatatype{Tree}.
+
+\begin{code}
+data Tree : Set where
+  leaf : Tree
+  branch : (A B : Tree) → Tree
+\end{code}
+
+Our \AgdaDatatype{Tree} stores no additional data in nodes, can have
+binary \AgdaInductiveConstructor{branch}es, and ends with a
+\AgdaInductiveConstructor{leaf}. It is easy to work with because it is
+first-order, has no dependencies between arguments, and not mutually
+defined functions.
+
+If we want to \AgdaFunction{lookup}
+a particular
+sub\AgdaDatatype{Tree}, we must first have a way to describe a
+\AgdaDatatype{Path} that indexes into our original tree.
+\footnote{
+  For lists, \texttt{lookup} refers to finding data in a list,
+  whereas \texttt{drop} refers to finding sublists. Nevertheless, in
+  this paper we refer to our generalization of ``drop'' to tree types
+  as \AgdaFunction{lookup} because we never define a lookup
+  function for non-inductive elements of a type.
+}
+
+\begin{code}
+data Path : Tree → Set where
+  here : ∀{A} → Path A
+  there₁ : ∀{A B}
+    → Path A
+    → Path (branch A B)
+  there₂ : ∀{A B}
+    → Path B
+    → Path (branch A B)
+\end{code}
+
+The \AgdaInductiveConstructor{here} constructor indicates that we have
+arrived at the subtree we would like to visit. The
+\AgdaInductiveConstructor{there₁} constructor tells us to take a left
+turn at a \AgdaInductiveConstructor{branch}, while
+\AgdaInductiveConstructor{there₂} tells us to take a right turn.
+
+\begin{code}
+lookup : (A : Tree) → Path A → Tree
+lookup A here = A
+lookup (branch A B) (there₁ i) = lookup A i
+lookup (branch A B) (there₂ i) = lookup B i
+\end{code}
+
+
+
 \subsection{Writing total functions}
 
 \acks
