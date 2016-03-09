@@ -118,7 +118,24 @@ NumFun = `Π `ℕ (λ n → NumArgs n)
 
 While defining models and example values using infinitary
 inductive-recursive types is common, writing inductively defined
-\textit{functions} over them is not! 
+\textit{functions} over them is not!
+
+Why isn't there much existing work on programming functions with
+infinitary inductive-recursive functions? They contain inherently
+complex properties that make programmers rather avoid thinking about
+dealing with them, so there simply aren't many examples for
+programmers to base their programs off. Their infinitary nature makes them
+\emph{higher-order} datatypes, rather than simpler first-order
+datatypes. Their inductive-recursive nature means you need to deal
+with dependencies between arguments and mutual functions too.
+
+Functional programming languages typically package useful datatypes
+(like \AgdaDatatype{List}s and \AgdaDatatype{Vec}tors) with useful operations
+(like \AgdaFunction{lookup}, \AgdaFunction{update} and
+\AgdaDatatype{Zipper} navigation) in their standard
+libraries. Additionally, \emph{generic} implementations of such operations
+may exist as libraries for any other user-defined datatypes.
+
 
 \appendix
 \section{Appendix Title}
