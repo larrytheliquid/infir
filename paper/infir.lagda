@@ -141,19 +141,21 @@ functional operations using common universe models of infinitary
 inductive-recursive types, and then show how to turn such operations
 over specific datatypes into generic operations over any user-defined
 datatype. More specifically, our contributions are:
-
+\nolinebreak
 \begin{itemize}
-\item An index type (\AgdaDatatype{Path}) for InfIR types.
-\item Concrete and open universe generic
+\item Concrete and generic open universe index InfIR types (\AgdaDatatype{Path}).
+\item Concrete and generic open universe
   \AgdaFunction{drop} and \AgdaFunction{update} functions for
   InfIR types.
-\item A \AgdaDatatype{Zipper} type for InfIR types.
-\item Concrete and open universe generic \AgdaDatatype{Zipper}
+\item Correctness proofs of \AgdaFunction{drop} and
+  \AgdaFunction{update} with respect to each other.
+\item Concrete and generic open universe \AgdaDatatype{Zipper} InfIR types.
+\item Concrete and generic open universe \AgdaDatatype{Zipper}
   operations for InfIR types.
-\item A concrete and closed universe generic \AgdaFunction{show}
-  function for InfIR types. 
-\item A model of a closed universe of InfIR types. The closed universe
-  generic \AgdaFunction{show} function is another example of a
+\item Concrete, generic open universe, and generic \emph{closed} universe \AgdaFunction{show}
+  functions for InfIR types. 
+\item A model of a closed universe of InfIR types. The generic closed universe
+  \AgdaFunction{show} function is another example of a
   concrete InfIR function, where the closed universe type is itself InfIR.
 \end{itemize}
 
