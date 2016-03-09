@@ -141,7 +141,7 @@ functional operations using common universe models of infinitary
 inductive-recursive types, and then show how to turn such operations
 over specific datatypes into generic operations over any user-defined
 datatype. More specifically, our contributions are:
-\nolinebreak
+
 \begin{itemize}
 \item Concrete and generic open universe index InfIR types (\AgdaDatatype{Path}).
 \item Concrete and generic open universe
@@ -159,16 +159,6 @@ datatype. More specifically, our contributions are:
   concrete InfIR function, where the closed universe type is itself InfIR.
 \end{itemize}
 
-
-
-%% indices for infir types
-%% lookup and update
-%% zipper operations
-%% show
-
-%% open universe genprog lookup/update/zipper/show
-%% closed universe genprog for show
-
 Finally, we hope that seeing examples of writing both specific and generic
 functions using infinitary inductive-recursive types will help future
 dependently functional programmers with writing their own functions
@@ -177,6 +167,19 @@ over this class of datatypes.
 %% trouble: non-heterogeneous answers
 %% either make the return type heterogeneous, or add
 %% a heterogeneous argument
+
+\section{The problem}
+
+Before describing why writing functions over InfIR types is difficult,
+we first consider writing analogous functions over simpler
+datatypes. Thereafter we point out what becomes difficult in the
+InfIR scenario, and describe a general methodology of writing
+total functions in a dependently typed language, which can be applied
+to successfully write InfIR functions. 
+
+\subsection{Background}
+
+\subsection{Writing total functions}
 
 \acks
 
