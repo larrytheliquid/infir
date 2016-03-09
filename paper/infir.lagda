@@ -69,7 +69,7 @@ module _ where
 open import Data.Nat
 \end{code}}
 
-Infinitary inductive-recursive types are commonly used in dependently
+Infinitary inductive-recursive (InfIR) types are commonly used in dependently
 typed programs to model type-theoretic universes. For example,
 consider the model below of the universe of natural numbers and
 dependent functions.
@@ -136,6 +136,45 @@ Functional programming languages typically package useful datatypes
 libraries. Additionally, \emph{generic} implementations of such operations
 may exist as libraries for any other user-defined datatypes.
 
+Our \emph{primary contribution} is to show how to write analogues of common
+functional operations using common universe models of infinitary
+inductive-recursive types, and then show how to turn such operations
+over specific datatypes into generic operations over any user-defined
+datatype. More specifically, our contributions are:
+
+\begin{itemize}
+\item An index type (\AgdaDatatype{Path}) for InfIR types.
+\item Concrete and open universe generic
+  \AgdaFunction{drop} and \AgdaFunction{update} functions for
+  InfIR types.
+\item A \AgdaDatatype{Zipper} type for InfIR types.
+\item Concrete and open universe generic \AgdaDatatype{Zipper}
+  operations for InfIR types.
+\item A concrete and closed universe generic \AgdaFunction{show}
+  function for InfIR types. 
+\item A model of a closed universe of InfIR types. The closed universe
+  generic \AgdaFunction{show} function is another example of a
+  concrete InfIR function, where the closed universe type is itself InfIR.
+\end{itemize}
+
+
+
+%% indices for infir types
+%% drop and update
+%% zipper operations
+%% show
+
+%% open universe genprog drop/update/zipper/show
+%% closed universe genprog for show
+
+Finally, we hope that seeing examples of writing both specific and generic
+functions using infinitary inductive-recursive types will help future
+dependently functional programmers with writing their own functions
+over this class of datatypes.
+
+%% trouble: non-heterogeneous answers
+%% either make the return type heterogeneous, or add
+%% a heterogeneous argument
 
 \appendix
 \section{Appendix Title}
