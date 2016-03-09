@@ -10,7 +10,7 @@
 \usepackage[utf8x]{inputenc}
 \usepackage{autofe}
 
-\usepackage{agda}
+\usepackage[references]{agda}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -50,7 +50,7 @@
 \maketitle
 
 \begin{abstract}
-\lipsum[2-3]
+\lipsum[3]
 \end{abstract}
 
 \category{D.3}{Software}{Programming Languages}.
@@ -69,16 +69,10 @@ module _ where
 open import Data.Nat
 \end{code}}
 
-The text of the paper begins here.
-
-\begin{code}
-NumArgs : ℕ → Set
-NumArgs zero = ℕ
-NumArgs (suc n) = ℕ → NumArgs n
-\end{code}
-
-\noindent
-bla blah
+Infinitary inductive-recursive types are commonly used in dependently
+typed programs to model type-theoretic universes. For example,
+consider the model below of the universe of natural numbers and
+dependent functions.
 
 \begin{code}
 data Type : Set
@@ -92,6 +86,39 @@ data Type where
 ⟦ `Π A B ⟧ = (a : ⟦ A ⟧) → ⟦ B a ⟧
 \end{code}
 
+\AgdaHide{
+\begin{code}
+_`→_ : (A B : Type) → Type
+A `→ B = `Π A (λ _ → B)
+\end{code}}
+
+\noindent
+This \AgdaDatatype{Type} is \emph{infinitary} because the
+\AgdaInductiveConstructor{`Π} constructor's second inductive argument
+(\AgdaBound{B}) is a function (hence \AgdaDatatype{Type}s can branch infinitely).
+Additionally, it is \emph{inductive-recursive} because it
+is mutually defined with a
+function (\AgdaFunction{⟦\_⟧}) operating over it.
+
+Once you have defined a model, it is also common to provide a few
+examples of values that inhabit it.
+For example, below (\AgdaFunction{NumFun}) is a function \AgdaDatatype{Type}
+that takes a natural number \AgdaBound{n} as input, then asks you
+to construct a natural number from \AgdaBound{n} additional natural
+number arguments.
+
+\begin{code}
+NumArgs : ℕ → Type
+NumArgs zero = `ℕ
+NumArgs (suc n) = `ℕ `→ NumArgs n
+
+NumFun : Type
+NumFun = `Π `ℕ (λ n → NumArgs n)
+\end{code}
+
+While defining models and example values using infinitary
+inductive-recursive types is common, writing inductively defined
+\textit{functions} over them is not! 
 
 \appendix
 \section{Appendix Title}
