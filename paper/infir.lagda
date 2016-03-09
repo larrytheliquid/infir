@@ -75,15 +75,14 @@ consider the model below of the universe of natural numbers and
 dependent functions.
 
 \begin{code}
-data Type : Set
-⟦_⟧ : Type → Set
-
-data Type where
-  `ℕ : Type
-  `Π : (A : Type) (B : ⟦ A ⟧ → Type) → Type
-
-⟦ `ℕ ⟧ = ℕ
-⟦ `Π A B ⟧ = (a : ⟦ A ⟧) → ⟦ B a ⟧
+mutual
+  data Type : Set where
+    `ℕ : Type
+    `Π : (A : Type) (B : ⟦ A ⟧ → Type) → Type
+  
+  ⟦_⟧ : Type → Set
+  ⟦ `ℕ ⟧ = ℕ
+  ⟦ `Π A B ⟧ = (a : ⟦ A ⟧) → ⟦ B a ⟧
 \end{code}
 
 \AgdaHide{
