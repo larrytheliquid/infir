@@ -12,6 +12,8 @@
 
 \usepackage[references]{agda}
 
+\DeclareUnicodeCharacter{8759}{\ensuremath{::}}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \newcommand{\cL}{{\cal L}}
@@ -237,8 +239,59 @@ lookup (branch A B) (there₂ i) = lookup B i
 \end{code}
 
 
-
 \subsection{Writing total functions}
+
+Once we move from a finitary non-dependent type like
+\AgdaDatatype{Tree} to a InfIR type like
+\AgdaDatatype{Type}, it is not obvious how to write a function like
+\AgdaFunction{lookup}. Looking up something in the
+left side (domain) of a \AgdaInductiveConstructor{`Π} is easy, but
+looking up something in the right side (codomain) requires entering a
+function space.
+
+One solution is to disallow right-side lookups of
+\AgdaInductiveConstructor{`Π}s, but that is rather limiting. Figuring
+out how to write functions like \AgdaFunction{lookup}, and more
+complicated functions, for InfIR types is the subject of this
+paper. Before we show the solution, let us first consider a general
+methodology for turning a would-be partial function into a total
+function.
+
+\begin{code}
+open import Data.Unit
+open import Data.Maybe
+open import Data.List
+
+postulate head : {A : Set} → List A → A
+
+head₁ : {A : Set} → List A → A → A
+head₁ [] y = y
+head₁ (x ∷ xs) y = x
+
+head₂ : {A : Set} → List A → Maybe A --⊤ ⊎ A
+head₂ [] = nothing
+head₂ (x ∷ xs) = just x
+\end{code}
+
+\begin{code}
+HeadDom : {A : Set} → List A → Set
+HeadDom {A = A} [] = A
+HeadDom (x ∷ xs) = ⊤
+
+head₃ : {A : Set} (xs : List A) → HeadDom xs → A
+head₃ [] y = y
+head₃ (x ∷ xs) tt = x
+\end{code}
+
+\begin{code}
+HeadCod : {A : Set} → List A → Set
+HeadCod [] = ⊤
+HeadCod {A = A} (x ∷ xs) = A
+
+head₄ : {A : Set} (xs : List A) → HeadCod xs
+head₄ [] = tt
+head₄ (x ∷ xs) = x
+\end{code}
 
 \acks
 
