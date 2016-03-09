@@ -145,9 +145,9 @@ datatype. More specifically, our contributions are:
 \begin{itemize}
 \item Concrete and generic open universe index InfIR types (\AgdaDatatype{Path}).
 \item Concrete and generic open universe
-  \AgdaFunction{drop} and \AgdaFunction{update} functions for
+  \AgdaFunction{lookup} and \AgdaFunction{update} functions for
   InfIR types.
-\item Correctness proofs of \AgdaFunction{drop} and
+\item Correctness proofs of \AgdaFunction{lookup} and
   \AgdaFunction{update} with respect to each other.
 \item Concrete and generic open universe \AgdaDatatype{Zipper} InfIR types.
 \item Concrete and generic open universe \AgdaDatatype{Zipper}
@@ -162,11 +162,11 @@ datatype. More specifically, our contributions are:
 
 
 %% indices for infir types
-%% drop and update
+%% lookup and update
 %% zipper operations
 %% show
 
-%% open universe genprog drop/update/zipper/show
+%% open universe genprog lookup/update/zipper/show
 %% closed universe genprog for show
 
 Finally, we hope that seeing examples of writing both specific and generic
@@ -177,11 +177,6 @@ over this class of datatypes.
 %% trouble: non-heterogeneous answers
 %% either make the return type heterogeneous, or add
 %% a heterogeneous argument
-
-\appendix
-\section{Appendix Title}
-
-This is the text of the appendix, if you need one.
 
 \acks
 
