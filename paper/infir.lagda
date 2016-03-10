@@ -384,6 +384,14 @@ corresponding datatypes and functions for InfIR
 
 \subsection{\AgdaDatatype{Path}s}
 
+Let's reconsider what it means to be a \AgdaDatatype{Path}. When
+traversing a \AgdaDatatype{Tree}, you can always go left or right at a
+\AgdaInductiveConstructor{branch}. When traversing a
+\AgdaDatatype{Type}, it you can immediately go to the left of a
+\AgdaInductiveConstructor{`Π}, but going right requires first knowing
+which element \AgdaBound{a} of the type family \AgdaBound{B a} to
+continue traversing under.
+
 \begin{code}
 data Path : Type → Set where
   here : {A : Type} → Path A
@@ -394,6 +402,17 @@ data Path : Type → Set where
     (f : (a : ⟦ A ⟧) → Path (B a))
     → Path (`Π A B)
 \end{code}
+
+Above, \AgdaInductiveConstructor{there₂} represents going right
+into the codomain of \AgdaInductiveConstructor{`Π}, but only once the
+user tells you which \AgdaBound{a} to use. In a sense, going right is
+like asking for a continuation that tells you where else to go once
+you have been given \AgdaBound{a}. Also note that because the argument
+\AgdaBound{f} of \AgdaInductiveConstructor{there₂} is a function that
+returns a \AgdaDatatype{Path}, the \AgdaDatatype{Path} datatype is
+infinitary (just like the \AgdaDatatype{Type} it indexes).
+
+
 
 \begin{code}
 Lookup : (A : Type) → Path A → Set
