@@ -335,6 +335,45 @@ head₄ [] = tt
 head₄ (x ∷ xs) = x
 \end{code}
 
+So far we have seen how to take a partial function and make it total,
+both with and without the extra precision afforded to us by dependent
+types.
+
+At this point we would like to emphasize that the extra argument
+\AgdaFunction{HeadDom} in \AgdaFunction{head₃} is not merely a
+precondition, but rather extra computational content that is required
+from the user applying the function to complete the cases that would
+normally make it a partial function.
+To see the difference, consider a total version of a function that looks up
+\AgdaFunction{elem}ents of a \AgdaDatatype{List},
+once given a natural number (\AgdaDatatype{ℕ}) index.
+
+\AgdaHide{
+\begin{code}
+open import Data.Nat
+\end{code}}
+
+\begin{code}
+postulate
+  elem : {A : Set} (xs : List A) (n : ℕ)
+    → length xs < n → A
+\end{code}
+
+Because the natural number \AgdaBound{n} may index outside the bounds
+of the list \AgdaBound{xs}, we need an extra argument serving as a
+precondition. If this precondition is satisfied, it computes to the unit
+type (\AgdaDatatype{⊤}),
+but if it fails it computes to the empty type (\AgdaDatatype{⊥}). So,
+in the failure case the precondition (\AgdaDatatype{⊥}) is
+unsatisfiable, whereas the failure case of \AgdaFunction{HeadDom} is
+the extra argument \AgdaBound{A} needed to complete the otherwise
+partial function.
+
+The rest of this paper expands on the ideas of this section by
+defining functions like \AgdaFunction{HeadDom} that non-trivially
+compute extra arguments. These dependent extra arguments
+are the key to writing functions over InfIR datatypes.
+
 \acks
 
 Acknowledgments, if needed.
