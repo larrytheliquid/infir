@@ -67,8 +67,11 @@ Dependent types; induction-recursion; generic programming.
 
 \AgdaHide{
 \begin{code}
-module _ where
+module InfIR where
+open import Data.Unit
 open import Data.Nat
+open import Data.Maybe
+open import Data.List
 \end{code}}
 
 Infinitary inductive-recursive (InfIR) types are commonly used in dependently
@@ -185,10 +188,15 @@ like \AgdaFunction{lookup} for the InfIR universe \AgdaDatatype{Type},
 let us first consider writing \AgdaFunction{lookup} for a binary
 \AgdaDatatype{Tree}.
 
+\AgdaHide{
 \begin{code}
-data Tree : Set where
-  leaf : Tree
-  branch : (A B : Tree) → Tree
+module Tree where
+\end{code}}
+
+\begin{code}
+  data Tree : Set where
+    leaf : Tree
+    branch : (A B : Tree) → Tree
 \end{code}
 
 Our \AgdaDatatype{Tree} stores no additional data in nodes, can have
@@ -210,14 +218,14 @@ sub\AgdaDatatype{Tree}, we must first have a way to describe a
 }
 
 \begin{code}
-data Path : Tree → Set where
-  here : ∀{A} → Path A
-  there₁ : ∀{A B}
-    → Path A
-    → Path (branch A B)
-  there₂ : ∀{A B}
-    → Path B
-    → Path (branch A B)
+  data Path : Tree → Set where
+    here : ∀{A} → Path A
+    there₁ : ∀{A B}
+      → Path A
+      → Path (branch A B)
+    there₂ : ∀{A B}
+      → Path B
+      → Path (branch A B)
 \end{code}
 
 The \AgdaInductiveConstructor{here} constructor indicates that we have
@@ -232,10 +240,10 @@ the \AgdaDatatype{Path} until we arrive at the type appearing
 \AgdaInductiveConstructor{here}.
 
 \begin{code}
-lookup : (A : Tree) → Path A → Tree
-lookup A here = A
-lookup (branch A B) (there₁ i) = lookup A i
-lookup (branch A B) (there₂ i) = lookup B i
+  lookup : (A : Tree) → Path A → Tree
+  lookup A here = A
+  lookup (branch A B) (there₁ i) = lookup A i
+  lookup (branch A B) (there₂ i) = lookup B i
 \end{code}
 
 
@@ -257,13 +265,6 @@ paper. Before we show the solution, let us first consider a general
 methodology for turning a would-be partial function into a total
 function. For example, say we wanted to write a total version of the
 typically partial \AgdaFunction{head} function.
-
-\AgdaHide{
-\begin{code}
-open import Data.Unit
-open import Data.Maybe
-open import Data.List
-\end{code}}
 
 \begin{code}
 postulate head : {A : Set} → List A → A
@@ -348,11 +349,6 @@ To see the difference, consider a total version of a function that looks up
 \AgdaFunction{elem}ents of a \AgdaDatatype{List},
 once given a natural number (\AgdaDatatype{ℕ}) index.
 
-\AgdaHide{
-\begin{code}
-open import Data.Nat
-\end{code}}
-
 \begin{code}
 postulate
   elem : {A : Set} (xs : List A) (n : ℕ)
@@ -373,6 +369,34 @@ The rest of this paper expands on the ideas of this section by
 defining functions like \AgdaFunction{HeadDom} that non-trivially
 compute extra arguments. These dependent extra arguments
 are the key to writing functions over InfIR datatypes.
+
+\section{InfIR \AgdaFunction{lookup} \& \AgdaFunction{update}}
+
+\begin{code}
+data Path : Type → Set where
+  here : {A : Type} → Path A
+  there₁ : {A : Type} {B : ⟦ A ⟧ → Type}
+    (i : Path A)
+    → Path (`Π A B)
+  there₂ : {A : Type} {B : ⟦ A ⟧ → Type}
+    (f : (a : ⟦ A ⟧) → Path (B a))
+    → Path (`Π A B)
+\end{code}
+
+\begin{code}
+Lookup : (A : Type) → Path A → Set
+Lookup A here = Type
+Lookup (`Π A B) (there₁ i) = Lookup A i
+Lookup (`Π A B) (there₂ f) = (a : ⟦ A ⟧) → Lookup (B a) (f a)
+\end{code}
+
+\begin{code}
+lookup : (A : Type) (i : Path A) → Lookup A i
+lookup A here = A
+lookup (`Π A B) (there₁ i) = lookup A i
+lookup (`Π A B) (there₂ f) = λ a → lookup (B a) (f a)
+\end{code}
+
 
 \acks
 
