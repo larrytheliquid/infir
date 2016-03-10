@@ -18,6 +18,8 @@
 
 \newcommand{\cL}{{\cal L}}
 
+\newcommand{\refsec}[1]{Section \ref{sec:#1}}
+
 \begin{document}
 
 \special{papersize=8.5in,11in}
@@ -182,6 +184,7 @@ total functions in a dependently typed language, which can be applied
 to successfully write InfIR functions. 
 
 \subsection{Background}
+\label{sec:problem:background}
 
 Instead of diving directly into the complexity of writing functions
 like \AgdaFunction{lookup} for the InfIR universe \AgdaDatatype{Type},
@@ -248,6 +251,7 @@ the \AgdaDatatype{Path} until we arrive at the type appearing
 
 
 \subsection{Writing total functions}
+\label{sec:problem:total}
 
 Once we move from a finitary non-dependent type like
 \AgdaDatatype{Tree} to a InfIR type like
@@ -371,6 +375,14 @@ compute extra arguments. These dependent extra arguments
 are the key to writing functions over InfIR datatypes.
 
 \section{InfIR \AgdaFunction{lookup} \& \AgdaFunction{update}}
+
+\refsec{problem:background} reviewed how to
+\AgdaFunction{lookup} a sub\AgdaDatatype{Tree} pointed to by a
+particular \AgdaDatatype{Path}. In this section we define the
+corresponding datatypes and functions for InfIR
+\AgdaDatatype{Type}s.
+
+\subsection{\AgdaDatatype{Path}s}
 
 \begin{code}
 data Path : Type → Set where
