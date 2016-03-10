@@ -205,7 +205,7 @@ sub\AgdaDatatype{Tree}, we must first have a way to describe a
   For lists, \texttt{lookup} refers to finding data in a list,
   whereas \texttt{drop} refers to finding sublists. Nevertheless, in
   this paper we refer to our generalization of ``drop'' to tree types
-  as \AgdaFunction{lookup} because we never define a lookup
+  as \AgdaFunction{lookup} because we never define a ``lookup''
   function for non-inductive elements of a type.
 }
 
@@ -255,23 +255,48 @@ out how to write functions like \AgdaFunction{lookup}, and more
 complicated functions, for InfIR types is the subject of this
 paper. Before we show the solution, let us first consider a general
 methodology for turning a would-be partial function into a total
-function.
+function. For example, say we wanted to write a total version of the
+typically partial \AgdaFunction{head} function.
 
+\AgdaHide{
 \begin{code}
 open import Data.Unit
 open import Data.Maybe
 open import Data.List
+\end{code}}
 
+\begin{code}
 postulate head : {A : Set} → List A → A
+\end{code}
 
+We have 2 options to make this function total. We can either:
+
+\begin{enumerate}
+\item Change the domain, for example by requiring an extra default argument.
+\item Change the codomain, for example by returning a
+  \AgdaDatatype{Maybe} result.
+\end{enumerate}
+
+\begin{code}
 head₁ : {A : Set} → List A → A → A
 head₁ [] y = y
 head₁ (x ∷ xs) y = x
 
-head₂ : {A : Set} → List A → Maybe A --⊤ ⊎ A
+head₂ : {A : Set} → List A → Maybe A
 head₂ [] = nothing
 head₂ (x ∷ xs) = just x
 \end{code}
+
+Both options give us something to do when we apply
+\AgdaFunction{head} to an empty list, either get an extra argument to
+return, or to bail on the computation with
+\AgdaInductiveConstructor{nothing}.
+However, these options are rather extreme as they require changing our
+intended type signature of \AgdaFunction{head} for \emph{all} possible
+lists. The precision of dependent types allows us to instead
+conditionally ask for an extra argument, or return
+\AgdaInductiveConstructor{nothing} of computational value, only if the
+input list is empty!
 
 \begin{code}
 HeadDom : {A : Set} → List A → Set
