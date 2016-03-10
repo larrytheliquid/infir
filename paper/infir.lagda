@@ -39,7 +39,7 @@
 %% \preprintfooter{short description of paper}   % 'preprint' option specified.
 
 \title{Programming with Infinitary Inductive-Recursive Types}
-\subtitle{Preconditions with computational content}
+%% \subtitle{Preconditions with computational content}
 
 \authorinfo{Larry Diehl}
            {Portland State University}
@@ -298,6 +298,14 @@ conditionally ask for an extra argument, or return
 \AgdaInductiveConstructor{nothing} of computational value, only if the
 input list is empty!
 
+First, let's use dependent types to conditonally change the domain. We
+will ask for an extra argument of type \AgdaBound{A} if the
+\AgdaDatatype{List} is empty. Otherwise, we will ask for an extra
+argument of type unit (\AgdaDatatype{⊤}), which is isomorphic to not
+asking for anything extra at all. Below, \AgdaFunction{HeadDom} is
+type of the extra argument, which is dependent on the input
+\AgdaBound{xs} of type \AgdaDatatype{List}.
+
 \begin{code}
 HeadDom : {A : Set} → List A → Set
 HeadDom {A = A} [] = A
@@ -307,6 +315,15 @@ head₃ : {A : Set} (xs : List A) → HeadDom xs → A
 head₃ [] y = y
 head₃ (x ∷ xs) tt = x
 \end{code}
+
+Second, let's use dependent types to conditonally change the
+codomain. \AgdaFunction{HeadCod} computes our new return type,
+conditionally dependent on the input list. If the input list is empty,
+our \AgdaFunction{head₄} function returns a value of type unit (\AgdaDatatype{⊤}). If
+it is non-empty, it returns an \AgdaBound{A}. Note that returning a
+value of \AgdaDatatype{⊤} is returning nothing of computational
+significance. Hence, it is like \AgdaFunction{head₄} is not defined
+for empty lists.
 
 \begin{code}
 HeadCod : {A : Set} → List A → Set
