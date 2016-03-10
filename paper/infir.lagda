@@ -412,7 +412,16 @@ you have been given \AgdaBound{a}. Also note that because the argument
 returns a \AgdaDatatype{Path}, the \AgdaDatatype{Path} datatype is
 infinitary (just like the \AgdaDatatype{Type} it indexes).
 
-
+We were able to write a total function to \AgdaFunction{lookup} any
+sub\AgdaDatatype{Tree}, but \AgdaFunction{lookup}ing up a
+sub\AgdaDatatype{Type} is not always possible. Using our methodology
+from \refsec{problem:total}, we can make \AgdaFunction{lookup} for
+\AgdaDatatype{Type}s total by choosing to change the codomain,
+depending on the input \AgdaDatatype{Type} and \AgdaDatatype{Path}.
+\AgdaFunction{Lookup} computes the necessary codomain of
+\AgdaFunction{lookup}, asking for a \AgdaDatatype{Type} in the base
+case, or a continuation when looking to the right of a
+\AgdaInductiveConstructor{`Π}.
 
 \begin{code}
 Lookup : (A : Type) → Path A → Set
@@ -420,6 +429,14 @@ Lookup A here = Type
 Lookup (`Π A B) (there₁ i) = Lookup A i
 Lookup (`Π A B) (there₂ f) = (a : ⟦ A ⟧) → Lookup (B a) (f a)
 \end{code}
+
+Finally, we can write \AgdaFunction{lookup} in terms of
+\AgdaDatatype{Path} and \AgdaFunction{Lookup}. Notice that users
+applying our \AgdaFunction{lookup} function will be need to supply
+extra \AgdaBound{a} arguments exactly when they go to the right of a
+\AgdaInductiveConstructor{`Π}. Therefore, our definition can expect an
+extra argument \AgdaBound{a} in the
+\AgdaInductiveConstructor{there₂} case.
 
 \begin{code}
 lookup : (A : Type) (i : Path A) → Lookup A i
