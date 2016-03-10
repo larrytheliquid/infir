@@ -2,6 +2,7 @@
 
 \usepackage{amsmath}
 \usepackage{lipsum}
+\usepackage{todonotes}
 
 \usepackage{amsfonts,amssymb,textgreek,stmaryrd}
 \usepackage{bbm}
@@ -9,6 +10,7 @@
 \usepackage{ucs}
 \usepackage[utf8x]{inputenc}
 \usepackage{autofe}
+
 
 \usepackage[references]{agda}
 
@@ -73,6 +75,7 @@ module InfIR where
 open import Data.Unit
 open import Data.Nat
 open import Data.Maybe
+open import Data.Product
 open import Data.List
 \end{code}}
 
@@ -412,6 +415,8 @@ you have been given \AgdaBound{a}. Also note that because the argument
 returns a \AgdaDatatype{Path}, the \AgdaDatatype{Path} datatype is
 infinitary (just like the \AgdaDatatype{Type} it indexes).
 
+\subsection{\AgdaFunction{lookup}}
+
 We were able to write a total function to \AgdaFunction{lookup} any
 sub\AgdaDatatype{Tree}, but \AgdaFunction{lookup}ing up a
 sub\AgdaDatatype{Type} is not always possible. Using our methodology
@@ -444,6 +449,65 @@ lookup A here = A
 lookup (`Π A B) (there₁ i) = lookup A i
 lookup (`Π A B) (there₂ f) = λ a → lookup (B a) (f a)
 \end{code}
+
+\subsection{\AgdaFunction{update}}
+
+Now we will write an \AgdaFunction{update} function for
+\AgdaDatatype{Type}s. After supplying a \AgdaDatatype{Path} and a
+substitute \AgdaDatatype{Type}, \AgdaFunction{update} should return
+the original \AgdaDatatype{Type} but with the substitute replacing
+what the \AgdaDatatype{Path} pointed to.
+You might expect to write a function like:
+
+\begin{code}
+postulate
+  updateNaive : (A : Type) (i : Path A) (X : Type) → Type
+\end{code}
+
+\noindent
+Where \AgdaBound{X} is the type to substitute at
+\AgdaBound{i}. In order to write a total version of
+\AgdaFunction{updateNaive}, we will need to change the domain by
+asking for an \AgdaBound{a} whenever updating the right side of a
+\AgdaInductiveConstructor{`Π}.
+
+We call the type of the subsitute
+\AgdaFunction{Sub}, which asks for a \AgdaDatatype{Type} in the base
+case (\AgdaInductiveConstructor{here}), and a continuation in the
+\AgdaInductiveConstructor{there₂} case. But, updating an element to
+the left of a \AgdaInductiveConstructor{`Π} is also
+problematic. We would like to keep the old
+\AgdaInductiveConstructor{`Π} codomain \AgdaBound{B} unchanged, but it
+still expects an \AgdaBound{a} of the original type
+\AgdaFunction{⟦} \AgdaBound{A} \AgdaFunction{⟧}. Therefore, we must
+ask for an additional function \AgdaBound{f} that can map newly
+updated \AgdaBound{a}'s to their original type.
+
+\todo[inline]{Give an example of the domain type changing and being translated}
+
+\begin{code}
+Sub : (A : Type) → Path A → Set
+update : (A : Type) (i : Path A) (X : Sub A i) → Type
+
+Sub A here = Type
+Sub (`Π A B) (there₁ i) =
+  Σ (Sub A i) (λ X → ⟦ update A i X ⟧ → ⟦ A ⟧)
+Sub (`Π A B) (there₂ f) =
+  (a : ⟦ A ⟧) → Sub (B a) (f a)
+
+update A here X = X
+update (`Π A B) (there₁ i) (X , f) =
+  `Π (update A i X) (λ a → B (f a))
+update (`Π A B) (there₂ f) F =
+  `Π A (λ a → update (B a) (f a) (F a))
+\end{code}
+
+Notice that we must define \AgdaFunction{Sub} and
+\AgdaFunction{update} mutually, because the domain of the translation
+function must refer to \AgdaFunction{update}. If we decided to define
+\AgdaFunction{Sub} as an inductive type, rather than as a function,
+then it would be an InfIR type with \AgdaFunction{update} as its
+mutually defined function!
 
 
 \acks
