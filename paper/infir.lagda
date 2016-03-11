@@ -77,6 +77,7 @@ open import Data.Nat
 open import Data.Maybe
 open import Data.Product
 open import Data.List
+open import Relation.Binary.PropositionalEquality
 \end{code}}
 
 Infinitary inductive-recursive (InfIR) types are commonly used in dependently
@@ -307,8 +308,8 @@ conditionally ask for an extra argument, or return
 input list is empty!
 
 First, let's use dependent types to conditonally change the domain. We
-will ask for an extra argument of type \AgdaBound{A} if the
-\AgdaDatatype{List} is empty. Otherwise, we will ask for an extra
+ask for an extra argument of type \AgdaBound{A} if the
+\AgdaDatatype{List} is empty. Otherwise, we ask for an extra
 argument of type unit (\AgdaDatatype{⊤}), which is isomorphic to not
 asking for anything extra at all. Below, \AgdaFunction{HeadDom} is
 type of the extra argument, which is dependent on the input
@@ -437,7 +438,7 @@ Lookup (`Π A B) (there₂ f) = (a : ⟦ A ⟧) → Lookup (B a) (f a)
 
 Finally, we can write \AgdaFunction{lookup} in terms of
 \AgdaDatatype{Path} and \AgdaFunction{Lookup}. Notice that users
-applying our \AgdaFunction{lookup} function will be need to supply
+applying our \AgdaFunction{lookup} function need to supply
 extra \AgdaBound{a} arguments exactly when they go to the right of a
 \AgdaInductiveConstructor{`Π}. Therefore, our definition can expect an
 extra argument \AgdaBound{a} in the
@@ -467,7 +468,7 @@ postulate
 \noindent
 Where \AgdaBound{X} is the type to substitute at
 \AgdaBound{i}. In order to write a total version of
-\AgdaFunction{updateNaive}, we will need to change the domain by
+\AgdaFunction{updateNaive}, we need to change the domain by
 asking for an \AgdaBound{a} whenever updating the right side of a
 \AgdaInductiveConstructor{`Π}.
 
@@ -479,7 +480,8 @@ the left of a \AgdaInductiveConstructor{`Π} is also
 problematic. We would like to keep the old
 \AgdaInductiveConstructor{`Π} codomain \AgdaBound{B} unchanged, but it
 still expects an \AgdaBound{a} of the original type
-\AgdaFunction{⟦} \AgdaBound{A} \AgdaFunction{⟧}. Therefore, we must
+\AgdaFunction{⟦} \AgdaBound{A} \AgdaFunction{⟧}. Therefore, the
+\AgdaInductiveConstructor{there₁} case must
 ask for an additional function \AgdaBound{f} that can map newly
 updated \AgdaBound{a}'s to their original type.
 
@@ -509,6 +511,69 @@ is that we could have defined \AgdaFunction{Sub} as an inductive type,
 rather than as a function. If we had done so,
 then it would be an InfIR type with \AgdaFunction{update} as its
 mutually defined function!
+
+\subsection{Correctness}
+
+In this section we prove a correctness theorem that relates
+\AgdaFunction{update} with \AgdaFunction{lookup}. Informally, we would
+like to prove the following equivalence.
+
+$$
+\forall A, i.~ A \equiv \textrm{update}~A~i~(\textrm{lookup}~A~i)
+$$
+
+However, the third parameter of \AgdaFunction{update} is a
+\AgdaFunction{Sub}, while \AgdaFunction{lookup} returns a
+\AgdaFunction{Lookup}. Thus, we need to have a function that
+\AgdaFunction{lift}s a \AgdaFunction{Lookup} to a
+\AgdaFunction{Sub} so that we may state our theorem. Additionally,
+proving this theorem requires functional extensionality.
+
+\begin{code}
+postulate
+  ext : {A : Set} {B : A → Set}
+    {f g : (a : A) → B a}
+    → ((a : A) → f a ≡ g a)
+    → f ≡ g
+\end{code}
+
+Notice that the \AgdaFunction{Sub} type is just like the
+\AgdaFunction{Lookup} type, except it has an additional transformation
+function in the \AgdaInductiveConstructor{there₁} case. Therefore, we
+should be able to \AgdaFunction{lift} a \AgdaFunction{Lookup} by
+structurally copying it, and inserting identity conversion functions
+whenever we pass through a \AgdaInductiveConstructor{there₁}.
+
+\begin{code}
+lift : (A : Type) (i : Path A) → Lookup A i → Sub A i
+lem : (A : Type) (i : Path A) (p : Lookup A i)
+  → A ≡ update A i (lift A i p)
+
+lift A here p = A
+lift (`Π A B) (there₁ i) p = (lift A i p) , id where
+  id : ⟦ update A i (lift A i p) ⟧ → ⟦ A ⟧
+  id a = subst ⟦_⟧ (sym (lem A i p)) a
+lift (`Π A B) (there₂ f) F = λ a → lift (B a) (f a) (F a)
+
+lem A here p = refl
+lem (`Π A B) (there₁ i) p
+  rewrite sym (lem A i p) = refl
+lem (`Π A B) (there₂ f) F
+  = cong (λ X → `Π A X) (ext (λ a → lem (B a) (f a) (F a)))
+\end{code}
+
+In order to supply an identify transformation function in the
+\AgdaInductiveConstructor{there₁} case, we must mutually prove that
+updating by any lifitng of a \AgdaDatatype{Lookup} is the identity
+operation. This is a generalization of our original theorem, so we can
+specialize it to arrive at a proof of our original theorem.
+
+\begin{code}
+thm : (A : Type) (i : Path A)
+  → A ≡ update A i (lift A i (lookup A i))
+thm A i = lem A i (lookup A i)
+\end{code}
+
 
 \acks
 
