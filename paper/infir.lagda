@@ -504,11 +504,11 @@ update (`Π A B) (there₂ f) F =
 
 Notice that we must define \AgdaFunction{Sub} and
 \AgdaFunction{update} mutually, because the domain of the translation
-function must refer to \AgdaFunction{update}. If we decided to define
-\AgdaFunction{Sub} as an inductive type, rather than as a function,
+function must refer to \AgdaFunction{update}. Another neat observation
+is that we could have defined \AgdaFunction{Sub} as an inductive type,
+rather than as a function. If we had done so,
 then it would be an InfIR type with \AgdaFunction{update} as its
 mutually defined function!
-
 
 \acks
 
