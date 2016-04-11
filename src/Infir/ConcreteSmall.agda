@@ -1,13 +1,15 @@
+open import Function
 open import Data.String hiding ( show )
 open import Data.Empty
 open import Data.Unit
 open import Data.Bool
 open import Data.Nat
-open import Data.Fin
+open import Data.Fin hiding ( lift )
 open import Data.Product
 open import Data.Sum
 open import Data.Maybe hiding ( Eq )
 open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.HeterogeneousEquality using ( _≅_ ; refl )
 module Infir.ConcreteSmall where
 
 ----------------------------------------------------------------------
@@ -17,6 +19,22 @@ postulate
     {f g : (a : A) → B a}
     → ((a : A) → f a ≡ g a)
     → f ≡ g
+
+Π : (A : Set) (B : A → Set) → Set
+Π A B = (a : A) → B a
+
+Dyn : Set₁
+Dyn = Σ Set id
+
+DynCon : Set → Set₁
+DynCon B = Σ Set (λ A → A → B)
+
+eqpair : {A : Set} {B : A → Set}
+  {a₁ a₂ : A} {b₁ : B a₁} {b₂ : B a₂} (q : a₁ ≡ a₂) → b₁ ≅ b₂ → (a₁ , b₁) ≡ (a₂ , b₂)
+eqpair refl refl = refl
+
+subst-id : {A : Set} {x y : A} (P : A → Set) (q : x ≡ y) (p : P x) → p ≅ subst P q p
+subst-id P refl p = refl
 
 ----------------------------------------------------------------------
 
@@ -50,41 +68,52 @@ data Path : Arith → Set where
 
 ----------------------------------------------------------------------
 
-Drop : (A : Arith) → Path A → Set
-Drop A here = Arith
-Drop (`Π A B) (there₁ i) = Drop A i
-Drop (`Π A B) (there₂ f) = (a : ⟦ A ⟧) → Drop (B a) (f a)
+lookup' : (A : Arith) → Path A → Dyn
+
+Lookup : (A : Arith) → Path A → Set
+Lookup A i = proj₁ (lookup' A i)
+
+lookup : (A : Arith) (i : Path A) → Lookup A i
+lookup A i = proj₂ (lookup' A i)
 
 ----------------------------------------------------------------------
 
-drop : (A : Arith) (i : Path A) → Drop A i
-drop A here = A
-drop (`Π A B) (there₁ i) = drop A i
-drop (`Π A B) (there₂ f) = λ a → drop (B a) (f a)
+lookup' A here = Arith , A
+lookup' (`Π A B) (there₁ i) = lookup' A i
+lookup' (`Π A B) (there₂ f) =
+  Π ⟦ A ⟧ (λ a → Lookup (B a) (f a))
+  , (λ a → lookup (B a) (f a))
 
 ----------------------------------------------------------------------
 
-Sub : (A : Arith) → Path A → Set
-update : (A : Arith) (i : Path A) (X : Sub A i) → Arith
+update' : (A : Arith) → Path A → DynCon Arith
 
-Sub A here = Arith
-Sub (`Π A B) (there₁ i) = Σ (Sub A i) λ X → ⟦ update A i X ⟧ → ⟦ A ⟧
-Sub (`Π A B) (there₂ f) = (a : ⟦ A ⟧) → Sub (B a) (f a)
+Update : (A : Arith) → Path A → Set
+Update A i = proj₁ (update' A i)
 
-update A here X = X
-update (`Π A B) (there₁ i) (X , f) = `Π (update A i X) (λ a → B (f a))
-update (`Π A B) (there₂ f) F = `Π A λ a → update (B a) (f a) (F a)
+update : (A : Arith) (i : Path A) (X : Update A i) → Arith
+update A i X = proj₂ (update' A i) X
 
 ----------------------------------------------------------------------
 
-liftD : (A : Arith) (i : Path A) → Drop A i → Sub A i
-lem : (A : Arith) (i : Path A) (p : Drop A i) → A ≡ update A i (liftD A i p)
+update' A here = Arith , id
+update' (`Π A B) (there₁ i) =
+  Σ (Update A i) (λ X → ⟦ update A i X ⟧ → ⟦ A ⟧)
+  , λ { (X , f) → `Π (update A i X) (λ a → B (f a)) }
+update' (`Π A B) (there₂ f) =
+  Π ⟦ A ⟧ (λ a → Update (B a) (f a))
+  , (λ F → `Π A λ a → update (B a) (f a) (F a))
 
-liftD A here p = A
-liftD (`Π A B) (there₁ i) p = liftD A i p , id where
-  id : ⟦ update A i (liftD A i p) ⟧ → ⟦ A ⟧
-  id a = subst ⟦_⟧ (sym (lem A i p)) a
-liftD (`Π A B) (there₂ f) F = λ a → liftD (B a) (f a) (F a)
+----------------------------------------------------------------------
+
+lift : (A : Arith) (i : Path A) → Lookup A i → Update A i
+lem : (A : Arith) (i : Path A) (p : Lookup A i) → A ≡ update A i (lift A i p)
+
+lift A here p = A
+lift (`Π A B) (there₁ i) p =
+  lift A i p
+  , subst ⟦_⟧ (sym (lem A i p))
+lift (`Π A B) (there₂ f) F = λ a → lift (B a) (f a) (F a)
 
 ----------------------------------------------------------------------
 
@@ -94,7 +123,7 @@ lem (`Π A B) (there₁ i) p
 lem (`Π A B) (there₂ f) F
   = cong (λ X → `Π A X) (ext (λ a → lem (B a) (f a) (F a)))
 
-thm : (A : Arith) (i : Path A) → A ≡ update A i (liftD A i (drop A i))
-thm A i = lem A i (drop A i)
+thm : (A : Arith) (i : Path A) → A ≡ update A i (lift A i (lookup A i))
+thm A i = lem A i (lookup A i)
 
 ----------------------------------------------------------------------

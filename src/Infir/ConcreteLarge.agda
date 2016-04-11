@@ -21,9 +21,6 @@ postulate
 Π : (A : Set) (B : A → Set) → Set
 Π A B = (a : A) → B a
 
-Dyn : Set₁
-Dyn = Σ Set (λ A → A)
-
 ----------------------------------------------------------------------
 
 mutual
@@ -48,34 +45,41 @@ data Path : Type → Set where
 
 ----------------------------------------------------------------------
 
-drop : (A : Type) (i : Path A) → Dyn
-drop A here = Type , A
-drop (`Π A B) (there₁ i) = drop A i
-drop (`Π A B) (there₂ f) =
-  Π ⟦ A ⟧ (λ a → proj₁ (drop (B a) (f a)))
-  , (λ a → proj₂ (drop (B a) (f a)))
+Lookup : (A : Type) → Path A → Set
+Lookup A here = Type
+Lookup (`Π A B) (there₁ i) = Lookup A i
+Lookup (`Π A B) (there₂ f) = (a : ⟦ A ⟧) → Lookup (B a) (f a)
 
 ----------------------------------------------------------------------
 
-update : (A : Type) (i : Path A) → Σ Set (λ A → A → Type)
-update A here = Type , (λ A → A)
-update (`Π A B) (there₁ i) =
-  Σ (proj₁ (update A i)) (λ X → ⟦ proj₂ (update A i) X ⟧ → ⟦ A ⟧)
-  , (λ { (X , f) → `Π (proj₂ (update A i) X) (λ a → B (f a)) })
-update (`Π A B) (there₂ f) =
-  Π ⟦ A ⟧ (λ a → proj₁ (update (B a) (f a)))
-  , (λ F → `Π A (λ a → proj₂ (update (B a) (f a)) (F a)))
+lookup : (A : Type) (i : Path A) → Lookup A i
+lookup A here = A
+lookup (`Π A B) (there₁ i) = lookup A i
+lookup (`Π A B) (there₂ f) = λ a → lookup (B a) (f a)
 
 ----------------------------------------------------------------------
 
-liftD : (A : Type) (i : Path A) → proj₁ (drop A i) → proj₁ (update A i)
-lem : (A : Type) (i : Path A) (p : proj₁ (drop A i)) → A ≡ proj₂ (update A i) (liftD A i p)
+Update : (A : Type) → Path A → Set
+update : (A : Type) (i : Path A) (X : Update A i) → Type
 
-liftD A here p = A
-liftD (`Π A B) (there₁ i) p = (liftD A i p) , id where
-  id : ⟦ proj₂ (update A i) (liftD A i p) ⟧ → ⟦ A ⟧
-  id a = subst ⟦_⟧ (sym (lem A i p)) a
-liftD (`Π A B) (there₂ f) F = λ a → liftD (B a) (f a) (F a)
+Update A here = Type
+Update (`Π A B) (there₁ i) = Σ (Update A i) λ X → ⟦ update A i X ⟧ → ⟦ A ⟧
+Update (`Π A B) (there₂ f) = (a : ⟦ A ⟧) → Update (B a) (f a)
+
+update A here X = X
+update (`Π A B) (there₁ i) (X , f) = `Π (update A i X) (λ a → B (f a))
+update (`Π A B) (there₂ f) F = `Π A λ a → update (B a) (f a) (F a)
+
+----------------------------------------------------------------------
+
+lift : (A : Type) (i : Path A) → Lookup A i → Update A i
+lem : (A : Type) (i : Path A) (p : Lookup A i) → A ≡ update A i (lift A i p)
+
+lift A here p = A
+lift (`Π A B) (there₁ i) p =
+  lift A i p
+  , subst ⟦_⟧ (sym (lem A i p))
+lift (`Π A B) (there₂ f) F = λ a → lift (B a) (f a) (F a)
 
 ----------------------------------------------------------------------
 
@@ -85,7 +89,7 @@ lem (`Π A B) (there₁ i) p
 lem (`Π A B) (there₂ f) F
   = cong (λ X → `Π A X) (ext (λ a → lem (B a) (f a) (F a)))
 
-thm : (A : Type) (i : Path A) → A ≡ proj₂ (update A i) (liftD A i (proj₂ (drop A i)))
-thm A i = lem A i (proj₂ (drop A i))
+thm : (A : Type) (i : Path A) → A ≡ update A i (lift A i (lookup A i))
+thm A i = lem A i (lookup A i)
 
 ----------------------------------------------------------------------

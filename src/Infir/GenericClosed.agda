@@ -34,7 +34,7 @@ eqpair : {A : Set} {B : A → Set}
 eqpair refl refl = refl
 
 subst-id : {A : Set} {x y : A} (P : A → Set) (q : x ≡ y) (p : P x) → p ≅ subst P q p
-subst-id P refl p = refl -- ≡-subst-removable
+subst-id P refl p = refl
 
 ----------------------------------------------------------------------
 

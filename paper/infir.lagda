@@ -209,7 +209,7 @@ module Tree where
 Our \AgdaDatatype{Tree} stores no additional data in nodes, can have
 binary \AgdaInductiveConstructor{branch}es, and ends with a
 \AgdaInductiveConstructor{leaf}. It is easy to work with because it is
-first-order, has no dependencies between arguments, and not mutually
+first-order, has no dependencies between arguments, and has no mutually
 defined functions.
 
 If we want to \AgdaFunction{lookup}
