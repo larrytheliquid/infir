@@ -72,24 +72,35 @@ update (`Π A B) (there₂ f) F = `Π A λ a → update (B a) (f a) (F a)
 
 ----------------------------------------------------------------------
 
-lift : (A : Type) (i : Path A) → Lookup A i → Update A i
-lem : (A : Type) (i : Path A) (p : Lookup A i) → A ≡ update A i (lift A i p)
+lift : (A : Type) (i : Path A) → Update A i
+lem : (A : Type) (i : Path A) → A ≡ update A i (lift A i)
 
-lift A here p = A
-lift (`Π A B) (there₁ i) p =
-  lift A i p
-  , subst ⟦_⟧ (sym (lem A i p))
-lift (`Π A B) (there₂ f) F = λ a → lift (B a) (f a) (F a)
+lift A here = A
+lift (`Π A B) (there₁ i) =
+  lift A i
+  , subst ⟦_⟧ (sym (lem A i))
+lift (`Π A B) (there₂ f) = λ a → lift (B a) (f a)
 
 ----------------------------------------------------------------------
 
-lem A here p = refl
-lem (`Π A B) (there₁ i) p
-  rewrite sym (lem A i p) = refl
-lem (`Π A B) (there₂ f) F
-  = cong (λ X → `Π A X) (ext (λ a → lem (B a) (f a) (F a)))
+lem A here = refl
+lem (`Π A B) (there₁ i)
+  rewrite sym (lem A i) = refl
+lem (`Π A B) (there₂ f)
+  = cong (λ X → `Π A X) (ext (λ a → lem (B a) (f a)))
 
-thm : (A : Type) (i : Path A) → A ≡ update A i (lift A i (lookup A i))
-thm A i = lem A i (lookup A i)
+----------------------------------------------------------------------
+
+forget : (A : Type) (i : Path A) → Update A i → Lookup A i
+forget A here X = X
+forget (`Π A B) (there₁ i) (X , f) = forget A i X
+forget (`Π A B) (there₂ f) h = λ a → forget (B a) (f a) (h a)
+
+----------------------------------------------------------------------
+
+thm : (A : Type) (i : Path A) → lookup A i ≡ forget A i (lift A i)
+thm A here = refl
+thm (`Π A B) (there₁ i) = thm A i
+thm (`Π A B) (there₂ f) = ext (λ a → thm (B a) (f a))
 
 ----------------------------------------------------------------------

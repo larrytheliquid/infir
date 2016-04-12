@@ -227,61 +227,70 @@ updateα' R (`Rec A D) (f , xs) (thereRec₂ i) =
 
 ----------------------------------------------------------------------
 
-lift : (A : `Set) (a : ⟦ A ⟧) (i : Path A a) → Lookup A a i → Update A a i
-lem : (A : `Set) (a : ⟦ A ⟧) (i : Path A a) (p : Lookup A a i)
-  → a ≡ update A a i (lift A a i p)
+lift : (A : `Set) (a : ⟦ A ⟧) (i : Path A a) → Update A a i
+lem : (A : `Set) (a : ⟦ A ⟧) (i : Path A a)
+  → a ≡ update A a i (lift A a i)
 liftα : {O : `Set} (R D : `Desc O) (xs : Func ⟪ D ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫))
-  (i : Pathα R D xs) → Lookupα R D xs i → Updateα R D xs i
+  (i : Pathα R D xs) → Updateα R D xs i
 lemα : {O : `Set} (R D : `Desc O) (xs : Func ⟪ D ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫))
-  (i : Pathα R D xs) (p : Lookupα R D xs i)
-  → xs ≡ updateα R D xs i (liftα R D xs i p)
+  (i : Pathα R D xs)
+  → xs ≡ updateα R D xs i (liftα R D xs i)
 
-lift A a here a' = nothing
-lift (`Σ A B) (a , b) (thereΣ₁ i) p =
-  lift A a i p
-  , subst (λ X → ⟦ B X ⟧) (lem A a i p)
-lift (`Σ A B) (a , b) (thereΣ₂ i) p = lift (B a) b i p
-lift (`Π A B) f (thereΠ g) F = λ a → lift (B a) (f a) (g a) (F a)
-lift (`μ D) (init xs) (thereμ i) p = liftα D D xs i p
+lift A a here = nothing
+lift (`Σ A B) (a , b) (thereΣ₁ i) =
+  lift A a i
+  , subst (λ X → ⟦ B X ⟧) (lem A a i)
+lift (`Σ A B) (a , b) (thereΣ₂ i) = lift (B a) b i
+lift (`Π A B) f (thereΠ g) = λ a → lift (B a) (f a) (g a)
+lift (`μ D) (init xs) (thereμ i) = liftα D D xs i
 
-lem A a here a' = refl
-lem (`Σ A B) (a , b) (thereΣ₁ i) p
-  with lem A a i p
+lem A a here = refl
+lem (`Σ A B) (a , b) (thereΣ₁ i)
+  with lem A a i
 ... | q = eqpair {B = λ X → ⟦ B X ⟧} q (subst-id (λ X → ⟦ B X ⟧) q b)
-lem (`Σ A B) (a , b) (thereΣ₂ i) p = cong (λ X → a , X) (lem (B a) b i p)
-lem (`Π A B) f (thereΠ g) F = ext (λ a → lem (B a) (f a) (g a) (F a))
-lem (`μ D) (init xs) (thereμ i) p = cong init (lemα D D xs i p)
+lem (`Σ A B) (a , b) (thereΣ₂ i) = cong (λ X → a , X) (lem (B a) b i)
+lem (`Π A B) f (thereΠ g) = ext (λ a → lem (B a) (f a) (g a))
+lem (`μ D) (init xs) (thereμ i) = cong init (lemα D D xs i)
 
-liftα R (`Arg A D) (a , xs) (thereArg₁ i) p =
-  lift A a i p
-  , subst (λ X → Func ⟪ D X ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫)) (lem A a i p)
-liftα R (`Arg A D) (a , xs) (thereArg₂ i) p = liftα R (D a) xs i p
-liftα R (`Rec A D) (f , xs) (thereRec₁ g) h =
-  (λ a → lift (`μ R) (f a) (g a) (h a))
+liftα R (`Arg A D) (a , xs) (thereArg₁ i) =
+  lift A a i
+  , subst (λ X → Func ⟪ D X ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫)) (lem A a i)
+liftα R (`Arg A D) (a , xs) (thereArg₂ i) = liftα R (D a) xs i
+liftα R (`Rec A D) (f , xs) (thereRec₁ g) =
+  (λ a → lift (`μ R) (f a) (g a))
   , subst (λ X → Func ⟪ D X ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫))
-    (ext (λ a → cong (rec ⟪ R ⟫) (lem (`μ R) (f a) (g a) (h a))))
-liftα R (`Rec A D) (f , xs) (thereRec₂ i) p = liftα R (D (rec ⟪ R ⟫ ∘ f)) xs i p
+    (ext (λ a → cong (rec ⟪ R ⟫) (lem (`μ R) (f a) (g a))))
+liftα R (`Rec A D) (f , xs) (thereRec₂ i) = liftα R (D (rec ⟪ R ⟫ ∘ f)) xs i
 
-lemα R (`Arg A D) (a , xs) (thereArg₁ i) p
-  with lem A a i p
+lemα R (`Arg A D) (a , xs) (thereArg₁ i)
+  with lem A a i
 ... | q =
   eqpair {B = λ a → Func ⟪ D a ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫)} q
     (subst-id (λ X → Func ⟪ D X ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫)) q xs)
-lemα R (`Arg A D) (a , xs) (thereArg₂ i) p =
-  cong (λ X → a , X) (lemα R (D a) xs i p)
-lemα R (`Rec A D) (f , xs) (thereRec₁ g) h
-  with ext (λ a → lem (`μ R) (f a) (g a) (h a))
-  | ext (λ a → cong (rec ⟪ R ⟫) (lem (`μ R) (f a) (g a) (h a)))
+lemα R (`Arg A D) (a , xs) (thereArg₂ i) =
+  cong (λ X → a , X) (lemα R (D a) xs i)
+lemα R (`Rec A D) (f , xs) (thereRec₁ g)
+  with ext (λ a → lem (`μ R) (f a) (g a))
+  | ext (λ a → cong (rec ⟪ R ⟫) (lem (`μ R) (f a) (g a)))
 ... | q₁ | q₂ =
-  eqpair {B = λ F → Func ⟪ D (λ a → rec ⟪ R ⟫ (F a)) ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫)} q₁
+  eqpair {B = λ h → Func ⟪ D (λ a → rec ⟪ R ⟫ (h a)) ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫)} q₁
     (subst-id (λ X → Func ⟪ D X ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫)) q₂ xs)
-lemα R (`Rec A D) (f , xs) (thereRec₂ i) p =
-  cong (λ X → f , X) (lemα R (D (rec ⟪ R ⟫ ∘ f)) xs i p)
+lemα R (`Rec A D) (f , xs) (thereRec₂ i) =
+  cong (λ X → f , X) (lemα R (D (rec ⟪ R ⟫ ∘ f)) xs i)
 
 ----------------------------------------------------------------------
 
-thm : (A : `Set) (a : ⟦ A ⟧) (i : Path A a)
- → a ≡ update A a i (lift A a i (lookup A a i))
-thm A a i = lem A a i (lookup A a i)
+forget : (A : `Set) (a : ⟦ A ⟧) (i : Path A a) → Update A a i → Lookup A a i
+forgetα : {O : `Set} (R D : `Desc O) (xs : Func ⟪ D ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫))
+  (i : Pathα R D xs) → Updateα R D xs i → Lookupα R D xs i
+
+forget A a here nothing = a
+forget A a here (just a') = a'
+forget (`Σ A B) (a , b) (thereΣ₁ i) X = {!!}
+forget (`Σ A B) (a , b) (thereΣ₂ i) X = {!!}
+forget (`Π A B) f (thereΠ g) h = λ a → {!!}
+forget (`μ D) (init xs) (thereμ i) X = {!!}
+
+forgetα = {!!}
 
 ----------------------------------------------------------------------

@@ -162,44 +162,65 @@ updateα' R (Rec A D) (f , xs) (thereRec₂ i) =
 
 ----------------------------------------------------------------------
 
-lift : {O : Set} (D : Desc O) (x : μ D) (i : Path D x) → Lookup D x i → Update D x i
+lift : {O : Set} (D : Desc O) (x : μ D) (i : Path D x) → Update D x i
 liftα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R)) (i : Pathα R D xs)
-  → Lookupα R D xs i → Updateα R D xs i
-lem : {O : Set} (D : Desc O) (x : μ D) (i : Path D x) (p : Lookup D x i)
-  → x ≡ update D x i (lift D x i p)
+  → Updateα R D xs i
+lem : {O : Set} (D : Desc O) (x : μ D) (i : Path D x)
+  → x ≡ update D x i (lift D x i)
 lemα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R))
-  (i : Pathα R D xs) (p : Lookupα R D xs i)
-  → xs ≡ updateα R D xs i (liftα R D xs i p)
+  (i : Pathα R D xs)
+  → xs ≡ updateα R D xs i (liftα R D xs i)
 
 ----------------------------------------------------------------------
 
-lift D x here p = x
-lift D (init xs) (there i) p = liftα D D xs i p
+lift D x here = x
+lift D (init xs) (there i) = liftα D D xs i
 
-liftα R (End o) tt () p
-liftα R (Arg A D) (a , xs) (thereArg i) p = liftα R (D a) xs i p
-liftα R (Rec A D) (f , xs) (thereRec₁ g) h =
-  (λ a → lift R (f a) (g a) (h a))
+liftα R (End o) tt ()
+liftα R (Arg A D) (a , xs) (thereArg i) = liftα R (D a) xs i
+liftα R (Rec A D) (f , xs) (thereRec₁ g) =
+  (λ a → lift R (f a) (g a))
   , subst (λ X → Func (D X) (μ R) (rec R))
-      (ext (λ a → cong (λ X → rec R X) (lem R (f a) (g a) (h a))))
-liftα R (Rec A D) (f , xs) (thereRec₂ i) p = liftα R (D (rec R ∘ f)) xs i p
+      (ext (λ a → cong (λ X → rec R X) (lem R (f a) (g a))))
+liftα R (Rec A D) (f , xs) (thereRec₂ i) = liftα R (D (rec R ∘ f)) xs i
 
-lem D x here p = refl
-lem D (init xs) (there i) p = cong init (lemα D D xs i p)
+lem D x here = refl
+lem D (init xs) (there i) = cong init (lemα D D xs i)
 
-lemα R (End o) tt () p
-lemα R (Arg A D) (a , xs) (thereArg i) p = cong (λ X → a , X) (lemα R (D a) xs i p)
-lemα R (Rec A D) (f , xs) (thereRec₁ g) h
-  with ext (λ a → lem R (f a) (g a) (h a)) | ext (λ a → cong (rec R) (lem R (f a) (g a) (h a)))
+lemα R (End o) tt ()
+lemα R (Arg A D) (a , xs) (thereArg i) = cong (λ X → a , X) (lemα R (D a) xs i)
+lemα R (Rec A D) (f , xs) (thereRec₁ g)
+  with ext (λ a → lem R (f a) (g a)) | ext (λ a → cong (rec R) (lem R (f a) (g a)))
 ... | q₁ | q₂ = eqpair q₁ (subst-id (λ X → Func (D X) (μ R) (rec R)) q₂ xs)
-lemα R (Rec A D) (f , xs) (thereRec₂ i) p =
-  cong (λ X → f , X) (lemα R (D (rec R ∘ f)) xs i p)
+lemα R (Rec A D) (f , xs) (thereRec₂ i) =
+  cong (λ X → f , X) (lemα R (D (rec R ∘ f)) xs i)
+
+----------------------------------------------------------------------
+
+forget : {O : Set} (D : Desc O) (x : μ D) (i : Path D x) → Update D x i → Lookup D x i
+forgetα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R))
+  (i : Pathα R D xs) → Updateα R D xs i → Lookupα R D xs i
+
+forget D x here X = X
+forget D (init xs) (there i) X = forgetα D D xs i X
+
+forgetα R (Arg A D) (a , xs) (thereArg i) X = forgetα R (D a) xs i X
+forgetα R (Rec A D) (f , xs) (thereRec₁ g) (h , _) = λ a → forget R (f a) (g a) (h a)
+forgetα R (Rec A D) (f , xs) (thereRec₂ i) X = forgetα R (D (rec R ∘ f)) xs i X
 
 ----------------------------------------------------------------------
 
 thm : {O : Set} (D : Desc O) (x : μ D) (i : Path D x)
-  → x ≡ update D x i (lift D x i (lookup D x i))
-thm D x i = lem D x i (lookup D x i)
+  → lookup D x i ≡ forget D x i (lift D x i) 
+thmα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R)) (i : Pathα R D xs)
+  → lookupα R D xs i ≡ forgetα R D xs i (liftα R D xs i) 
+
+thm D x here = refl
+thm D (init xs) (there i) = thmα D D xs i
+
+thmα R (Arg A D) (a , xs) (thereArg i) = thmα R (D a) xs i
+thmα R (Rec A D) (f , xs) (thereRec₁ g) = ext (λ a → thm R (f a) (g a))
+thmα R (Rec A D) (f , xs) (thereRec₂ i) = thmα R (D (rec R ∘ f)) xs i
 
 ----------------------------------------------------------------------
 
