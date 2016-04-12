@@ -44,11 +44,11 @@ prod (suc n) f = f zero * prod n (λ x → f (suc x))
 
 mutual
   data Arith : Set where
-    `[_] : ℕ → Arith
+    `Num : ℕ → Arith
     `Π : (A : Arith) (f : Fin (eval A) → Arith) → Arith
 
   eval : Arith → ℕ
-  eval `[ n ] = n
+  eval (`Num n) = n
   eval (`Π A f) = prod (eval A) λ a → prod (toℕ a) λ b → eval (f (inject b))
 
 ⟦_⟧ : Arith → Set
@@ -58,11 +58,11 @@ mutual
 
 data Path : Arith → Set where
   here : {A : Arith} → Path A
-  -- there₀ : {n : ℕ} → Pathℕ n → Path `[ n ]
-  there₁ : {A : Arith} {B : ⟦ A ⟧ → Arith}
+  -- thereNum : {n : ℕ} → Fin n → Path `[ n ]
+  thereΠ₁ : {A : Arith} {B : ⟦ A ⟧ → Arith}
     (i : Path A)
     → Path (`Π A B)
-  there₂ : {A : Arith} {B : ⟦ A ⟧ → Arith}
+  thereΠ₂ : {A : Arith} {B : ⟦ A ⟧ → Arith}
     (f : (a : ⟦ A ⟧) → Path (B a))
     → Path (`Π A B)
 
@@ -79,8 +79,8 @@ lookup A i = proj₂ (lookup' A i)
 ----------------------------------------------------------------------
 
 lookup' A here = Arith , A
-lookup' (`Π A B) (there₁ i) = lookup' A i
-lookup' (`Π A B) (there₂ f) =
+lookup' (`Π A B) (thereΠ₁ i) = lookup' A i
+lookup' (`Π A B) (thereΠ₂ f) =
   Π ⟦ A ⟧ (λ a → Lookup (B a) (f a))
   , (λ a → lookup (B a) (f a))
 
@@ -96,11 +96,11 @@ update A i X = proj₂ (update' A i) X
 
 ----------------------------------------------------------------------
 
-update' A here = Arith , id
-update' (`Π A B) (there₁ i) =
+update' A here = Maybe Arith , maybe id A
+update' (`Π A B) (thereΠ₁ i) =
   Σ (Update A i) (λ X → ⟦ update A i X ⟧ → ⟦ A ⟧)
   , λ { (X , f) → `Π (update A i X) (λ a → B (f a)) }
-update' (`Π A B) (there₂ f) =
+update' (`Π A B) (thereΠ₂ f) =
   Π ⟦ A ⟧ (λ a → Update (B a) (f a))
   , (λ F → `Π A λ a → update (B a) (f a) (F a))
 
@@ -109,32 +109,32 @@ update' (`Π A B) (there₂ f) =
 lift : (A : Arith) (i : Path A) → Update A i
 lem : (A : Arith) (i : Path A) → A ≡ update A i (lift A i)
 
-lift A here = A
-lift (`Π A B) (there₁ i) =
+lift A here = nothing
+lift (`Π A B) (thereΠ₁ i) =
   lift A i
   , subst ⟦_⟧ (sym (lem A i))
-lift (`Π A B) (there₂ f) = λ a → lift (B a) (f a)
+lift (`Π A B) (thereΠ₂ f) = λ a → lift (B a) (f a)
 
 ----------------------------------------------------------------------
 
 lem A here = refl
-lem (`Π A B) (there₁ i)
+lem (`Π A B) (thereΠ₁ i)
   rewrite sym (lem A i) = refl
-lem (`Π A B) (there₂ f)
+lem (`Π A B) (thereΠ₂ f)
   = cong (λ X → `Π A X) (ext (λ a → lem (B a) (f a)))
 
 ----------------------------------------------------------------------
 
 forget : (A : Arith) (i : Path A) → Update A i → Lookup A i
-forget A here X = X
-forget (`Π A B) (there₁ i) (X , f) = forget A i X
-forget (`Π A B) (there₂ f) h = λ a → forget (B a) (f a) (h a)
+forget A here X = maybe id A X
+forget (`Π A B) (thereΠ₁ i) (X , f) = forget A i X
+forget (`Π A B) (thereΠ₂ f) h = λ a → forget (B a) (f a) (h a)
 
 ----------------------------------------------------------------------
 
 thm : (A : Arith) (i : Path A) → lookup A i ≡ forget A i (lift A i)
 thm A here = refl
-thm (`Π A B) (there₁ i) = thm A i
-thm (`Π A B) (there₂ f) = ext (λ a → thm (B a) (f a))
+thm (`Π A B) (thereΠ₁ i) = thm A i
+thm (`Π A B) (thereΠ₂ f) = ext (λ a → thm (B a) (f a))
 
 ----------------------------------------------------------------------
