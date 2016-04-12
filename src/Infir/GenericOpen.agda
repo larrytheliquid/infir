@@ -160,52 +160,52 @@ updateα' R (Rec A D) (f , xs) (thereRec₂ i) =
 
 ----------------------------------------------------------------------
 
--- lift : {O : Set} (D : Desc O) (x : μ D) (i : Path D x) → Lookup D x i → Update D x i
--- liftα : {O : Set} (D E : Desc O) (xs : Func D (μ E) (rec E)) (i : Pathα D E xs)
---   → Lookupα D E xs i → Updateα D E xs i
--- lem : {O : Set} (D : Desc O) (x : μ D) (i : Path D x) (p : Lookup D x i)
---   → x ≡ update D x i (lift D x i p)
--- lemα : {O : Set} (D E : Desc O) (xs : Func D (μ E) (rec E))
---   (i : Pathα D E xs) (p : Lookupα D E xs i)
---   → xs ≡ updateα D E xs i (liftα D E xs i p)  
+lift : {O : Set} (D : Desc O) (x : μ D) (i : Path D x) → Lookup D x i → Update D x i
+liftα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R)) (i : Pathα R D xs)
+  → Lookupα R D xs i → Updateα R D xs i
+lem : {O : Set} (D : Desc O) (x : μ D) (i : Path D x) (p : Lookup D x i)
+  → x ≡ update D x i (lift D x i p)
+lemα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R))
+  (i : Pathα R D xs) (p : Lookupα R D xs i)
+  → xs ≡ updateα R D xs i (liftα R D xs i p)  
 
--- lift D (init xs) (inj₁ tt) p = init xs
--- lift D (init xs) (inj₂ i) p = liftα D D xs i p
+lift D x here p = x
+lift D (init xs) (there i) p = liftα D D xs i p
 
--- liftα (End o) E tt () p
--- liftα (Arg A D) E (a , xs) i p = liftα (D a) E xs i p
--- liftα (Rec A D) E (f , xs) (inj₁ g) h =
---   (λ a → lift E (f a) (g a) (h a))
---   , subst (λ X → Func (D X) (μ E) (rec E))
---       (ext (λ a → cong (λ X → rec E X) (lem E (f a) (g a) (h a))))
--- liftα (Rec A D) E (f , xs) (inj₂ i) p = liftα (D (rec E ∘ f)) E xs i p
+liftα R (End o) tt () p
+liftα R (Arg A D) (a , xs) (thereArg i) p = liftα R (D a) xs i p
+liftα R (Rec A D) (f , xs) (thereRec₁ g) h =
+  (λ a → lift R (f a) (g a) (h a))
+  , subst (λ X → Func (D X) (μ R) (rec R))
+      (ext (λ a → cong (λ X → rec R X) (lem R (f a) (g a) (h a))))
+liftα R (Rec A D) (f , xs) (thereRec₂ i) p = liftα R (D (rec R ∘ f)) xs i p
 
--- lem D (init xs) (inj₁ tt) p = refl
--- lem D (init xs) (inj₂ i) p = cong init (lemα D D xs i p)
+lem D x here p = refl
+lem D (init xs) (there i) p = cong init (lemα D D xs i p)
 
--- lemα (End o) E tt () p
--- lemα (Arg A D) E (a , xs) i p = cong (λ X → a , X) (lemα (D a) E xs i p)
--- lemα (Rec A D) E (f , xs) (inj₁ g) h
---   with ext (λ a → lem E (f a) (g a) (h a)) | ext (λ a → cong (rec E) (lem E (f a) (g a) (h a)))
--- ... | q₁ | q₂ = eqpair q₁ (subst-id (λ X → Func (D X) (μ E) (rec E)) q₂ xs)
--- lemα (Rec A D) E (f , xs) (inj₂ i) p =
---   cong (λ X → f , X) (lemα (D (rec E ∘ f)) E xs i p)
+lemα R (End o) tt () p
+lemα R (Arg A D) (a , xs) (thereArg i) p = cong (λ X → a , X) (lemα R (D a) xs i p)
+lemα R (Rec A D) (f , xs) (thereRec₁ g) h
+  with ext (λ a → lem R (f a) (g a) (h a)) | ext (λ a → cong (rec R) (lem R (f a) (g a) (h a)))
+... | q₁ | q₂ = eqpair q₁ (subst-id (λ X → Func (D X) (μ R) (rec R)) q₂ xs)
+lemα R (Rec A D) (f , xs) (thereRec₂ i) p =
+  cong (λ X → f , X) (lemα R (D (rec R ∘ f)) xs i p)
 
--- ----------------------------------------------------------------------
+----------------------------------------------------------------------
 
--- thm : {O : Set} (D : Desc O) (x : μ D) (i : Path D x)
---   → x ≡ update D x i (lift D x i (lookup D x i))
--- thm D x i = lem D x i (lookup D x i)
+thm : {O : Set} (D : Desc O) (x : μ D) (i : Path D x)
+  → x ≡ update D x i (lift D x i (lookup D x i))
+thm D x i = lem D x i (lookup D x i)
 
--- ----------------------------------------------------------------------
+----------------------------------------------------------------------
 
--- data ArithT {ℓ} : Set ℓ where
---   NumT ProdT : ArithT
+data ArithT {ℓ} : Set ℓ where
+  NumT ProdT : ArithT
 
--- ArithD : Desc ℕ
--- ArithD = Arg ArithT λ
---   { NumT → Arg ℕ λ n → End n
---   ; ProdT → Rec ⊤ λ a → Rec (Fin (a tt)) λ f → End (prod (a tt) f)
---   }
+ArithD : Desc ℕ
+ArithD = Arg ArithT λ
+  { NumT → Arg ℕ λ n → End n
+  ; ProdT → Rec ⊤ λ a → Rec (Fin (a tt)) λ f → End (prod (a tt) f)
+  }
 
--- ----------------------------------------------------------------------
+----------------------------------------------------------------------
