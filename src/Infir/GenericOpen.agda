@@ -140,6 +140,8 @@ updateα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R)) (i : Pathα R D
   → Updateα R D xs i → Func D (μ R) (rec R)
 updateα R D xs i X = proj₂ (updateα' R D xs i) X
 
+----------------------------------------------------------------------
+
 update' D x here = μ D , id
 update' D (init xs) (there i) =
   Updateα D D xs i
@@ -167,7 +169,9 @@ lem : {O : Set} (D : Desc O) (x : μ D) (i : Path D x) (p : Lookup D x i)
   → x ≡ update D x i (lift D x i p)
 lemα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R))
   (i : Pathα R D xs) (p : Lookupα R D xs i)
-  → xs ≡ updateα R D xs i (liftα R D xs i p)  
+  → xs ≡ updateα R D xs i (liftα R D xs i p)
+
+----------------------------------------------------------------------
 
 lift D x here p = x
 lift D (init xs) (there i) p = liftα D D xs i p
