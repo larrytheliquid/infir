@@ -194,7 +194,7 @@ updateα R D xs i = proj₂ (updateα' R D xs i)
 ----------------------------------------------------------------------
 
 update' A a here =
-  Maybe ⟦ A ⟧ , λ { nothing → a ; (just a') → a' }
+  Maybe ⟦ A ⟧ , maybe id a
 update' (`Σ A B) (a , b) (thereΣ₁ i) =
   Σ (Update A a i) (λ a' → ⟦ B a ⟧ → ⟦ B (update A a i a') ⟧)
   , λ { (a' , f) → update A a i a' , f b }
@@ -284,13 +284,33 @@ forget : (A : `Set) (a : ⟦ A ⟧) (i : Path A a) → Update A a i → Lookup A
 forgetα : {O : `Set} (R D : `Desc O) (xs : Func ⟪ D ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫))
   (i : Pathα R D xs) → Updateα R D xs i → Lookupα R D xs i
 
-forget A a here nothing = a
-forget A a here (just a') = a'
-forget (`Σ A B) (a , b) (thereΣ₁ i) X = {!!}
-forget (`Σ A B) (a , b) (thereΣ₂ i) X = {!!}
-forget (`Π A B) f (thereΠ g) h = λ a → {!!}
-forget (`μ D) (init xs) (thereμ i) X = {!!}
+forget A a here X = maybe id a X
+forget (`Σ A B) (a , b) (thereΣ₁ i) (X , f) = forget A a i X
+forget (`Σ A B) (a , b) (thereΣ₂ i) X = forget (B a) b i X
+forget (`Π A B) f (thereΠ g) h = λ a → forget (B a) (f a) (g a) (h a)
+forget (`μ D) (init xs) (thereμ i) X = forgetα D D xs i X
 
-forgetα = {!!}
+forgetα R (`Arg A D) (a , xs) (thereArg₁ i) (X , f) = forget A a i X
+forgetα R (`Arg A D) (a , xs) (thereArg₂ i) X = forgetα R (D a) xs i X
+forgetα R (`Rec A D) (f , xs) (thereRec₁ g) (h , F) = λ a → forget (`μ R) (f a) (g a) (h a)
+forgetα R (`Rec A D) (f , xs) (thereRec₂ i) X = forgetα R (D (λ z → rec ⟪ R ⟫ (f z))) xs i X
+
+----------------------------------------------------------------------
+
+thm : (A : `Set) (a : ⟦ A ⟧) (i : Path A a)
+  → lookup A a i ≡ forget A a i (lift A a i) 
+thmα : {O : `Set} (R D : `Desc O) (xs : Func ⟪ D ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫)) (i : Pathα R D xs)
+  → lookupα R D xs i ≡ forgetα R D xs i (liftα R D xs i) 
+
+thm A a here = refl
+thm (`Σ A B) (a , b) (thereΣ₁ i) = thm A a i
+thm (`Σ A B) (a , b) (thereΣ₂ i) = thm (B a) b i
+thm (`Π A B) f (thereΠ g) = ext (λ a → thm (B a) (f a) (g a))
+thm (`μ D) (init xs) (thereμ i) = thmα D D xs i
+
+thmα R (`Arg A D) (a , xs) (thereArg₁ i) = thm A a i
+thmα R (`Arg A D) (a , xs) (thereArg₂ i) = thmα R (D a) xs i
+thmα R (`Rec A D) (f , xs) (thereRec₁ g) = ext (λ a → thm (`μ R) (f a) (g a))
+thmα R (`Rec A D) (f , xs) (thereRec₂ i) = thmα R (D (rec ⟪ R ⟫ ∘ f)) xs i
 
 ----------------------------------------------------------------------

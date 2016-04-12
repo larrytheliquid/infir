@@ -142,7 +142,7 @@ updateα R D xs i X = proj₂ (updateα' R D xs i) X
 
 ----------------------------------------------------------------------
 
-update' D x here = μ D , id
+update' D x here = Maybe (μ D) , maybe id x
 update' D (init xs) (there i) =
   Updateα D D xs i
   , init ∘ updateα D D xs i
@@ -173,7 +173,7 @@ lemα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R))
 
 ----------------------------------------------------------------------
 
-lift D x here = x
+lift D x here = nothing
 lift D (init xs) (there i) = liftα D D xs i
 
 liftα R (End o) tt ()
@@ -201,7 +201,8 @@ forget : {O : Set} (D : Desc O) (x : μ D) (i : Path D x) → Update D x i → L
 forgetα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R))
   (i : Pathα R D xs) → Updateα R D xs i → Lookupα R D xs i
 
-forget D x here X = X
+forget D x here nothing = x
+forget D x here (just x') = x'
 forget D (init xs) (there i) X = forgetα D D xs i X
 
 forgetα R (Arg A D) (a , xs) (thereArg i) X = forgetα R (D a) xs i X
