@@ -23,12 +23,6 @@ postulate
 Π : (A : Set) (B : A → Set) → Set
 Π A B = (a : A) → B a
 
-Dyn : Set₁
-Dyn = Σ Set id
-
-DynCon : Set → Set₁
-DynCon B = Σ Set (λ A → A → B)
-
 eqpair : {A : Set} {B : A → Set}
   {a₁ a₂ : A} {b₁ : B a₁} {b₂ : B a₂} (q : a₁ ≡ a₂) → b₁ ≅ b₂ → (a₁ , b₁) ≡ (a₂ , b₂)
 eqpair refl refl = refl
@@ -90,45 +84,38 @@ data Path : Arith → Set where
 
 ----------------------------------------------------------------------
 
-lookup' : (A : Arith) → Path A → Dyn
-
 Lookup : (A : Arith) → Path A → Set
-Lookup A i = proj₁ (lookup' A i)
+Lookup A here = Arith
+Lookup (`Num n) (thereNum i) = ℕ 
+Lookup (`Π A B) (thereΠ₁ i) = Lookup A i
+Lookup (`Π A B) (thereΠ₂ f) = Π ⟦ A ⟧ (λ a → Lookup (B a) (f a))
+
+----------------------------------------------------------------------
 
 lookup : (A : Arith) (i : Path A) → Lookup A i
-lookup A i = proj₂ (lookup' A i)
+lookup A here = A
+lookup (`Num n) (thereNum i) = lookupℕ n i
+lookup (`Π A B) (thereΠ₁ i) = lookup A i
+lookup (`Π A B) (thereΠ₂ f) = λ a → lookup (B a) (f a)
 
 ----------------------------------------------------------------------
-
-lookup' A here = Arith , A
-lookup' (`Num n) (thereNum i) = ℕ , lookupℕ n i
-lookup' (`Π A B) (thereΠ₁ i) = lookup' A i
-lookup' (`Π A B) (thereΠ₂ f) =
-  Π ⟦ A ⟧ (λ a → Lookup (B a) (f a))
-  , (λ a → lookup (B a) (f a))
-
-----------------------------------------------------------------------
-
-update' : (A : Arith) → Path A → DynCon Arith
 
 Update : (A : Arith) → Path A → Set
-Update A i = proj₁ (update' A i)
-
 update : (A : Arith) (i : Path A) (X : Update A i) → Arith
-update A i X = proj₂ (update' A i) X
 
-----------------------------------------------------------------------
-
-update' A here =
-  Maybe Arith , maybe id A
-update' (`Num n) (thereNum i) =
-  Maybe ℕ , `Num ∘ updateℕ n i
-update' (`Π A B) (thereΠ₁ i) =
+Update A here = Maybe Arith
+Update (`Num n) (thereNum i) = Maybe ℕ
+Update (`Π A B) (thereΠ₁ i) =
   Σ (Update A i) (λ X → ⟦ update A i X ⟧ → ⟦ A ⟧)
-  , λ { (X , f) → `Π (update A i X) (λ a → B (f a)) }
-update' (`Π A B) (thereΠ₂ f) =
+Update (`Π A B) (thereΠ₂ f) =
   Π ⟦ A ⟧ (λ a → Update (B a) (f a))
-  , (λ F → `Π A λ a → update (B a) (f a) (F a))
+
+update A here X = maybe id A X
+update (`Num n) (thereNum i) X = `Num (updateℕ n i X)
+update (`Π A B) (thereΠ₁ i) (X , f) =
+  `Π (update A i X) (B ∘ f)
+update (`Π A B) (thereΠ₂ f) g =
+  `Π A (λ a → update (B a) (f a) (g a))
 
 ----------------------------------------------------------------------
 
@@ -142,8 +129,6 @@ lift (`Π A B) (thereΠ₁ i) =
   lift A i
   , subst ⟦_⟧ (sym (lem A i))
 lift (`Π A B) (thereΠ₂ f) = λ a → lift (B a) (f a)
-
-----------------------------------------------------------------------
 
 lem A here = refl
 lem (`Num n) (thereNum i) =

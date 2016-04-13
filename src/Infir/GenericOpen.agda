@@ -92,73 +92,65 @@ data Pathα {O} R where
 
 ----------------------------------------------------------------------
 
-lookup' : {O : Set} (D : Desc O) (x : μ D) → Path D x → Dyn
-lookupα' : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R)) → Pathα R D xs → Dyn
-
 Lookup : {O : Set} (D : Desc O) (x : μ D) → Path D x → Set
-Lookup D x i = proj₁ (lookup' D x i)
+Lookupα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R)) → Pathα R D xs → Set
+
+Lookup D x here = μ D
+Lookup D (init xs) (there i) = Lookupα D D xs i
+
+Lookupα R (End o) tt ()
+Lookupα R (Arg A D) (a , xs) (thereArg i) = Lookupα R (D a) xs i
+Lookupα R (Rec A D) (f , xs) (thereRec₁ g) = Π A (λ a → Lookup R (f a) (g a))
+Lookupα R (Rec A D) (f , xs) (thereRec₂ i) = Lookupα R (D (rec R ∘ f)) xs i
+
+----------------------------------------------------------------------
 
 lookup : {O : Set} (D : Desc O) (x : μ D) (i : Path D x) → Lookup D x i
-lookup D x i = proj₂ (lookup' D x i)
-
-Lookupα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R)) → Pathα R D xs → Set
-Lookupα R D xs i = proj₁ (lookupα' R D xs i)
-
 lookupα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R)) (i : Pathα R D xs)
   → Lookupα R D xs i
-lookupα R D xs i = proj₂ (lookupα' R D xs i)
 
---------------------------------------------------------------------------------
+lookup D x here = x
+lookup D (init xs) (there i) = lookupα D D xs i
 
-lookup' D x here = μ D , x
-lookup' D (init xs) (there i) = lookupα' D D xs i
-
-lookupα' R (End o) tt ()
-lookupα' R (Arg A D) (a , xs) (thereArg i) = lookupα' R (D a) xs i
-lookupα' R (Rec A D) (f , xs) (thereRec₁ g) =
-  Π A (λ a → Lookup R (f a) (g a))
-  , (λ a → lookup R (f a) (g a))
-lookupα' R (Rec A D) (f , xs) (thereRec₂ i) =
-  lookupα' R (D (rec R ∘ f)) xs i
+lookupα R (End o) tt ()
+lookupα R (Arg A D) (a , xs) (thereArg i) = lookupα R (D a) xs i
+lookupα R (Rec A D) (f , xs) (thereRec₁ g) = λ a → lookup R (f a) (g a)
+lookupα R (Rec A D) (f , xs) (thereRec₂ i) = lookupα R (D (rec R ∘ f)) xs i
 
 ----------------------------------------------------------------------
-
-update' : {O : Set} (D : Desc O) (x : μ D) → Path D x → DynCon (μ D)
-updateα' : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R)) → Pathα R D xs
-  → DynCon (Func D (μ R) (rec R))
 
 Update : {O : Set} (D : Desc O) (x : μ D) → Path D x → Set
-Update D x i = proj₁ (update' D x i)
-
-update : {O : Set} (D : Desc O) (x : μ D) (i : Path D x) (X : Update D x i) → μ D
-update D x i X = proj₂ (update' D x i) X
-
 Updateα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R)) → Pathα R D xs → Set
-Updateα R D xs i = proj₁ (updateα' R D xs i)
-
+update : {O : Set} (D : Desc O) (x : μ D) (i : Path D x) (X : Update D x i) → μ D
 updateα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R)) (i : Pathα R D xs)
   → Updateα R D xs i → Func D (μ R) (rec R)
-updateα R D xs i X = proj₂ (updateα' R D xs i) X
 
 ----------------------------------------------------------------------
 
-update' D x here = Maybe (μ D) , maybe id x
-update' D (init xs) (there i) =
-  Updateα D D xs i
-  , init ∘ updateα D D xs i
+Update D x here = Maybe (μ D)
+Update D (init xs) (there i) = Updateα D D xs i
 
-updateα' R (End o) tt ()
-updateα' R (Arg A D) (a , xs) (thereArg i) =
-  Updateα R (D a) xs i
-  , (λ X → a , updateα R (D a) xs i X)
-updateα' R (Rec A D) (f , xs) (thereRec₁ g) =
+Updateα R (End o) tt ()
+Updateα R (Arg A D) (a , xs) (thereArg i) = Updateα R (D a) xs i
+Updateα R (Rec A D) (f , xs) (thereRec₁ g) =
   Σ (Π A (λ a → Update R (f a) (g a)))
-    (λ F → Func (D (rec R ∘ f)) (μ R) (rec R)
-      → Func (D (λ a → rec R (update R (f a) (g a) (F a)))) (μ R) (rec R))
-  , λ { (F , h) → (λ a → update R (f a) (g a) (F a)) , h xs }
-updateα' R (Rec A D) (f , xs) (thereRec₂ i) =
+    (λ h → Func (D (rec R ∘ f)) (μ R) (rec R)
+      → Func (D (λ a → rec R (update R (f a) (g a) (h a)))) (μ R) (rec R))
+Updateα R (Rec A D) (f , xs) (thereRec₂ i) =
   Updateα R (D (rec R ∘ f)) xs i
-  , (λ X → f , updateα R (D (rec R ∘ f)) xs i X)
+
+----------------------------------------------------------------------
+
+update D x here X = maybe id x X
+update D (init xs) (there i) X = init (updateα D D xs i X)
+
+updateα R (End o) tt () X
+updateα R (Arg A D) (a , xs) (thereArg i) X =
+  a , updateα R (D a) xs i X
+updateα R (Rec A D) (f , xs) (thereRec₁ g) (F , h) =
+  (λ a → update R (f a) (g a) (F a)) , h xs
+updateα R (Rec A D) (f , xs) (thereRec₂ i) X =
+  f , updateα R (D (rec R ∘ f)) xs i X
 
 ----------------------------------------------------------------------
 
