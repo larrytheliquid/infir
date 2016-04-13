@@ -1,3 +1,4 @@
+open import Function
 open import Data.String hiding ( show )
 open import Data.Empty
 open import Data.Unit
@@ -62,11 +63,11 @@ lookup (`Π A B) (there₂ f) = λ a → lookup (B a) (f a)
 Update : (A : Type) → Path A → Set
 update : (A : Type) (i : Path A) (X : Update A i) → Type
 
-Update A here = Type
+Update A here = Maybe Type
 Update (`Π A B) (there₁ i) = Σ (Update A i) λ X → ⟦ update A i X ⟧ → ⟦ A ⟧
 Update (`Π A B) (there₂ f) = (a : ⟦ A ⟧) → Update (B a) (f a)
 
-update A here X = X
+update A here X = maybe id A X
 update (`Π A B) (there₁ i) (X , f) = `Π (update A i X) (λ a → B (f a))
 update (`Π A B) (there₂ f) F = `Π A λ a → update (B a) (f a) (F a)
 
@@ -75,7 +76,7 @@ update (`Π A B) (there₂ f) F = `Π A λ a → update (B a) (f a) (F a)
 lift : (A : Type) (i : Path A) → Update A i
 lem : (A : Type) (i : Path A) → A ≡ update A i (lift A i)
 
-lift A here = A
+lift A here = nothing
 lift (`Π A B) (there₁ i) =
   lift A i
   , subst ⟦_⟧ (sym (lem A i))
@@ -92,7 +93,7 @@ lem (`Π A B) (there₂ f)
 ----------------------------------------------------------------------
 
 forget : (A : Type) (i : Path A) → Update A i → Lookup A i
-forget A here X = X
+forget A here X = maybe id A X
 forget (`Π A B) (there₁ i) (X , f) = forget A i X
 forget (`Π A B) (there₂ f) h = λ a → forget (B a) (f a) (h a)
 
