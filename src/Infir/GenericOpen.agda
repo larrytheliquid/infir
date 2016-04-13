@@ -77,7 +77,10 @@ data Path {O} D where
     → Path D (init xs)
 
 data Pathα {O} R where
-  thereArg : {A : Set} {D : A → Desc O}
+  thereArg₁ : {A : Set} {D : A → Desc O}
+    {a : A} {xs : Func (D a) (μ R) (rec R)}
+    → Pathα R (Arg A D) (a , xs)
+  thereArg₂ : {A : Set} {D : A → Desc O}
     {a : A} {xs : Func (D a) (μ R) (rec R)}
     → Pathα R (D a) xs
     → Pathα R (Arg A D) (a , xs)
@@ -99,7 +102,8 @@ Lookup D x here = μ D
 Lookup D (init xs) (there i) = Lookupα D D xs i
 
 Lookupα R (End o) tt ()
-Lookupα R (Arg A D) (a , xs) (thereArg i) = Lookupα R (D a) xs i
+Lookupα R (Arg A D) (a , xs) thereArg₁ = A
+Lookupα R (Arg A D) (a , xs) (thereArg₂ i) = Lookupα R (D a) xs i
 Lookupα R (Rec A D) (f , xs) (thereRec₁ g) = Π A (λ a → Lookup R (f a) (g a))
 Lookupα R (Rec A D) (f , xs) (thereRec₂ i) = Lookupα R (D (rec R ∘ f)) xs i
 
@@ -113,7 +117,8 @@ lookup D x here = x
 lookup D (init xs) (there i) = lookupα D D xs i
 
 lookupα R (End o) tt ()
-lookupα R (Arg A D) (a , xs) (thereArg i) = lookupα R (D a) xs i
+lookupα R (Arg A D) (a , xs) thereArg₁ = a
+lookupα R (Arg A D) (a , xs) (thereArg₂ i) = lookupα R (D a) xs i
 lookupα R (Rec A D) (f , xs) (thereRec₁ g) = λ a → lookup R (f a) (g a)
 lookupα R (Rec A D) (f , xs) (thereRec₂ i) = lookupα R (D (rec R ∘ f)) xs i
 
@@ -131,7 +136,10 @@ Update D x here = Maybe (μ D)
 Update D (init xs) (there i) = Updateα D D xs i
 
 Updateα R (End o) tt ()
-Updateα R (Arg A D) (a , xs) (thereArg i) = Updateα R (D a) xs i
+Updateα R (Arg A D) (a , xs) thereArg₁ =
+  Σ (Maybe A)
+    (maybe (λ a' → Func (D a) (μ R) (rec R) → Func (D a') (μ R) (rec R)) ⊤)
+Updateα R (Arg A D) (a , xs) (thereArg₂ i) = Updateα R (D a) xs i
 Updateα R (Rec A D) (f , xs) (thereRec₁ g) =
   Σ (Π A (λ a → Update R (f a) (g a)))
     (λ h → Func (D (rec R ∘ f)) (μ R) (rec R)
@@ -145,10 +153,13 @@ update D x here X = maybe id x X
 update D (init xs) (there i) X = init (updateα D D xs i X)
 
 updateα R (End o) tt () X
-updateα R (Arg A D) (a , xs) (thereArg i) X =
+updateα R (Arg A D) (a , xs) thereArg₁ (nothing , f) = a , xs
+updateα R (Arg A D) (a , xs) thereArg₁ (just X , f) =
+  X , f xs
+updateα R (Arg A D) (a , xs) (thereArg₂ i) X =
   a , updateα R (D a) xs i X
-updateα R (Rec A D) (f , xs) (thereRec₁ g) (F , h) =
-  (λ a → update R (f a) (g a) (F a)) , h xs
+updateα R (Rec A D) (f , xs) (thereRec₁ g) (h , F) =
+  (λ a → update R (f a) (g a) (h a)) , F xs
 updateα R (Rec A D) (f , xs) (thereRec₂ i) X =
   f , updateα R (D (rec R ∘ f)) xs i X
 
@@ -169,7 +180,8 @@ lift D x here = nothing
 lift D (init xs) (there i) = liftα D D xs i
 
 liftα R (End o) tt ()
-liftα R (Arg A D) (a , xs) (thereArg i) = liftα R (D a) xs i
+liftα R (Arg A D) (a , xs) thereArg₁ = nothing , tt
+liftα R (Arg A D) (a , xs) (thereArg₂ i) = liftα R (D a) xs i
 liftα R (Rec A D) (f , xs) (thereRec₁ g) =
   (λ a → lift R (f a) (g a))
   , subst (λ X → Func (D X) (μ R) (rec R))
@@ -180,7 +192,8 @@ lem D x here = refl
 lem D (init xs) (there i) = cong init (lemα D D xs i)
 
 lemα R (End o) tt ()
-lemα R (Arg A D) (a , xs) (thereArg i) = cong (λ X → a , X) (lemα R (D a) xs i)
+lemα R (Arg A D) (a , xs) thereArg₁ = refl
+lemα R (Arg A D) (a , xs) (thereArg₂ i) = cong (λ X → a , X) (lemα R (D a) xs i)
 lemα R (Rec A D) (f , xs) (thereRec₁ g)
   with ext (λ a → lem R (f a) (g a)) | ext (λ a → cong (rec R) (lem R (f a) (g a)))
 ... | q₁ | q₂ = eqpair q₁ (subst-id (λ X → Func (D X) (μ R) (rec R)) q₂ xs)
@@ -197,7 +210,9 @@ forget D x here nothing = x
 forget D x here (just x') = x'
 forget D (init xs) (there i) X = forgetα D D xs i X
 
-forgetα R (Arg A D) (a , xs) (thereArg i) X = forgetα R (D a) xs i X
+forgetα R (Arg A D) (a , xs) thereArg₁ (nothing , tt) = a
+forgetα R (Arg A D) (a , xs) thereArg₁ (just X , f) = X
+forgetα R (Arg A D) (a , xs) (thereArg₂ i) X = forgetα R (D a) xs i X
 forgetα R (Rec A D) (f , xs) (thereRec₁ g) (h , _) = λ a → forget R (f a) (g a) (h a)
 forgetα R (Rec A D) (f , xs) (thereRec₂ i) X = forgetα R (D (rec R ∘ f)) xs i X
 
@@ -211,7 +226,8 @@ thmα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R)) (i : Pathα R D xs
 thm D x here = refl
 thm D (init xs) (there i) = thmα D D xs i
 
-thmα R (Arg A D) (a , xs) (thereArg i) = thmα R (D a) xs i
+thmα R (Arg A D) (a , xs) thereArg₁ = refl
+thmα R (Arg A D) (a , xs) (thereArg₂ i) = thmα R (D a) xs i
 thmα R (Rec A D) (f , xs) (thereRec₁ g) = ext (λ a → thm R (f a) (g a))
 thmα R (Rec A D) (f , xs) (thereRec₂ i) = thmα R (D (rec R ∘ f)) xs i
 
