@@ -314,35 +314,48 @@ depending on what the input \AgdaDatatype{Path} points to.
 The \AgdaFunction{Lookup} function \textit{computes} the return type
 of \AgdaFunction{lookup}, allowing \AgdaFunction{lookup} to return
 either a \AgdaDatatype{List} or an \AgdaBound{A} (the base cases of
-\AgdaFunction{Lookup}).
+\AgdaFunction{Lookup}). I will refer to functions like
+\AgdaFunction{Lookup} as \textit{computational types}.
 
 
 \subsection{Writing total functions}
 \label{sec:problem:total}
 
-Once we move from a finitary non-dependent type like
-\AgdaDatatype{Tree} to a InfIR type like
-\AgdaDatatype{Type}, it is not obvious how to write a function like
+Once we move from finitary non-dependent types like
+\AgdaDatatype{Tree} and \AgdaDatatype{List} to an InfIR type like
+\AgdaDatatype{Type}, it is no longer obvious how to write a function like
 \AgdaFunction{lookup}. Looking up something in the
 left side (domain) of a \AgdaInductiveConstructor{`Π} is easy, but
 looking up something in the right side (codomain) requires entering a
 function space.
 
-\todo[inline]{problem with Pi return type and A return type}
-
-One solution is to disallow right-side lookups of
-\AgdaInductiveConstructor{`Π}s, but that is rather limiting. Figuring
-out how to write functions like \AgdaFunction{lookup}, and more
+Figuring out how to write functions like \AgdaFunction{lookup}, and more
 complicated functions, for InfIR types is the subject of this
-paper. Before we show the solution, let us first consider a general
+paper. The solution (given in the next section) involves a more
+complicated version of the computational type \AgdaFunction{Lookup} above. 
+But, let us first consider a general
 methodology for turning a would-be partial function into a total
 function. For example, say we wanted to write a total version of the
 typically partial \AgdaFunction{head} function.
 
+\AgdaHide{
 \begin{code}
-open import Data.List
-postulate head : {A : Set} → List A → A
+  postulate magic : {A : Set} → A
+  
+  length : {A : Set} → List A → ℕ
+  length nil = zero
+  length (cons x xs) = suc (length xs)
+\end{code}}
+
+
+\begin{code}
+  head : {A : Set} → List A → A
 \end{code}
+
+\AgdaHide{
+\begin{code}
+  head = magic
+\end{code}}
 
 We have 2 options to make this function total. We can either:
 
@@ -353,18 +366,18 @@ We have 2 options to make this function total. We can either:
 \end{enumerate}
 
 \begin{code}
-head₁ : {A : Set} → List A → A → A
-head₁ [] y = y
-head₁ (x ∷ xs) y = x
-
-head₂ : {A : Set} → List A → Maybe A
-head₂ [] = nothing
-head₂ (x ∷ xs) = just x
+  head₁ : {A : Set} → List A → A → A
+  head₁ nil y = y
+  head₁ (cons x xs) y = x
+  
+  head₂ : {A : Set} → List A → Maybe A
+  head₂ nil = nothing
+  head₂ (cons x xs) = just x
 \end{code}
 
 Both options give us something to do when we apply
-\AgdaFunction{head} to an empty list, either get an extra argument to
-return, or to bail on the computation with
+\AgdaFunction{head} to an empty list: either get an extra argument to
+return, or we simly return
 \AgdaInductiveConstructor{nothing}.
 However, these options are rather extreme as they require changing our
 intended type signature of \AgdaFunction{head} for \emph{all} possible
@@ -382,13 +395,13 @@ type of the extra argument, which is dependent on the input
 \AgdaBound{xs} of type \AgdaDatatype{List}.
 
 \begin{code}
-HeadDom : {A : Set} → List A → Set
-HeadDom {A = A} [] = A
-HeadDom (x ∷ xs) = ⊤
-
-head₃ : {A : Set} (xs : List A) → HeadDom xs → A
-head₃ [] y = y
-head₃ (x ∷ xs) tt = x
+  HeadDom : {A : Set} → List A → Set
+  HeadDom {A = A} nil = A
+  HeadDom (cons x xs) = ⊤
+  
+  head₃ : {A : Set} (xs : List A) → HeadDom xs → A
+  head₃ nil y = y
+  head₃ (cons x xs) tt = x
 \end{code}
 
 Second, let's use dependent types to conditonally change the
@@ -397,24 +410,31 @@ conditionally dependent on the input list. If the input list is empty,
 our \AgdaFunction{head₄} function returns a value of type unit (\AgdaDatatype{⊤}). If
 it is non-empty, it returns an \AgdaBound{A}. Note that returning a
 value of \AgdaDatatype{⊤} is returning nothing of computational
-significance. Hence, it is like \AgdaFunction{head₄} is not defined
+significance. Hence, it is as if \AgdaFunction{head₄} is not defined
 for empty lists.
 
 \begin{code}
-HeadCod : {A : Set} → List A → Set
-HeadCod [] = ⊤
-HeadCod {A = A} (x ∷ xs) = A
-
-head₄ : {A : Set} (xs : List A) → HeadCod xs
-head₄ [] = tt
-head₄ (x ∷ xs) = x
+  HeadCod : {A : Set} → List A → Set
+  HeadCod nil = ⊤
+  HeadCod {A = A} (cons x xs) = A
+  
+  head₄ : {A : Set} (xs : List A) → HeadCod xs
+  head₄ nil = tt
+  head₄ (cons x xs) = x
 \end{code}
 
 So far we have seen how to take a partial function and make it total,
 both with and without the extra precision afforded to us by dependent
-types.
+types. Note that \AgdaFunction{HeadCod} is a computational type like
+\AgdaFunction{Lookup}. We will refer to functions like
+\AgdaFunction{HeadDom} as \textit{computational arguments}.
+\footnote{It is
+possible to write dependently typed functions using either a
+computational argument or a computational type. Picking which
+technique to use is a matter of preference, and determines whether the
+arguments or the return type is statically known.}
 
-At this point we would like to emphasize that the extra argument
+Finally, we would like to emphasize that the extra argument
 \AgdaFunction{HeadDom} in \AgdaFunction{head₃} is not merely a
 precondition, but rather extra computational content that is required
 from the user applying the function to complete the cases that would
@@ -424,10 +444,13 @@ To see the difference, consider a total version of a function that looks up
 once given a natural number (\AgdaDatatype{ℕ}) index.
 
 \begin{code}
-postulate
-  elem : {A : Set} (xs : List A) (n : ℕ)
-    → length xs < n → A
+  elem : {A : Set} (xs : List A) (n : ℕ) → length xs < n → A
 \end{code}
+
+\AgdaHide{
+\begin{code}
+  elem = magic
+\end{code}}
 
 Because the natural number \AgdaBound{n} may index outside the bounds
 of the list \AgdaBound{xs}, we need an extra argument serving as a
