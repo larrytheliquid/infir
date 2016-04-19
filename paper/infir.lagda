@@ -475,10 +475,10 @@ module ConcreteLarge where
   open Intro
 \end{code}}
 
-\refsec{problem:background} reviewed how to
-\AgdaFunction{lookup} a sub\AgdaDatatype{Tree} pointed to by a
-particular \AgdaDatatype{Path}. In this section we define the
-corresponding datatypes and functions for InfIR
+\refsec{problem:background} reviews how to
+\AgdaFunction{lookup} sub\AgdaDatatype{Tree}s, sub\AgdaDatatype{List}s,
+and subelements pointed to by \AgdaDatatype{Path}s. In this section we
+define the corresponding datatypes and functions for InfIR
 \AgdaDatatype{Type}s.
 
 \subsection{\AgdaDatatype{Path}s}
