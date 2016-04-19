@@ -66,9 +66,6 @@ Dependent types; induction-recursion; generic programming.
 
 \section{Introduction}
 
-%% modeling univeres, modeling arithmetic summations and products,
-%% modeling file formats
-
 \AgdaHide{
 \begin{code}
 module InfIR where
@@ -76,8 +73,9 @@ open import Data.Unit
 open import Data.Nat
 open import Data.Maybe
 open import Data.Product
-open import Data.List
 open import Relation.Binary.PropositionalEquality
+
+module Intro where
 \end{code}}
 
 Infinitary inductive-recursive (InfIR) types are commonly used in dependently
@@ -86,20 +84,20 @@ consider the model below of the universe of natural numbers and
 dependent functions.
 
 \begin{code}
-mutual
-  data Type : Set where
-    `ℕ : Type
-    `Π : (A : Type) (B : ⟦ A ⟧ → Type) → Type
-  
-  ⟦_⟧ : Type → Set
-  ⟦ `ℕ ⟧ = ℕ
-  ⟦ `Π A B ⟧ = (a : ⟦ A ⟧) → ⟦ B a ⟧
+  mutual
+    data Type : Set where
+      `ℕ : Type
+      `Π : (A : Type) (B : ⟦ A ⟧ → Type) → Type
+    
+    ⟦_⟧ : Type → Set
+    ⟦ `ℕ ⟧ = ℕ
+    ⟦ `Π A B ⟧ = (a : ⟦ A ⟧) → ⟦ B a ⟧
 \end{code}
 
 \AgdaHide{
 \begin{code}
-_`→_ : (A B : Type) → Type
-A `→ B = `Π A (λ _ → B)
+  _`→_ : (A B : Type) → Type
+  A `→ B = `Π A (λ _ → B)
 \end{code}}
 
 \noindent
@@ -118,12 +116,12 @@ to construct a natural number from \AgdaBound{n} additional natural
 number arguments.
 
 \begin{code}
-NumArgs : ℕ → Type
-NumArgs zero = `ℕ
-NumArgs (suc n) = `ℕ `→ NumArgs n
-
-NumFun : Type
-NumFun = `Π `ℕ (λ n → NumArgs n)
+  NumArgs : ℕ → Type
+  NumArgs zero = `ℕ
+  NumArgs (suc n) = `ℕ `→ NumArgs n
+  
+  NumFun : Type
+  NumFun = `Π `ℕ (λ n → NumArgs n)
 \end{code}
 
 While defining models and example values using infinitary
@@ -253,6 +251,71 @@ the \AgdaDatatype{Path} until we arrive at the type appearing
   lookup (branch A B) (there₂ i) = lookup B i
 \end{code}
 
+\subsection{Writing type-changing functions}
+\label{sec:problem:typechanging}
+
+\AgdaHide{
+\begin{code}
+module List where
+\end{code}}
+
+Now let's consider writing a total \AgdaFunction{lookup} function for
+polymorphic \AgdaDatatype{List}s instead of the binary
+\AgdaDatatype{Tree}s above. Below is the \AgdaDatatype{List} and its
+\AgdaDatatype{Path}.
+
+\begin{code}
+  data List (A : Set) : Set where
+    nil : List A
+    cons : A → List A → List A
+
+  data Path {A : Set} : List A → Set where
+    here : ∀{xs} → Path xs
+    there₁ : ∀{x xs} → Path (cons x xs)
+    there₂ : ∀{x xs}
+      → Path xs
+      → Path (cons x xs)
+\end{code}
+
+The \AgdaInductiveConstructor{here} and
+\AgdaInductiveConstructor{there₂} constructors are analogous to those
+for \AgdaDatatype{Tree} \AgdaDatatype{Path}s. However,
+\AgdaInductiveConstructor{there₁} points to a non-inductive
+\AgdaBound{A} value, the first argument to
+\AgdaInductiveConstructor{cons}, whereas this pointed to an inductive
+subtree in the \AgdaDatatype{Tree} scenario.
+
+In the non-dependent Haskell~\cite{TODO} language there are two
+distinct \AgdaFunction{lookup}-like functions for lists.
+
+\begin{verbatim}
+  drop :: Int -> [a] -> [a]
+  (!!) :: [a] -> Int -> a
+\end{verbatim}
+
+The first (\texttt{drop}) looks up inductive sublists, and the second
+\texttt{(!!)} looks up non-inductive \texttt{a} values.
+A depedently typed language like Agda allows us to a write a single
+function that may return a \AgdaDatatype{List} or an \AgdaBound{A},
+depending on what the input \AgdaDatatype{Path} points to.
+
+\begin{code}
+  Lookup : {A : Set} (xs : List A) → Path xs → Set
+  Lookup {A = A} xs here = List A
+  Lookup {A = A} (cons x xs) there₁ = A
+  Lookup (cons x xs) (there₂ i) = Lookup xs i
+
+  lookup : {A : Set} (xs : List A) (i : Path xs) → Lookup xs i
+  lookup xs here = xs
+  lookup (cons x xs) there₁ = x
+  lookup (cons x xs) (there₂ i) = lookup xs i
+\end{code}
+
+The \AgdaFunction{Lookup} function \textit{computes} the return type
+of \AgdaFunction{lookup}, allowing \AgdaFunction{lookup} to return
+either a \AgdaDatatype{List} or an \AgdaBound{A} (the base cases of
+\AgdaFunction{Lookup}).
+
 
 \subsection{Writing total functions}
 \label{sec:problem:total}
@@ -265,6 +328,8 @@ left side (domain) of a \AgdaInductiveConstructor{`Π} is easy, but
 looking up something in the right side (codomain) requires entering a
 function space.
 
+\todo[inline]{problem with Pi return type and A return type}
+
 One solution is to disallow right-side lookups of
 \AgdaInductiveConstructor{`Π}s, but that is rather limiting. Figuring
 out how to write functions like \AgdaFunction{lookup}, and more
@@ -275,6 +340,7 @@ function. For example, say we wanted to write a total version of the
 typically partial \AgdaFunction{head} function.
 
 \begin{code}
+open import Data.List
 postulate head : {A : Set} → List A → A
 \end{code}
 
@@ -380,6 +446,12 @@ are the key to writing functions over InfIR datatypes.
 
 \section{InfIR \AgdaFunction{lookup} \& \AgdaFunction{update}}
 
+\AgdaHide{
+\begin{code}
+module ConcreteLarge where
+  open Intro
+\end{code}}
+
 \refsec{problem:background} reviewed how to
 \AgdaFunction{lookup} a sub\AgdaDatatype{Tree} pointed to by a
 particular \AgdaDatatype{Path}. In this section we define the
@@ -397,14 +469,14 @@ which element \AgdaBound{a} of the type family \AgdaBound{B a} to
 continue traversing under.
 
 \begin{code}
-data Path : Type → Set where
-  here : {A : Type} → Path A
-  there₁ : {A : Type} {B : ⟦ A ⟧ → Type}
-    (i : Path A)
-    → Path (`Π A B)
-  there₂ : {A : Type} {B : ⟦ A ⟧ → Type}
-    (f : (a : ⟦ A ⟧) → Path (B a))
-    → Path (`Π A B)
+  data Path : Type → Set where
+    here : {A : Type} → Path A
+    there₁ : {A : Type} {B : ⟦ A ⟧ → Type}
+      (i : Path A)
+      → Path (`Π A B)
+    there₂ : {A : Type} {B : ⟦ A ⟧ → Type}
+      (f : (a : ⟦ A ⟧) → Path (B a))
+      → Path (`Π A B)
 \end{code}
 
 Above, \AgdaInductiveConstructor{there₂} represents going right
@@ -430,10 +502,10 @@ case, or a continuation when looking to the right of a
 \AgdaInductiveConstructor{`Π}.
 
 \begin{code}
-Lookup : (A : Type) → Path A → Set
-Lookup A here = Type
-Lookup (`Π A B) (there₁ i) = Lookup A i
-Lookup (`Π A B) (there₂ f) = (a : ⟦ A ⟧) → Lookup (B a) (f a)
+  Lookup : (A : Type) → Path A → Set
+  Lookup A here = Type
+  Lookup (`Π A B) (there₁ i) = Lookup A i
+  Lookup (`Π A B) (there₂ f) = (a : ⟦ A ⟧) → Lookup (B a) (f a)
 \end{code}
 
 Finally, we can write \AgdaFunction{lookup} in terms of
@@ -445,10 +517,10 @@ extra argument \AgdaBound{a} in the
 \AgdaInductiveConstructor{there₂} case.
 
 \begin{code}
-lookup : (A : Type) (i : Path A) → Lookup A i
-lookup A here = A
-lookup (`Π A B) (there₁ i) = lookup A i
-lookup (`Π A B) (there₂ f) = λ a → lookup (B a) (f a)
+  lookup : (A : Type) (i : Path A) → Lookup A i
+  lookup A here = A
+  lookup (`Π A B) (there₁ i) = lookup A i
+  lookup (`Π A B) (there₂ f) = λ a → lookup (B a) (f a)
 \end{code}
 
 \subsection{\AgdaFunction{update}}
@@ -461,8 +533,8 @@ what the \AgdaDatatype{Path} pointed to.
 You might expect to write a function like:
 
 \begin{code}
-postulate
-  updateNaive : (A : Type) (i : Path A) (X : Type) → Type
+  postulate
+    updateNaive : (A : Type) (i : Path A) (X : Type) → Type
 \end{code}
 
 \noindent
@@ -488,20 +560,20 @@ updated \AgdaBound{a}'s to their original type.
 \todo[inline]{Give an example of the domain type changing and being translated}
 
 \begin{code}
-Sub : (A : Type) → Path A → Set
-update : (A : Type) (i : Path A) (X : Sub A i) → Type
-
-Sub A here = Type
-Sub (`Π A B) (there₁ i) =
-  Σ (Sub A i) (λ X → ⟦ update A i X ⟧ → ⟦ A ⟧)
-Sub (`Π A B) (there₂ f) =
-  (a : ⟦ A ⟧) → Sub (B a) (f a)
-
-update A here X = X
-update (`Π A B) (there₁ i) (X , f) =
-  `Π (update A i X) (λ a → B (f a))
-update (`Π A B) (there₂ f) F =
-  `Π A (λ a → update (B a) (f a) (F a))
+  Sub : (A : Type) → Path A → Set
+  update : (A : Type) (i : Path A) (X : Sub A i) → Type
+  
+  Sub A here = Type
+  Sub (`Π A B) (there₁ i) =
+    Σ (Sub A i) (λ X → ⟦ update A i X ⟧ → ⟦ A ⟧)
+  Sub (`Π A B) (there₂ f) =
+    (a : ⟦ A ⟧) → Sub (B a) (f a)
+  
+  update A here X = X
+  update (`Π A B) (there₁ i) (X , f) =
+    `Π (update A i X) (λ a → B (f a))
+  update (`Π A B) (there₂ f) F =
+    `Π A (λ a → update (B a) (f a) (F a))
 \end{code}
 
 Notice that we must define \AgdaFunction{Sub} and
@@ -512,67 +584,67 @@ rather than as a function. If we had done so,
 then it would be an InfIR type with \AgdaFunction{update} as its
 mutually defined function!
 
-\subsection{Correctness}
+%% \subsection{Correctness}
 
-In this section we prove a correctness theorem that relates
-\AgdaFunction{update} with \AgdaFunction{lookup}. Informally, we would
-like to prove the following equivalence.
+%% In this section we prove a correctness theorem that relates
+%% \AgdaFunction{update} with \AgdaFunction{lookup}. Informally, we would
+%% like to prove the following equivalence.
 
-$$
-\forall A, i.~ A \equiv \textrm{update}~A~i~(\textrm{lookup}~A~i)
-$$
+%% $$
+%% \forall A, i.~ A \equiv \textrm{update}~A~i~(\textrm{lookup}~A~i)
+%% $$
 
-However, the third parameter of \AgdaFunction{update} is a
-\AgdaFunction{Sub}, while \AgdaFunction{lookup} returns a
-\AgdaFunction{Lookup}. Thus, we need to have a function that
-\AgdaFunction{lift}s a \AgdaFunction{Lookup} to a
-\AgdaFunction{Sub} so that we may state our theorem. Additionally,
-proving this theorem requires functional extensionality.
+%% However, the third parameter of \AgdaFunction{update} is a
+%% \AgdaFunction{Sub}, while \AgdaFunction{lookup} returns a
+%% \AgdaFunction{Lookup}. Thus, we need to have a function that
+%% \AgdaFunction{lift}s a \AgdaFunction{Lookup} to a
+%% \AgdaFunction{Sub} so that we may state our theorem. Additionally,
+%% proving this theorem requires functional extensionality.
 
-\begin{code}
-postulate
-  ext : {A : Set} {B : A → Set}
-    {f g : (a : A) → B a}
-    → ((a : A) → f a ≡ g a)
-    → f ≡ g
-\end{code}
+%% \begin{code}
+%% postulate
+%%   ext : {A : Set} {B : A → Set}
+%%     {f g : (a : A) → B a}
+%%     → ((a : A) → f a ≡ g a)
+%%     → f ≡ g
+%% \end{code}
 
-Notice that the \AgdaFunction{Sub} type is just like the
-\AgdaFunction{Lookup} type, except it has an additional transformation
-function in the \AgdaInductiveConstructor{there₁} case. Therefore, we
-should be able to \AgdaFunction{lift} a \AgdaFunction{Lookup} by
-structurally copying it, and inserting identity conversion functions
-whenever we pass through a \AgdaInductiveConstructor{there₁}.
+%% Notice that the \AgdaFunction{Sub} type is just like the
+%% \AgdaFunction{Lookup} type, except it has an additional transformation
+%% function in the \AgdaInductiveConstructor{there₁} case. Therefore, we
+%% should be able to \AgdaFunction{lift} a \AgdaFunction{Lookup} by
+%% structurally copying it, and inserting identity conversion functions
+%% whenever we pass through a \AgdaInductiveConstructor{there₁}.
 
-\begin{code}
-lift : (A : Type) (i : Path A) → Lookup A i → Sub A i
-lem : (A : Type) (i : Path A) (p : Lookup A i)
-  → A ≡ update A i (lift A i p)
+%% \begin{code}
+%% lift : (A : Type) (i : Path A) → Lookup A i → Sub A i
+%% lem : (A : Type) (i : Path A) (p : Lookup A i)
+%%   → A ≡ update A i (lift A i p)
 
-lift A here p = A
-lift (`Π A B) (there₁ i) p = (lift A i p) , id where
-  id : ⟦ update A i (lift A i p) ⟧ → ⟦ A ⟧
-  id a = subst ⟦_⟧ (sym (lem A i p)) a
-lift (`Π A B) (there₂ f) F = λ a → lift (B a) (f a) (F a)
+%% lift A here p = A
+%% lift (`Π A B) (there₁ i) p = (lift A i p) , id where
+%%   id : ⟦ update A i (lift A i p) ⟧ → ⟦ A ⟧
+%%   id a = subst ⟦_⟧ (sym (lem A i p)) a
+%% lift (`Π A B) (there₂ f) F = λ a → lift (B a) (f a) (F a)
 
-lem A here p = refl
-lem (`Π A B) (there₁ i) p
-  rewrite sym (lem A i p) = refl
-lem (`Π A B) (there₂ f) F
-  = cong (λ X → `Π A X) (ext (λ a → lem (B a) (f a) (F a)))
-\end{code}
+%% lem A here p = refl
+%% lem (`Π A B) (there₁ i) p
+%%   rewrite sym (lem A i p) = refl
+%% lem (`Π A B) (there₂ f) F
+%%   = cong (λ X → `Π A X) (ext (λ a → lem (B a) (f a) (F a)))
+%% \end{code}
 
-In order to supply an identify transformation function in the
-\AgdaInductiveConstructor{there₁} case, we must mutually prove that
-updating by any lifitng of a \AgdaDatatype{Lookup} is the identity
-operation. This is a generalization of our original theorem, so we can
-specialize it to arrive at a proof of our original theorem.
+%% In order to supply an identify transformation function in the
+%% \AgdaInductiveConstructor{there₁} case, we must mutually prove that
+%% updating by any lifitng of a \AgdaDatatype{Lookup} is the identity
+%% operation. This is a generalization of our original theorem, so we can
+%% specialize it to arrive at a proof of our original theorem.
 
-\begin{code}
-thm : (A : Type) (i : Path A)
-  → A ≡ update A i (lift A i (lookup A i))
-thm A i = lem A i (lookup A i)
-\end{code}
+%% \begin{code}
+%% thm : (A : Type) (i : Path A)
+%%   → A ≡ update A i (lift A i (lookup A i))
+%% thm A i = lem A i (lookup A i)
+%% \end{code}
 
 
 \acks
