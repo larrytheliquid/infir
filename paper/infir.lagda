@@ -473,7 +473,8 @@ defining functions like \AgdaFunction{HeadDom} that non-trivially
 compute extra arguments. These dependent extra arguments
 are the key to writing functions over InfIR datatypes.
 
-\section{InfIR \AgdaFunction{lookup} \& \AgdaFunction{update}}
+\section{Large InfIR \AgdaFunction{lookup} \& \AgdaFunction{update}}
+\label{sec:concretelarge}
 
 \AgdaHide{
 \begin{code}
