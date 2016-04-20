@@ -621,7 +621,7 @@ problematic. We would like to keep the old
 still expects an \AgdaBound{a} of the original type
 \AgdaFunction{⟦} \AgdaBound{A} \AgdaFunction{⟧}. Therefore, the
 \AgdaInductiveConstructor{thereΠ₁} case must
-ask for an additional function \AgdaBound{f} that can map newly
+ask for an additional function \AgdaBound{f} that maps newly
 updated \AgdaBound{a}'s to their original type.
 
 \todo[inline]{Give an example of the domain type changing and being translated}
@@ -658,8 +658,8 @@ codomain expects an \AgdaBound{a} of type
 translation function \AgdaBound{f} to map back to \AgdaBound{a}'s
 original type.
 
-The base cases \AgdaInductiveConstructor{here} and
-\AgdaInductiveConstructor{thereBase} of \AgdaFunction{update}
+The base cases (\AgdaInductiveConstructor{here} and
+\AgdaInductiveConstructor{thereBase}) of \AgdaFunction{update}
 perform updates using the
 subsitute \AgdaBound{X} (where \AgdaInductiveConstructor{nothing}
 results in an identity update). The \AgdaInductiveConstructor{thereΠ₂}
