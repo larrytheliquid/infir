@@ -185,6 +185,7 @@ over this class of datatypes.
 %% a heterogeneous argument
 
 \section{The problem}
+\label{sec:problem}
 
 Before describing why writing functions over InfIR types is difficult,
 we first consider writing analogous functions over simpler
@@ -481,7 +482,7 @@ are the key to writing functions over InfIR datatypes.
 module ConcreteLarge where
 \end{code}}
 
-\refsec{problem:background} reviews how to
+\refsec{problem} reviews how to
 \AgdaFunction{lookup} sub\AgdaDatatype{Tree}s, sub\AgdaDatatype{List}s,
 and subelements pointed to by \AgdaDatatype{Path}s. In this section we
 define the corresponding datatypes and functions for InfIR
@@ -673,6 +674,37 @@ we could have defined \AgdaFunction{Update} as an inductive type,
 rather than a computational type. If we had done so,
 then it would be an InfIR type with \AgdaFunction{update} as its
 mutually defined function!
+
+
+\section{Small InfIR \AgdaFunction{lookup} \& \AgdaFunction{update}}
+\label{sec:concretesmall}
+
+\AgdaHide{
+\begin{code}
+module ConcreteSmall where
+\end{code}}
+
+\refsec{concretelarge} shows how to define
+\AgdaFunction{lookup} and \AgdaFunction{update} for the large InfIR
+\AgdaDatatype{Type}. \AgdaDatatype{Type} is called \textit{large}
+because the codomain of its IR function \AgdaFunction{⟦\_⟧} has type
+\AgdaDatatype{Set}. In this section we adapt our work to a
+small InfIR type called \AgdaDatatype{Arith} (it is called
+\textit{small} because the codomain of its IR function is \textit{not}
+\AgdaDatatype{Set}), which is structurally similar to
+\AgdaDatatype{Type}.
+
+
+
+
+
+
+
+
+
+
+
+
 
 %% \subsection{Correctness}
 
