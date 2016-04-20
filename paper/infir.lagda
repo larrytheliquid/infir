@@ -74,6 +74,7 @@ open import Level using ( _⊔_ )
 open import Function
 open import Data.Unit
 open import Data.Nat hiding ( _⊔_ )
+open import Data.Fin hiding ( lift ; _<_ )
 open import Data.Maybe
 open import Data.Product
 open import Relation.Binary.PropositionalEquality
@@ -474,7 +475,7 @@ defining functions like \AgdaFunction{HeadDom} that non-trivially
 compute extra arguments. These dependent extra arguments
 are the key to writing functions over InfIR datatypes.
 
-\section{Large InfIR \AgdaFunction{lookup} \& \AgdaFunction{update}}
+\section{Large InfIR \AgdaDatatype{Type}}
 \label{sec:concretelarge}
 
 \AgdaHide{
@@ -488,7 +489,7 @@ and subelements pointed to by \AgdaDatatype{Path}s. In this section we
 define the corresponding datatypes and functions for InfIR
 \AgdaDatatype{Type}s.
 
-\subsection{\AgdaDatatype{Type}s}
+\subsection{\AgdaDatatype{Type}}
 
 The InfIR \AgdaDatatype{Type} used in this section will be another
 type universe, similar to the one in \refsec{intro}. The
@@ -507,8 +508,7 @@ the base types are parameters instead of being hardcoded to
     ⟦ `Π A B ⟧ = Π ⟦ A ⟧ (λ a → ⟦ B a ⟧)
 \end{code}
 
-
-\subsection{\AgdaDatatype{Path}s}
+\subsection{\AgdaDatatype{Path}}
 
 Let's reconsider what it means to be a \AgdaDatatype{Path}.
 You can still point to a recursive \AgdaDatatype{Type} using
@@ -676,7 +676,7 @@ then it would be an InfIR type with \AgdaFunction{update} as its
 mutually defined function!
 
 
-\section{Small InfIR \AgdaFunction{lookup} \& \AgdaFunction{update}}
+\section{Small InfIR \AgdaDatatype{Arith}}
 \label{sec:concretesmall}
 
 \AgdaHide{
@@ -694,15 +694,104 @@ small InfIR type called \AgdaDatatype{Arith} (it is called
 \AgdaDatatype{Set}), which is structurally similar to
 \AgdaDatatype{Type}.
 
+\subsection{\AgdaDatatype{Arith}}
+
+\begin{code}
+  prod : (n : ℕ) (f : Fin n → ℕ) → ℕ
+  prod zero f = suc zero
+  prod (suc n) f = f zero * prod n (λ x → f (suc x))
+
+  mutual
+    data Arith : Set where
+      `Num : ℕ → Arith
+      `Π : (A : Arith) (f : Fin (eval A) → Arith) → Arith
+  
+    eval : Arith → ℕ
+    eval (`Num n) = n
+    eval (`Π A f) = prod (eval A)
+      (λ a → prod (toℕ a) λ b → eval (f (inject b)))
+\end{code}
+
+\begin{code}
+  ⟦_⟧ : Arith → Set
+  ⟦ A ⟧ = Fin (eval A)
+\end{code}
 
 
+\subsection{\AgdaDatatype{Path}}
+
+\begin{code}
+  data Pathℕ : ℕ → Set where
+    here : {n : ℕ} → Pathℕ n
+    there : {n : ℕ}
+      → Pathℕ n
+      → Pathℕ (suc n)
+  
+  lookupℕ : (n : ℕ) → Pathℕ n → ℕ
+  lookupℕ n here = n
+  lookupℕ (suc n) (there i) = lookupℕ n i
+  
+  updateℕ : (n : ℕ) → Pathℕ n → Maybe ℕ → ℕ
+  updateℕ n here x = maybe id n x
+  updateℕ (suc n) (there i) x = suc (updateℕ n i x)
+  
+  lemℕ : (n : ℕ) (i : Pathℕ n)
+    → n ≡ updateℕ n i (just (lookupℕ n i))
+  lemℕ n here = refl
+  lemℕ (suc n) (there i) = cong suc (lemℕ n i)
+\end{code}
+
+\begin{code}
+  data Path : Arith → Set where
+    here : {A : Arith} → Path A
+    thereNum : {n : ℕ} → Pathℕ n → Path (`Num n)
+    thereΠ₁ : {A : Arith} {B : ⟦ A ⟧ → Arith}
+      (i : Path A)
+      → Path (`Π A B)
+    thereΠ₂ : {A : Arith} {B : ⟦ A ⟧ → Arith}
+      (f : (a : ⟦ A ⟧) → Path (B a))
+      → Path (`Π A B)
+\end{code}
 
 
+\subsection{\AgdaFunction{lookup}}
 
+\begin{code}
+  Lookup : (A : Arith) → Path A → Set
+  Lookup A here = Arith
+  Lookup (`Num n) (thereNum i) = ℕ 
+  Lookup (`Π A B) (thereΠ₁ i) = Lookup A i
+  Lookup (`Π A B) (thereΠ₂ f) = Π ⟦ A ⟧ (λ a → Lookup (B a) (f a))
+\end{code}
 
+\begin{code}
+  lookup : (A : Arith) (i : Path A) → Lookup A i
+  lookup A here = A
+  lookup (`Num n) (thereNum i) = lookupℕ n i
+  lookup (`Π A B) (thereΠ₁ i) = lookup A i
+  lookup (`Π A B) (thereΠ₂ f) = λ a → lookup (B a) (f a)
+\end{code}
 
+\subsection{\AgdaFunction{update}}
 
-
+\begin{code}
+  Update : (A : Arith) → Path A → Set
+  update : (A : Arith) (i : Path A) (X : Update A i) → Arith
+  
+  Update A here = Maybe Arith
+  Update (`Num n) (thereNum i) = Maybe ℕ
+  Update (`Π A B) (thereΠ₁ i) =
+    Σ (Update A i) (λ X → ⟦ update A i X ⟧ → ⟦ A ⟧)
+  Update (`Π A B) (thereΠ₂ f) =
+    Π ⟦ A ⟧ (λ a → Update (B a) (f a))
+  
+  update A here X = maybe id A X
+  update (`Num n) (thereNum i) X = `Num (updateℕ n i X)
+  update (`Π A B) (thereΠ₁ i) (X , f) =
+    `Π (update A i X) (B ∘ f)
+  update (`Π A B) (thereΠ₂ f) g =
+    `Π A (λ a → update (B a) (f a) (g a))
+\end{code}
 
 
 

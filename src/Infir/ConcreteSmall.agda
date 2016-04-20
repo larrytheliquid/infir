@@ -65,7 +65,7 @@ mutual
 
   eval : Arith → ℕ
   eval (`Num n) = n
-  eval (`Π A f) = prod (eval A) λ a → prod (toℕ a) λ b → eval (f (inject b))
+  eval (`Π A f) = prod (eval A) (λ a → prod (toℕ a) λ b → eval (f (inject b)))
 
 ⟦_⟧ : Arith → Set
 ⟦ A ⟧ = Fin (eval A)
