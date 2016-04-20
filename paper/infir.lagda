@@ -65,16 +65,23 @@
 Dependent types; induction-recursion; generic programming.
 
 \section{Introduction}
+\label{sec:intro}
 
 \AgdaHide{
 \begin{code}
 module InfIR where
+open import Function
 open import Data.Unit
 open import Data.Nat
 open import Data.Maybe
 open import Data.Product
 open import Relation.Binary.PropositionalEquality
 
+Π : (A : Set) (B : A → Set) → Set
+Π A B = (a : A) → B a
+
+postulate magic : ∀{ℓ} {A : Set ℓ} → A
+  
 module Intro where
 \end{code}}
 
@@ -340,8 +347,6 @@ typically partial \AgdaFunction{head} function.
 
 \AgdaHide{
 \begin{code}
-  postulate magic : {A : Set} → A
-  
   length : {A : Set} → List A → ℕ
   length nil = zero
   length (cons x xs) = suc (length xs)
@@ -472,7 +477,6 @@ are the key to writing functions over InfIR datatypes.
 \AgdaHide{
 \begin{code}
 module ConcreteLarge where
-  open Intro
 \end{code}}
 
 \refsec{problem:background} reviews how to
@@ -481,33 +485,59 @@ and subelements pointed to by \AgdaDatatype{Path}s. In this section we
 define the corresponding datatypes and functions for InfIR
 \AgdaDatatype{Type}s.
 
+\subsection{\AgdaDatatype{Type}s}
+
+The InfIR \AgdaDatatype{Type} used in this section will be another
+type universe, similar to the one in \refsec{intro}. The
+\AgdaDatatype{Type} universe is still closed under functions, but now
+the base types are parameters instead of being hardcoded to
+\AgdaDatatype{ℕ}.
+
+\begin{code}
+  mutual
+    data Type : Set₁ where
+      `Base : Set → Type
+      `Π : (A : Type) (B : ⟦ A ⟧ → Type) → Type
+  
+    ⟦_⟧ : Type → Set
+    ⟦ `Base A ⟧ = A
+    ⟦ `Π A B ⟧ = Π ⟦ A ⟧ (λ a → ⟦ B a ⟧)
+\end{code}
+
+
 \subsection{\AgdaDatatype{Path}s}
 
-Let's reconsider what it means to be a \AgdaDatatype{Path}. When
-traversing a \AgdaDatatype{Tree}, you can always go left or right at a
+Let's reconsider what it means to be a \AgdaDatatype{Path}.
+You can still point to a recursive \AgdaDatatype{Type} using
+\AgdaInductiveConstructor{here}. Now you can also point to a
+non-recursive \AgdaBound{A} of type \AgdaDatatype{Set} using
+\AgdaInductiveConstructor{thereBase}.
+
+When traversing a \AgdaDatatype{Tree}, you can always go left or right at a
 \AgdaInductiveConstructor{branch}. When traversing a
-\AgdaDatatype{Type}, it you can immediately go to the left of a
+\AgdaDatatype{Type}, you can immediately go to the left of a
 \AgdaInductiveConstructor{`Π}, but going right requires first knowing
 which element \AgdaBound{a} of the type family \AgdaBound{B a} to
 continue traversing under.
 
 \begin{code}
-  data Path : Type → Set where
+  data Path : Type → Set₁ where
     here : {A : Type} → Path A
-    there₁ : {A : Type} {B : ⟦ A ⟧ → Type}
+    thereBase : {A : Set} → Path (`Base A)
+    thereΠ₁ : {A : Type} {B : ⟦ A ⟧ → Type}
       (i : Path A)
       → Path (`Π A B)
-    there₂ : {A : Type} {B : ⟦ A ⟧ → Type}
+    thereΠ₂ : {A : Type} {B : ⟦ A ⟧ → Type}
       (f : (a : ⟦ A ⟧) → Path (B a))
       → Path (`Π A B)
 \end{code}
 
-Above, \AgdaInductiveConstructor{there₂} represents going right
+Above, \AgdaInductiveConstructor{thereΠ₂} represents going right
 into the codomain of \AgdaInductiveConstructor{`Π}, but only once the
 user tells you which \AgdaBound{a} to use. In a sense, going right is
 like asking for a continuation that tells you where else to go once
 you have been given \AgdaBound{a}. Also note that because the argument
-\AgdaBound{f} of \AgdaInductiveConstructor{there₂} is a function that
+\AgdaBound{f} of \AgdaInductiveConstructor{thereΠ₂} is a function that
 returns a \AgdaDatatype{Path}, the \AgdaDatatype{Path} datatype is
 infinitary (just like the \AgdaDatatype{Type} it indexes).
 
@@ -520,30 +550,32 @@ from \refsec{problem:total}, we can make \AgdaFunction{lookup} for
 \AgdaDatatype{Type}s total by choosing to change the codomain,
 depending on the input \AgdaDatatype{Type} and \AgdaDatatype{Path}.
 \AgdaFunction{Lookup} computes the necessary codomain of
-\AgdaFunction{lookup}, asking for a \AgdaDatatype{Type} in the base
-case, or a continuation when looking to the right of a
+\AgdaFunction{lookup}, asking for a \AgdaDatatype{Type} or \AgdaDatatype{Set} in the base
+cases, or a continuation when looking to the right of a
 \AgdaInductiveConstructor{`Π}.
 
 \begin{code}
-  Lookup : (A : Type) → Path A → Set
+  Lookup : (A : Type) → Path A → Set₁
   Lookup A here = Type
-  Lookup (`Π A B) (there₁ i) = Lookup A i
-  Lookup (`Π A B) (there₂ f) = (a : ⟦ A ⟧) → Lookup (B a) (f a)
+  Lookup (`Base A) thereBase = Set
+  Lookup (`Π A B) (thereΠ₁ i) = Lookup A i
+  Lookup (`Π A B) (thereΠ₂ f) = (a : ⟦ A ⟧) → Lookup (B a) (f a)
 \end{code}
 
 Finally, we can write \AgdaFunction{lookup} in terms of
 \AgdaDatatype{Path} and \AgdaFunction{Lookup}. Notice that users
 applying our \AgdaFunction{lookup} function need to supply
 extra \AgdaBound{a} arguments exactly when they go to the right of a
-\AgdaInductiveConstructor{`Π}. Therefore, our definition can expect an
+\AgdaInductiveConstructor{`Π}. Thus, our definition can expect an
 extra argument \AgdaBound{a} in the
-\AgdaInductiveConstructor{there₂} case.
+\AgdaInductiveConstructor{thereΠ₂} case.
 
 \begin{code}
   lookup : (A : Type) (i : Path A) → Lookup A i
   lookup A here = A
-  lookup (`Π A B) (there₁ i) = lookup A i
-  lookup (`Π A B) (there₂ f) = λ a → lookup (B a) (f a)
+  lookup (`Base A) thereBase = A
+  lookup (`Π A B) (thereΠ₁ i) = lookup A i
+  lookup (`Π A B) (thereΠ₂ f) = λ a → lookup (B a) (f a)
 \end{code}
 
 \subsection{\AgdaFunction{update}}
@@ -556,9 +588,14 @@ what the \AgdaDatatype{Path} pointed to.
 You might expect to write a function like:
 
 \begin{code}
-  postulate
-    updateNaive : (A : Type) (i : Path A) (X : Type) → Type
+  updateNaive : (A : Type) (i : Path A) (X : Type) → Type
 \end{code}
+
+\AgdaHide{
+\begin{code}
+  updateNaive = magic
+\end{code}}
+
 
 \noindent
 Where \AgdaBound{X} is the type to substitute at
@@ -567,36 +604,36 @@ Where \AgdaBound{X} is the type to substitute at
 asking for an \AgdaBound{a} whenever updating the right side of a
 \AgdaInductiveConstructor{`Π}.
 
-We call the type of the subsitute
-\AgdaFunction{Sub}, which asks for a \AgdaDatatype{Type} in the base
-case (\AgdaInductiveConstructor{here}), and a continuation in the
-\AgdaInductiveConstructor{there₂} case. But, updating an element to
+\todo[inline]{Ask for a Maybe Type}
+
+We call the type of the substitute
+\AgdaFunction{Sub}, which asks for a \AgdaDatatype{Type} or \AgdaDatatype{Set} in the base
+cases (\AgdaInductiveConstructor{here} and \AgdaInductiveConstructor{thereBase}), and a continuation in the
+\AgdaInductiveConstructor{thereΠ₂} case. But, updating an element to
 the left of a \AgdaInductiveConstructor{`Π} is also
 problematic. We would like to keep the old
 \AgdaInductiveConstructor{`Π} codomain \AgdaBound{B} unchanged, but it
 still expects an \AgdaBound{a} of the original type
 \AgdaFunction{⟦} \AgdaBound{A} \AgdaFunction{⟧}. Therefore, the
-\AgdaInductiveConstructor{there₁} case must
+\AgdaInductiveConstructor{thereΠ₁} case must
 ask for an additional function \AgdaBound{f} that can map newly
 updated \AgdaBound{a}'s to their original type.
 
 \todo[inline]{Give an example of the domain type changing and being translated}
 
 \begin{code}
-  Sub : (A : Type) → Path A → Set
-  update : (A : Type) (i : Path A) (X : Sub A i) → Type
+  Update : (A : Type) → Path A → Set₁
+  update : (A : Type) (i : Path A) (X : Update A i) → Type
   
-  Sub A here = Type
-  Sub (`Π A B) (there₁ i) =
-    Σ (Sub A i) (λ X → ⟦ update A i X ⟧ → ⟦ A ⟧)
-  Sub (`Π A B) (there₂ f) =
-    (a : ⟦ A ⟧) → Sub (B a) (f a)
+  Update A here = Maybe Type
+  Update (`Base A) thereBase = Maybe Set
+  Update (`Π A B) (thereΠ₁ i) = Σ (Update A i) λ X → ⟦ update A i X ⟧ → ⟦ A ⟧
+  Update (`Π A B) (thereΠ₂ f) = (a : ⟦ A ⟧) → Update (B a) (f a)
   
-  update A here X = X
-  update (`Π A B) (there₁ i) (X , f) =
-    `Π (update A i X) (λ a → B (f a))
-  update (`Π A B) (there₂ f) F =
-    `Π A (λ a → update (B a) (f a) (F a))
+  update A here X = maybe id A X
+  update (`Base A) thereBase X = maybe `Base (`Base A) X
+  update (`Π A B) (thereΠ₁ i) (X , f) = `Π (update A i X) (λ a → B (f a))
+  update (`Π A B) (thereΠ₂ f) F = `Π A λ a → update (B a) (f a) (F a)
 \end{code}
 
 Notice that we must define \AgdaFunction{Sub} and
