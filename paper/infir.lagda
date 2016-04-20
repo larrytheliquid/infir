@@ -70,14 +70,15 @@ Dependent types; induction-recursion; generic programming.
 \AgdaHide{
 \begin{code}
 module InfIR where
+open import Level using ( _⊔_ )
 open import Function
 open import Data.Unit
-open import Data.Nat
+open import Data.Nat hiding ( _⊔_ )
 open import Data.Maybe
 open import Data.Product
 open import Relation.Binary.PropositionalEquality
 
-Π : (A : Set) (B : A → Set) → Set
+Π : ∀{ℓ₁ ℓ₂} (A : Set ℓ₁) (B : A → Set ℓ₂) → Set (ℓ₁ ⊔ ℓ₂)
 Π A B = (a : A) → B a
 
 postulate magic : ∀{ℓ} {A : Set ℓ} → A
@@ -584,11 +585,16 @@ Now we will write an \AgdaFunction{update} function for
 \AgdaDatatype{Type}s. After supplying a \AgdaDatatype{Path} and a
 substitute \AgdaDatatype{Type}, \AgdaFunction{update} should return
 the original \AgdaDatatype{Type} but with the substitute replacing
-what the \AgdaDatatype{Path} pointed to.
+what the \AgdaDatatype{Path} pointed to. To make updating the InfIR
+\AgdaDatatype{Type}
+more convenient, the type of the substitute will actually be
+\AgdaDatatype{Maybe Type}, where \AgdaInductiveConstructor{nothing}
+causes an identity update.
 You might expect to write a function like:
 
 \begin{code}
-  updateNaive : (A : Type) (i : Path A) (X : Type) → Type
+  updateNaive :
+    (A : Type) (i : Path A) (X : Maybe Type) → Type
 \end{code}
 
 \AgdaHide{
@@ -596,20 +602,19 @@ You might expect to write a function like:
   updateNaive = magic
 \end{code}}
 
-
 \noindent
-Where \AgdaBound{X} is the type to substitute at
-\AgdaBound{i}. In order to write a total version of
+Above \AgdaBound{X} is the intended \AgdaDatatype{Type} to
+\AgdaDatatype{Maybe} substitute at position \AgdaBound{i}.
+In order to write a total version of
 \AgdaFunction{updateNaive}, we need to change the domain by
-asking for an \AgdaBound{a} whenever updating the right side of a
-\AgdaInductiveConstructor{`Π}.
-
-\todo[inline]{Ask for a Maybe Type}
+asking for an \AgdaBound{a} whenever we update within the codomain of
+a \AgdaInductiveConstructor{`Π}.
 
 We call the type of the substitute
-\AgdaFunction{Sub}, which asks for a \AgdaDatatype{Type} or \AgdaDatatype{Set} in the base
-cases (\AgdaInductiveConstructor{here} and \AgdaInductiveConstructor{thereBase}), and a continuation in the
-\AgdaInductiveConstructor{thereΠ₂} case. But, updating an element to
+\AgdaFunction{Update}, which asks for a \AgdaDatatype{Maybe Type} or a
+\AgdaDatatype{Maybe Set} in the base cases (\AgdaInductiveConstructor{here}
+and \AgdaInductiveConstructor{thereBase} respectively), and a continuation in the
+\AgdaInductiveConstructor{thereΠ₂} case. However, updating an element to
 the left of a \AgdaInductiveConstructor{`Π} is also
 problematic. We would like to keep the old
 \AgdaInductiveConstructor{`Π} codomain \AgdaBound{B} unchanged, but it
@@ -627,20 +632,44 @@ updated \AgdaBound{a}'s to their original type.
   
   Update A here = Maybe Type
   Update (`Base A) thereBase = Maybe Set
-  Update (`Π A B) (thereΠ₁ i) = Σ (Update A i) λ X → ⟦ update A i X ⟧ → ⟦ A ⟧
-  Update (`Π A B) (thereΠ₂ f) = (a : ⟦ A ⟧) → Update (B a) (f a)
+  Update (`Π A B) (thereΠ₁ i) =
+    Σ (Update A i) (λ X → ⟦ update A i X ⟧ → ⟦ A ⟧)
+  Update (`Π A B) (thereΠ₂ f) =
+    Π ⟦ A ⟧ (λ a → Update (B a) (f a))
   
   update A here X = maybe id A X
   update (`Base A) thereBase X = maybe `Base (`Base A) X
-  update (`Π A B) (thereΠ₁ i) (X , f) = `Π (update A i X) (λ a → B (f a))
-  update (`Π A B) (thereΠ₂ f) F = `Π A λ a → update (B a) (f a) (F a)
+  update (`Π A B) (thereΠ₁ i) (X , f) =
+    `Π (update A i X) (λ a → B (f a))
+  update (`Π A B) (thereΠ₂ f) h =
+    `Π A (λ a → update (B a) (f a) (h a))
 \end{code}
 
-Notice that we must define \AgdaFunction{Sub} and
-\AgdaFunction{update} mutually, because the domain of the translation
-function must refer to \AgdaFunction{update}. Another neat observation
-is that we could have defined \AgdaFunction{Sub} as an inductive type,
-rather than as a function. If we had done so,
+Notice that we must define \AgdaFunction{Update} and
+\AgdaFunction{update} mutually, because the translation
+function (the codomain of
+\AgdaDatatype{Σ} in the \AgdaInductiveConstructor{thereΠ₁} case of
+\AgdaFunction{Update}) must refer to \AgdaFunction{update} in its
+domain. Although the \AgdaInductiveConstructor{thereΠ₁} case of
+\AgdaFunction{update} only updates the domain of
+\AgdaInductiveConstructor{`Π}, the type family \AgdaBound{B} in the
+codomain expects an \AgdaBound{a} of type
+\AgdaFunction{⟦} \AgdaBound{A} \AgdaFunction{⟧}, so we use the
+translation function \AgdaBound{f} to map back to \AgdaBound{a}'s
+original type.
+
+The base cases \AgdaInductiveConstructor{here} and
+\AgdaInductiveConstructor{thereBase} of \AgdaFunction{update}
+perform updates using the
+subsitute \AgdaBound{X} (where \AgdaInductiveConstructor{nothing}
+results in an identity update). The \AgdaInductiveConstructor{thereΠ₂}
+case of \AgdaFunction{update} leaves the domain of
+\AgdaInductiveConstructor{`Π} unchanged, and recursively updates the
+codmain using the substitute continuation \AgdaBound{h}.
+
+Note that
+we could have defined \AgdaFunction{Update} as an inductive type,
+rather than a computational type. If we had done so,
 then it would be an InfIR type with \AgdaFunction{update} as its
 mutually defined function!
 

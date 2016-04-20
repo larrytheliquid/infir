@@ -1,3 +1,4 @@
+open import Level using ( _⊔_ )
 open import Function
 open import Data.String hiding ( show )
 open import Data.Empty
@@ -19,7 +20,7 @@ postulate
 
 ----------------------------------------------------------------------
 
-Π : (A : Set) (B : A → Set) → Set
+Π : ∀{ℓ₁ ℓ₂} (A : Set ℓ₁) (B : A → Set ℓ₂) → Set (ℓ₁ ⊔ ℓ₂)
 Π A B = (a : A) → B a
 
 ----------------------------------------------------------------------
@@ -68,13 +69,13 @@ update : (A : Type) (i : Path A) (X : Update A i) → Type
 
 Update A here = Maybe Type
 Update (`Base A) thereBase = Maybe Set
-Update (`Π A B) (thereΠ₁ i) = Σ (Update A i) λ X → ⟦ update A i X ⟧ → ⟦ A ⟧
-Update (`Π A B) (thereΠ₂ f) = (a : ⟦ A ⟧) → Update (B a) (f a)
+Update (`Π A B) (thereΠ₁ i) = Σ (Update A i) (λ X → ⟦ update A i X ⟧ → ⟦ A ⟧)
+Update (`Π A B) (thereΠ₂ f) = Π ⟦ A ⟧ (λ a → Update (B a) (f a))
 
 update A here X = maybe id A X
 update (`Base A) thereBase X = maybe `Base (`Base A) X
 update (`Π A B) (thereΠ₁ i) (X , f) = `Π (update A i X) (λ a → B (f a))
-update (`Π A B) (thereΠ₂ f) F = `Π A λ a → update (B a) (f a) (F a)
+update (`Π A B) (thereΠ₂ f) h = `Π A (λ a → update (B a) (f a) (h a))
 
 ----------------------------------------------------------------------
 
