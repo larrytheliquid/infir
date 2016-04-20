@@ -23,12 +23,6 @@ postulate
 Π : (A : Set) (B : A → Set) → Set
 Π A B = (a : A) → B a
 
-Dyn : Set₁
-Dyn = Σ Set id
-
-DynCon : Set → Set₁
-DynCon B = Σ Set (λ A → A → B)
-
 eqpair : {A : Set} {B : A → Set}
   {a₁ a₂ : A} {b₁ : B a₁} {b₂ : B a₂} (q : a₁ ≡ a₂) → b₁ ≅ b₂ → (a₁ , b₁) ≡ (a₂ , b₂)
 eqpair refl refl = refl
@@ -72,8 +66,8 @@ mutual
   ⟦ `⊥ ⟧ = ⊥
   ⟦ `⊤ ⟧ = ⊤
   ⟦ `Bool ⟧ = Bool
-  ⟦ `Σ A B ⟧ = Σ ⟦ A ⟧ λ a → ⟦ B a ⟧
-  ⟦ `Π A B ⟧ = (a : ⟦ A ⟧) → ⟦ B a ⟧
+  ⟦ `Σ A B ⟧ = Σ ⟦ A ⟧ (λ a → ⟦ B a ⟧)
+  ⟦ `Π A B ⟧ = Π ⟦ A ⟧ (λ a → ⟦ B a ⟧)
   ⟦ `μ D ⟧ = μ ⟪ D ⟫
 
   data `Desc (O : `Set) : Set where

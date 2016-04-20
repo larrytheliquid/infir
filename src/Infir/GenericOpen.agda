@@ -24,12 +24,6 @@ postulate
 Π : ∀{a b} (A : Set a) (B : A → Set b) → Set (a ⊔ b)
 Π A B = (a : A) → B a
 
-Dyn : Set₁
-Dyn = Σ Set id
-
-DynCon : Set → Set₁
-DynCon B = Σ Set (λ A → A → B)
-
 prod : (n : ℕ) (f : Fin n → ℕ) → ℕ
 prod zero f = suc zero
 prod (suc n) f = f zero * prod n (λ x → f (suc x))

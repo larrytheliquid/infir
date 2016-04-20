@@ -15,6 +15,8 @@
 \usepackage[references]{agda}
 
 \DeclareUnicodeCharacter{8759}{\ensuremath{::}}
+\DeclareUnicodeCharacter{10218}{\guillemotleft}
+\DeclareUnicodeCharacter{10219}{\guillemotright}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -72,7 +74,9 @@ Dependent types; induction-recursion; generic programming.
 module InfIR where
 open import Level using ( _⊔_ )
 open import Function
+open import Data.Empty
 open import Data.Unit
+open import Data.Bool
 open import Data.Nat hiding ( _⊔_ )
 open import Data.Fin hiding ( lift ; _<_ )
 open import Data.Maybe
@@ -794,68 +798,321 @@ small InfIR type called \AgdaDatatype{Arith} (it is called
 \end{code}
 
 
+\section{Generic Open InfIR}
+\label{sec:genericopen}
 
-%% \subsection{Correctness}
+\AgdaHide{
+\begin{code}
+module GenericOpen where
+\end{code}}
 
-%% In this section we prove a correctness theorem that relates
-%% \AgdaFunction{update} with \AgdaFunction{lookup}. Informally, we would
-%% like to prove the following equivalence.
+\subsection{\AgdaDatatype{Desc} \& \AgdaDatatype{μ}}
 
-%% $$
-%% \forall A, i.~ A \equiv \textrm{update}~A~i~(\textrm{lookup}~A~i)
-%% $$
+\begin{code}
+  data Desc (O : Set) : Set₁ where
+    End : (o : O) → Desc O
+    Arg : (A : Set) (D : A → Desc O) → Desc O
+    Rec : (A : Set) (D : (o : A → O) → Desc O) → Desc O
+  
+  Func : {O : Set} (D : Desc O) (X : Set) (Y : X → O) → Set
+  Func (End o) X Y = ⊤
+  Func (Arg A D) X Y = Σ A (λ a → Func (D a) X Y)
+  Func (Rec A D) X Y = Σ (A → X) λ f → Func (D (λ a → Y (f a))) X Y
+\end{code}
 
-%% However, the third parameter of \AgdaFunction{update} is a
-%% \AgdaFunction{Sub}, while \AgdaFunction{lookup} returns a
-%% \AgdaFunction{Lookup}. Thus, we need to have a function that
-%% \AgdaFunction{lift}s a \AgdaFunction{Lookup} to a
-%% \AgdaFunction{Sub} so that we may state our theorem. Additionally,
-%% proving this theorem requires functional extensionality.
+\begin{code}
+  mutual
+    data μ {O : Set} (D : Desc O) : Set where
+      init : Func D (μ D) (rec D) → μ D
+    
+    rec : {O : Set} (D : Desc O) → μ D → O
+    rec D (init xs) = recα D D xs
+  
+    recα : {O : Set} (D E : Desc O) → Func D (μ E) (rec E) → O
+    recα (End o) E tt = o
+    recα (Arg A D) E (a , xs) = recα (D a) E xs
+    recα (Rec A D) E (f , xs) = recα (D (λ a → rec E (f a))) E xs
+\end{code}
 
-%% \begin{code}
-%% postulate
-%%   ext : {A : Set} {B : A → Set}
-%%     {f g : (a : A) → B a}
-%%     → ((a : A) → f a ≡ g a)
-%%     → f ≡ g
-%% \end{code}
+\subsection{\AgdaDatatype{Path}}
 
-%% Notice that the \AgdaFunction{Sub} type is just like the
-%% \AgdaFunction{Lookup} type, except it has an additional transformation
-%% function in the \AgdaInductiveConstructor{there₁} case. Therefore, we
-%% should be able to \AgdaFunction{lift} a \AgdaFunction{Lookup} by
-%% structurally copying it, and inserting identity conversion functions
-%% whenever we pass through a \AgdaInductiveConstructor{there₁}.
+\begin{code}
+  data Path {O : Set} (D : Desc O) : μ D → Set₁
+  data Pathα {O : Set} (R : Desc O) : (D : Desc O) → Func D (μ R) (rec R) → Set₁
+  
+  data Path {O} D where
+    here : {x : μ D} → Path D x
+    there : {xs : Func D (μ D) (rec D)}
+      → Pathα D D xs
+      → Path D (init xs)
+  
+  data Pathα {O} R where
+    thereArg₁ : {A : Set} {D : A → Desc O}
+      {a : A} {xs : Func (D a) (μ R) (rec R)}
+      → Pathα R (Arg A D) (a , xs)
+    thereArg₂ : {A : Set} {D : A → Desc O}
+      {a : A} {xs : Func (D a) (μ R) (rec R)}
+      → Pathα R (D a) xs
+      → Pathα R (Arg A D) (a , xs)
+    thereRec₁ : {A : Set} {D : (o : A → O) → Desc O}
+      {f : A → μ R} {xs : Func (D (rec R ∘ f)) (μ R) (rec R)}
+      → Π A (λ a → Path R (f a))
+      → Pathα R (Rec A D) (f , xs)
+    thereRec₂ : {A : Set} {D : (o : A → O) → Desc O}
+      {f : A → μ R} {xs : Func (D (rec R ∘ f)) (μ R) (rec R)}
+      → Pathα R (D (rec R ∘ f)) xs
+      → Pathα R (Rec A D) (f , xs)
+\end{code}
 
-%% \begin{code}
-%% lift : (A : Type) (i : Path A) → Lookup A i → Sub A i
-%% lem : (A : Type) (i : Path A) (p : Lookup A i)
-%%   → A ≡ update A i (lift A i p)
+\subsection{\AgdaFunction{lookup}}
 
-%% lift A here p = A
-%% lift (`Π A B) (there₁ i) p = (lift A i p) , id where
-%%   id : ⟦ update A i (lift A i p) ⟧ → ⟦ A ⟧
-%%   id a = subst ⟦_⟧ (sym (lem A i p)) a
-%% lift (`Π A B) (there₂ f) F = λ a → lift (B a) (f a) (F a)
+\begin{code}
+  Lookup : {O : Set} (D : Desc O) (x : μ D) → Path D x → Set
+  Lookupα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R)) → Pathα R D xs → Set
+  
+  Lookup D x here = μ D
+  Lookup D (init xs) (there i) = Lookupα D D xs i
+  
+  Lookupα R (End o) tt ()
+  Lookupα R (Arg A D) (a , xs) thereArg₁ = A
+  Lookupα R (Arg A D) (a , xs) (thereArg₂ i) = Lookupα R (D a) xs i
+  Lookupα R (Rec A D) (f , xs) (thereRec₁ g) = Π A (λ a → Lookup R (f a) (g a))
+  Lookupα R (Rec A D) (f , xs) (thereRec₂ i) = Lookupα R (D (rec R ∘ f)) xs i
+\end{code}
 
-%% lem A here p = refl
-%% lem (`Π A B) (there₁ i) p
-%%   rewrite sym (lem A i p) = refl
-%% lem (`Π A B) (there₂ f) F
-%%   = cong (λ X → `Π A X) (ext (λ a → lem (B a) (f a) (F a)))
-%% \end{code}
+\begin{code}
+  lookup : {O : Set} (D : Desc O) (x : μ D) (i : Path D x) → Lookup D x i
+  lookupα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R)) (i : Pathα R D xs)
+    → Lookupα R D xs i
+  
+  lookup D x here = x
+  lookup D (init xs) (there i) = lookupα D D xs i
+  
+  lookupα R (End o) tt ()
+  lookupα R (Arg A D) (a , xs) thereArg₁ = a
+  lookupα R (Arg A D) (a , xs) (thereArg₂ i) = lookupα R (D a) xs i
+  lookupα R (Rec A D) (f , xs) (thereRec₁ g) = λ a → lookup R (f a) (g a)
+  lookupα R (Rec A D) (f , xs) (thereRec₂ i) = lookupα R (D (rec R ∘ f)) xs i
+\end{code}
 
-%% In order to supply an identify transformation function in the
-%% \AgdaInductiveConstructor{there₁} case, we must mutually prove that
-%% updating by any lifitng of a \AgdaDatatype{Lookup} is the identity
-%% operation. This is a generalization of our original theorem, so we can
-%% specialize it to arrive at a proof of our original theorem.
+\subsection{\AgdaFunction{update}}
 
-%% \begin{code}
-%% thm : (A : Type) (i : Path A)
-%%   → A ≡ update A i (lift A i (lookup A i))
-%% thm A i = lem A i (lookup A i)
-%% \end{code}
+\begin{code}
+  Update : {O : Set} (D : Desc O) (x : μ D) → Path D x → Set
+  Updateα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R)) → Pathα R D xs → Set
+  update : {O : Set} (D : Desc O) (x : μ D) (i : Path D x) (X : Update D x i) → μ D
+  updateα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R)) (i : Pathα R D xs)
+    → Updateα R D xs i → Func D (μ R) (rec R)
+  
+  Update D x here = Maybe (μ D)
+  Update D (init xs) (there i) = Updateα D D xs i
+  
+  Updateα R (End o) tt ()
+  Updateα R (Arg A D) (a , xs) thereArg₁ =
+    Σ (Maybe A)
+      (maybe (λ a' → Func (D a) (μ R) (rec R) → Func (D a') (μ R) (rec R)) ⊤)
+  Updateα R (Arg A D) (a , xs) (thereArg₂ i) = Updateα R (D a) xs i
+  Updateα R (Rec A D) (f , xs) (thereRec₁ g) =
+    Σ (Π A (λ a → Update R (f a) (g a)))
+      (λ h → Func (D (rec R ∘ f)) (μ R) (rec R)
+        → Func (D (λ a → rec R (update R (f a) (g a) (h a)))) (μ R) (rec R))
+  Updateα R (Rec A D) (f , xs) (thereRec₂ i) =
+    Updateα R (D (rec R ∘ f)) xs i
+  
+  update D x here X = maybe id x X
+  update D (init xs) (there i) X = init (updateα D D xs i X)
+  
+  updateα R (End o) tt () X
+  updateα R (Arg A D) (a , xs) thereArg₁ (nothing , f) = a , xs
+  updateα R (Arg A D) (a , xs) thereArg₁ (just X , f) =
+    X , f xs
+  updateα R (Arg A D) (a , xs) (thereArg₂ i) X =
+    a , updateα R (D a) xs i X
+  updateα R (Rec A D) (f , xs) (thereRec₁ g) (h , F) =
+    (λ a → update R (f a) (g a) (h a)) , F xs
+  updateα R (Rec A D) (f , xs) (thereRec₂ i) X =
+    f , updateα R (D (rec R ∘ f)) xs i X
+\end{code}
+
+
+\section{Generic Closed InfIR}
+\label{sec:genericclosed}
+
+\AgdaHide{
+\begin{code}
+module GenericClosed where
+
+  data Desc (O : Set) : Set₁ where
+    End : (o : O) → Desc O
+    Arg : (A : Set) (D : A → Desc O) → Desc O
+    Rec : (A : Set) (D : (o : A → O) → Desc O) → Desc O
+  
+  Func : {O : Set} (D : Desc O) (X : Set) (Y : X → O) → Set
+  Func (End o) X Y = ⊤
+  Func (Arg A D) X Y = Σ A (λ a → Func (D a) X Y)
+  Func (Rec A D) X Y = Σ (A → X) λ f → Func (D (λ a → Y (f a))) X Y
+  
+  mutual
+    data μ {O : Set} (D : Desc O) : Set where
+      init : Func D (μ D) (rec D) → μ D
+    
+    rec : {O : Set} (D : Desc O) → μ D → O
+    rec D (init xs) = recα D D xs
+  
+    recα : {O : Set} (D E : Desc O) → Func D (μ E) (rec E) → O
+    recα (End o) E tt = o
+    recα (Arg A D) E (a , xs) = recα (D a) E xs
+    recα (Rec A D) E (f , xs) = recα (D (λ a → rec E (f a))) E xs
+\end{code}}
+
+\subsection{\AgdaDatatype{`Set} \& \AgdaDatatype{`Desc}}
+
+\begin{code}
+  mutual
+    data `Set : Set where
+      `⊥ `⊤ `Bool : `Set
+      `Σ `Π : (A : `Set) (B : ⟦ A ⟧ → `Set) → `Set
+      `μ : {O : `Set} (D : `Desc O) → `Set
+  
+    ⟦_⟧ : `Set → Set
+    ⟦ `⊥ ⟧ = ⊥
+    ⟦ `⊤ ⟧ = ⊤
+    ⟦ `Bool ⟧ = Bool
+    ⟦ `Σ A B ⟧ = Σ ⟦ A ⟧ (λ a → ⟦ B a ⟧)
+    ⟦ `Π A B ⟧ = Π ⟦ A ⟧ (λ a → ⟦ B a ⟧)
+    ⟦ `μ D ⟧ = μ ⟪ D ⟫
+  
+    data `Desc (O : `Set) : Set where
+      `End : (o : ⟦ O ⟧) → `Desc O
+      `Arg : (A : `Set) (D : ⟦ A ⟧ → `Desc O) → `Desc O
+      `Rec : (A : `Set) (D : (o : ⟦ A ⟧ → ⟦ O ⟧) → `Desc O) → `Desc O
+  
+    ⟪_⟫ : {O : `Set} → `Desc O → Desc ⟦ O ⟧
+    ⟪ `End o ⟫ = End o
+    ⟪ `Arg A D ⟫ = Arg ⟦ A ⟧ λ a → ⟪ D a ⟫
+    ⟪ `Rec A D ⟫ = Rec ⟦ A ⟧ λ o → ⟪ D o ⟫
+\end{code}
+
+\subsection{\AgdaDatatype{Path}}
+
+\begin{code}
+  data Path : (A : `Set) → ⟦ A ⟧ → Set
+  data Pathα {O : `Set} (R : `Desc O) : (D : `Desc O) → Func ⟪ D ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫) → Set
+  
+  data Path where
+    here : {A : `Set} {a : ⟦ A ⟧} → Path A a
+    thereΣ₁ : {A : `Set} {B : ⟦ A ⟧ → `Set} {a : ⟦ A ⟧} {b : ⟦ B a ⟧}
+      → Path A a
+      → Path (`Σ A B) (a , b)
+    thereΣ₂ : {A : `Set} {B : ⟦ A ⟧ → `Set} {a : ⟦ A ⟧} {b : ⟦ B a ⟧}
+      → Path (B a) b
+      → Path (`Σ A B) (a , b)
+    thereΠ : {A : `Set} {B : ⟦ A ⟧ → `Set} {f : (a : ⟦ A ⟧) → ⟦ B a ⟧}
+      → Π ⟦ A ⟧ (λ a → Path (B a) (f a))
+      → Path (`Π A B) f
+    thereμ : {O : `Set} {D : `Desc O} {xs : Func ⟪ D ⟫ (μ ⟪ D ⟫) (rec ⟪ D ⟫)}
+      → Pathα D D xs
+      → Path (`μ D) (init xs)
+  
+  data Pathα {O} R where
+    thereArg₁ : {A : `Set} {D : ⟦ A ⟧ → `Desc O}
+      {a : ⟦ A ⟧} {xs : Func ⟪ D a ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫)}
+      → Path A a
+      → Pathα R (`Arg A D) (a , xs)
+    thereArg₂ : {A : `Set} {D : ⟦ A ⟧ → `Desc O}
+      {a : ⟦ A ⟧} {xs : Func ⟪ D a ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫)}
+      → Pathα R (D a) xs
+      → Pathα R (`Arg A D) (a , xs)
+    thereRec₁ : {A : `Set} {D : (o : ⟦ A ⟧ → ⟦ O ⟧) → `Desc O}
+      {f : ⟦ A ⟧ → μ ⟪ R ⟫} {xs : Func ⟪ D (rec ⟪ R ⟫ ∘ f) ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫)}
+      → Π ⟦ A ⟧ (λ a → Path (`μ R) (f a))
+      → Pathα R (`Rec A D) (f , xs)
+    thereRec₂ : {A : `Set} {D : (o : ⟦ A ⟧ → ⟦ O ⟧) → `Desc O}
+      {f : ⟦ A ⟧ → μ ⟪ R ⟫} {xs : Func ⟪ D (rec ⟪ R ⟫ ∘ f) ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫)}
+      → Pathα R (D (rec ⟪ R ⟫ ∘ f)) xs
+      → Pathα R (`Rec A D) (f , xs)
+\end{code}
+
+\subsection{\AgdaFunction{lookup}}
+
+\begin{code}
+  Lookup : (A : `Set) (a : ⟦ A ⟧) → Path A a → Set
+  Lookupα : {O : `Set} (R D : `Desc O) (xs : Func ⟪ D ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫))
+    → Pathα R D xs → Set
+  
+  Lookup A a here = ⟦ A ⟧
+  Lookup (`Σ A B) (a , b) (thereΣ₁ i) = Lookup A a i
+  Lookup (`Σ A B) (a , b) (thereΣ₂ i) = Lookup (B a) b i
+  Lookup (`Π A B) f (thereΠ g) = Π ⟦ A ⟧ (λ a → Lookup (B a) (f a) (g a))
+  Lookup (`μ D) (init xs) (thereμ i) = Lookupα D D xs i
+  
+  Lookupα R (`Arg A D) (a , xs) (thereArg₁ i) = Lookup A a i
+  Lookupα R (`Arg A D) (a , xs) (thereArg₂ i) = Lookupα R (D a) xs i
+  Lookupα R (`Rec A D) (f , xs) (thereRec₁ g) = Π ⟦ A ⟧ (λ a → Lookup (`μ R) (f a) (g a))
+  Lookupα R (`Rec A D) (f , xs) (thereRec₂ i) = Lookupα R (D (rec ⟪ R ⟫ ∘ f)) xs i
+\end{code}
+
+\begin{code}
+  lookup : (A : `Set) (a : ⟦ A ⟧) (i : Path A a) → Lookup A a i
+  lookupα : {O : `Set} (R D : `Desc O) (xs : Func ⟪ D ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫))
+    (i : Pathα R D xs) → Lookupα R D xs i
+  
+  lookup A a here = a
+  lookup (`Σ A B) (a , b) (thereΣ₁ i) = lookup A a i
+  lookup (`Σ A B) (a , b) (thereΣ₂ i) = lookup (B a) b i
+  lookup (`Π A B) f (thereΠ g) = λ a → lookup (B a) (f a) (g a)
+  lookup (`μ D) (init xs) (thereμ i) = lookupα D D xs i
+  
+  lookupα R (`Arg A D) (a , xs) (thereArg₁ i) = lookup A a i
+  lookupα R (`Arg A D) (a , xs) (thereArg₂ i) = lookupα R (D a) xs i
+  lookupα R (`Rec A D) (f , xs) (thereRec₁ g) = λ a → lookup (`μ R) (f a) (g a)
+  lookupα R (`Rec A D) (f , xs) (thereRec₂ i) = lookupα R (D (rec ⟪ R ⟫ ∘ f)) xs i
+\end{code}
+
+\subsection{\AgdaFunction{update}}
+
+\begin{code}
+  Update : (A : `Set) (a : ⟦ A ⟧) → Path A a → Set
+  Updateα : {O : `Set} (R D : `Desc O) (xs : Func ⟪ D ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫))
+    → Pathα R D xs → Set
+  update : (A : `Set) (a : ⟦ A ⟧) (i : Path A a)
+    → Update A a i → ⟦ A ⟧
+  updateα : {O : `Set} (R D : `Desc O) (xs : Func ⟪ D ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫))
+    (i : Pathα R D xs)
+    → Updateα R D xs i
+    → Func ⟪ D ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫)
+  
+  Update A a here = Maybe ⟦ A ⟧
+  Update (`Σ A B) (a , b) (thereΣ₁ i) =
+    Σ (Update A a i) (λ a' → ⟦ B a ⟧ → ⟦ B (update A a i a') ⟧)
+  Update (`Σ A B) (a , b) (thereΣ₂ i) = Update (B a) b i
+  Update (`Π A B) f (thereΠ g) = Π ⟦ A ⟧ (λ a → Update (B a) (f a) (g a))
+  Update (`μ D) (init xs) (thereμ i) = Updateα D D xs i
+  
+  Updateα R (`Arg A D) (a , xs) (thereArg₁ i) =
+    Σ (Update A a i)
+      (λ a' → Func ⟪ D a ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫) → Func ⟪ D (update A a i a') ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫))
+  Updateα R (`Arg A D) (a , xs) (thereArg₂ i) = Updateα R (D a) xs i
+  Updateα R (`Rec A D) (f , xs) (thereRec₁ g) =
+    Σ (Π ⟦ A ⟧ (λ a → Update (`μ R) (f a) (g a)))
+      (λ h → Func ⟪ D (λ a → rec ⟪ R ⟫ (f a)) ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫)
+        → Func ⟪ D (λ a → rec ⟪ R ⟫ (update (`μ R) (f a) (g a) (h a))) ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫)
+      )
+  Updateα R (`Rec A D) (f , xs) (thereRec₂ i) = Updateα R (D (rec ⟪ R ⟫ ∘ f)) xs i
+  
+  update A a here X = maybe id a X
+  update (`Σ A B) (a , b) (thereΣ₁ i) (X , f) = update A a i X , f b
+  update (`Σ A B) (a , b) (thereΣ₂ i) X = a , update (B a) b i X
+  update (`Π A B) f (thereΠ g) h = λ a → update (B a) (f a) (g a) (h a)
+  update (`μ D) (init xs) (thereμ i) X = init (updateα D D xs i X)
+  
+  updateα R (`Arg A D) (a , xs) (thereArg₁ i) (X , f) = update A a i X , f xs
+  updateα R (`Arg A D) (a , xs) (thereArg₂ i) X = a , updateα R (D a) xs i X
+  updateα R (`Rec A D) (f , xs) (thereRec₁ g) (h , F) =
+    (λ a → update (`μ R) (f a) (g a) (h a)) , F xs
+  updateα R (`Rec A D) (f , xs) (thereRec₂ i) X =
+    f , updateα R (D (rec ⟪ R ⟫ ∘ f)) xs i X
+\end{code}
 
 
 \acks
