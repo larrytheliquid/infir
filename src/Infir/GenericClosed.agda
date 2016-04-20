@@ -40,7 +40,7 @@ data Desc (O : Set) : Set₁ where
 Func : {O : Set} (D : Desc O) (X : Set) (Y : X → O) → Set
 Func (End o) X Y = ⊤
 Func (Arg A D) X Y = Σ A (λ a → Func (D a) X Y)
-Func (Rec A D) X Y = Σ (A → X) λ f → Func (D (λ a → Y (f a))) X Y
+Func (Rec A D) X Y = Σ (A → X) (λ f → Func (D (λ a → Y (f a))) X Y)
 
 mutual
   data μ {O : Set} (D : Desc O) : Set where

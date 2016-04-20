@@ -556,7 +556,7 @@ sub\AgdaDatatype{Type} is not always possible. Using our methodology
 from \refsec{problem:total}, we can make \AgdaFunction{lookup} for
 \AgdaDatatype{Type}s total by choosing to change the codomain,
 depending on the input \AgdaDatatype{Type} and \AgdaDatatype{Path}.
-\AgdaFunction{Lookup} computes the necessary codomain of
+\AgdaFunction{Lookup} computes the codomain of
 \AgdaFunction{lookup}, asking for a \AgdaDatatype{Type} or \AgdaDatatype{Set} in the base
 cases, or a continuation when looking to the right of a
 \AgdaInductiveConstructor{`Π}.
@@ -738,11 +738,6 @@ small InfIR type called \AgdaDatatype{Arith} (it is called
   updateℕ : (n : ℕ) → Pathℕ n → Maybe ℕ → ℕ
   updateℕ n here x = maybe id n x
   updateℕ (suc n) (there i) x = suc (updateℕ n i x)
-  
-  lemℕ : (n : ℕ) (i : Pathℕ n)
-    → n ≡ updateℕ n i (just (lookupℕ n i))
-  lemℕ n here = refl
-  lemℕ (suc n) (there i) = cong suc (lemℕ n i)
 \end{code}
 
 \begin{code}
@@ -817,7 +812,7 @@ module GenericOpen where
   Func : {O : Set} (D : Desc O) (X : Set) (Y : X → O) → Set
   Func (End o) X Y = ⊤
   Func (Arg A D) X Y = Σ A (λ a → Func (D a) X Y)
-  Func (Rec A D) X Y = Σ (A → X) λ f → Func (D (λ a → Y (f a))) X Y
+  Func (Rec A D) X Y = Σ (A → X) (λ f → Func (D (λ a → Y (f a))) X Y)
 \end{code}
 
 \begin{code}
@@ -950,7 +945,7 @@ module GenericClosed where
   Func : {O : Set} (D : Desc O) (X : Set) (Y : X → O) → Set
   Func (End o) X Y = ⊤
   Func (Arg A D) X Y = Σ A (λ a → Func (D a) X Y)
-  Func (Rec A D) X Y = Σ (A → X) λ f → Func (D (λ a → Y (f a))) X Y
+  Func (Rec A D) X Y = Σ (A → X) (λ f → Func (D (λ a → Y (f a))) X Y)
   
   mutual
     data μ {O : Set} (D : Desc O) : Set where
