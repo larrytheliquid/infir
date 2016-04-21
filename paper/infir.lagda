@@ -83,9 +83,6 @@ open import Data.Maybe
 open import Data.Product
 open import Relation.Binary.PropositionalEquality
 
-Π : ∀{ℓ₁ ℓ₂} (A : Set ℓ₁) (B : A → Set ℓ₂) → Set (ℓ₁ ⊔ ℓ₂)
-Π A B = (a : A) → B a
-
 postulate magic : ∀{ℓ} {A : Set ℓ} → A
   
 module Intro where
@@ -134,7 +131,7 @@ number arguments.
   NumArgs (suc n) = `ℕ `→ NumArgs n
   
   NumFun : Type
-  NumFun = `Π `ℕ (λ n → NumArgs n)
+  NumFun = `Π `ℕ NumArgs
 \end{code}
 
 While defining models and example values using infinitary
@@ -509,7 +506,7 @@ the base types are parameters instead of being hardcoded to
   
     ⟦_⟧ : Type → Set
     ⟦ `Base A ⟧ = A
-    ⟦ `Π A B ⟧ = Π ⟦ A ⟧ (λ a → ⟦ B a ⟧)
+    ⟦ `Π A B ⟧ = (a : ⟦ A ⟧) → ⟦ B a ⟧
 \end{code}
 
 \subsection{\AgdaDatatype{Path}}
@@ -641,7 +638,7 @@ updated \AgdaBound{a}'s to their original type.
   Update (`Π A B) (thereΠ₁ i) =
     Σ (Update A i) (λ X → ⟦ update A i X ⟧ → ⟦ A ⟧)
   Update (`Π A B) (thereΠ₂ f) =
-    Π ⟦ A ⟧ (λ a → Update (B a) (f a))
+    (a : ⟦ A ⟧) → Update (B a) (f a)
   
   update A here X = maybe id A X
   update (`Base A) thereBase X = maybe `Base (`Base A) X
@@ -703,7 +700,7 @@ small InfIR type called \AgdaDatatype{Arith} (it is called
 \begin{code}
   prod : (n : ℕ) (f : Fin n → ℕ) → ℕ
   prod zero f = suc zero
-  prod (suc n) f = f zero * prod n (λ x → f (suc x))
+  prod (suc n) f = f zero * prod n (f ∘ suc)
 
   mutual
     data Arith : Set where
@@ -713,7 +710,7 @@ small InfIR type called \AgdaDatatype{Arith} (it is called
     eval : Arith → ℕ
     eval (`Num n) = n
     eval (`Π A f) = prod (eval A)
-      (λ a → prod (toℕ a) λ b → eval (f (inject b)))
+      λ a → prod (toℕ a) λ b → eval (f (inject b))
 \end{code}
 
 \begin{code}
@@ -760,7 +757,7 @@ small InfIR type called \AgdaDatatype{Arith} (it is called
   Lookup A here = Arith
   Lookup (`Num n) (thereNum i) = ℕ 
   Lookup (`Π A B) (thereΠ₁ i) = Lookup A i
-  Lookup (`Π A B) (thereΠ₂ f) = Π ⟦ A ⟧ (λ a → Lookup (B a) (f a))
+  Lookup (`Π A B) (thereΠ₂ f) = (a : ⟦ A ⟧) → Lookup (B a) (f a)
 \end{code}
 
 \begin{code}
@@ -782,7 +779,7 @@ small InfIR type called \AgdaDatatype{Arith} (it is called
   Update (`Π A B) (thereΠ₁ i) =
     Σ (Update A i) (λ X → ⟦ update A i X ⟧ → ⟦ A ⟧)
   Update (`Π A B) (thereΠ₂ f) =
-    Π ⟦ A ⟧ (λ a → Update (B a) (f a))
+    (a : ⟦ A ⟧) → Update (B a) (f a)
   
   update A here X = maybe id A X
   update (`Num n) (thereNum i) X = `Num (updateℕ n i X)
@@ -851,7 +848,7 @@ module GenericOpen where
       → Pathα R (Arg A D) (a , xs)
     thereRec₁ : {A : Set} {D : (o : A → O) → Desc O}
       {f : A → μ R} {xs : Func (D (rec R ∘ f)) (μ R) (rec R)}
-      → Π A (λ a → Path R (f a))
+      → ((a : A) → Path R (f a))
       → Pathα R (Rec A D) (f , xs)
     thereRec₂ : {A : Set} {D : (o : A → O) → Desc O}
       {f : A → μ R} {xs : Func (D (rec R ∘ f)) (μ R) (rec R)}
@@ -871,7 +868,7 @@ module GenericOpen where
   Lookupα R (End o) tt ()
   Lookupα R (Arg A D) (a , xs) thereArg₁ = A
   Lookupα R (Arg A D) (a , xs) (thereArg₂ i) = Lookupα R (D a) xs i
-  Lookupα R (Rec A D) (f , xs) (thereRec₁ g) = Π A (λ a → Lookup R (f a) (g a))
+  Lookupα R (Rec A D) (f , xs) (thereRec₁ g) = (a : A) → Lookup R (f a) (g a)
   Lookupα R (Rec A D) (f , xs) (thereRec₂ i) = Lookupα R (D (rec R ∘ f)) xs i
 \end{code}
 
@@ -908,7 +905,7 @@ module GenericOpen where
       (maybe (λ a' → Func (D a) (μ R) (rec R) → Func (D a') (μ R) (rec R)) ⊤)
   Updateα R (Arg A D) (a , xs) (thereArg₂ i) = Updateα R (D a) xs i
   Updateα R (Rec A D) (f , xs) (thereRec₁ g) =
-    Σ (Π A (λ a → Update R (f a) (g a)))
+    Σ ((a : A) → Update R (f a) (g a))
       (λ h → Func (D (rec R ∘ f)) (μ R) (rec R)
         → Func (D (λ a → rec R (update R (f a) (g a) (h a)))) (μ R) (rec R))
   Updateα R (Rec A D) (f , xs) (thereRec₂ i) =
@@ -974,7 +971,7 @@ module GenericClosed where
     ⟦ `⊤ ⟧ = ⊤
     ⟦ `Bool ⟧ = Bool
     ⟦ `Σ A B ⟧ = Σ ⟦ A ⟧ (λ a → ⟦ B a ⟧)
-    ⟦ `Π A B ⟧ = Π ⟦ A ⟧ (λ a → ⟦ B a ⟧)
+    ⟦ `Π A B ⟧ = (a : ⟦ A ⟧) → ⟦ B a ⟧
     ⟦ `μ D ⟧ = μ ⟪ D ⟫
   
     data `Desc (O : `Set) : Set where
@@ -1003,7 +1000,7 @@ module GenericClosed where
       → Path (B a) b
       → Path (`Σ A B) (a , b)
     thereΠ : {A : `Set} {B : ⟦ A ⟧ → `Set} {f : (a : ⟦ A ⟧) → ⟦ B a ⟧}
-      → Π ⟦ A ⟧ (λ a → Path (B a) (f a))
+      → ((a : ⟦ A ⟧) → Path (B a) (f a))
       → Path (`Π A B) f
     thereμ : {O : `Set} {D : `Desc O} {xs : Func ⟪ D ⟫ (μ ⟪ D ⟫) (rec ⟪ D ⟫)}
       → Pathα D D xs
@@ -1020,7 +1017,7 @@ module GenericClosed where
       → Pathα R (`Arg A D) (a , xs)
     thereRec₁ : {A : `Set} {D : (o : ⟦ A ⟧ → ⟦ O ⟧) → `Desc O}
       {f : ⟦ A ⟧ → μ ⟪ R ⟫} {xs : Func ⟪ D (rec ⟪ R ⟫ ∘ f) ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫)}
-      → Π ⟦ A ⟧ (λ a → Path (`μ R) (f a))
+      → ((a : ⟦ A ⟧) → Path (`μ R) (f a))
       → Pathα R (`Rec A D) (f , xs)
     thereRec₂ : {A : `Set} {D : (o : ⟦ A ⟧ → ⟦ O ⟧) → `Desc O}
       {f : ⟦ A ⟧ → μ ⟪ R ⟫} {xs : Func ⟪ D (rec ⟪ R ⟫ ∘ f) ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫)}
@@ -1038,12 +1035,12 @@ module GenericClosed where
   Lookup A a here = ⟦ A ⟧
   Lookup (`Σ A B) (a , b) (thereΣ₁ i) = Lookup A a i
   Lookup (`Σ A B) (a , b) (thereΣ₂ i) = Lookup (B a) b i
-  Lookup (`Π A B) f (thereΠ g) = Π ⟦ A ⟧ (λ a → Lookup (B a) (f a) (g a))
+  Lookup (`Π A B) f (thereΠ g) = (a : ⟦ A ⟧) → Lookup (B a) (f a) (g a)
   Lookup (`μ D) (init xs) (thereμ i) = Lookupα D D xs i
   
   Lookupα R (`Arg A D) (a , xs) (thereArg₁ i) = Lookup A a i
   Lookupα R (`Arg A D) (a , xs) (thereArg₂ i) = Lookupα R (D a) xs i
-  Lookupα R (`Rec A D) (f , xs) (thereRec₁ g) = Π ⟦ A ⟧ (λ a → Lookup (`μ R) (f a) (g a))
+  Lookupα R (`Rec A D) (f , xs) (thereRec₁ g) = (a : ⟦ A ⟧) → Lookup (`μ R) (f a) (g a)
   Lookupα R (`Rec A D) (f , xs) (thereRec₂ i) = Lookupα R (D (rec ⟪ R ⟫ ∘ f)) xs i
 \end{code}
 
@@ -1081,7 +1078,7 @@ module GenericClosed where
   Update (`Σ A B) (a , b) (thereΣ₁ i) =
     Σ (Update A a i) (λ a' → ⟦ B a ⟧ → ⟦ B (update A a i a') ⟧)
   Update (`Σ A B) (a , b) (thereΣ₂ i) = Update (B a) b i
-  Update (`Π A B) f (thereΠ g) = Π ⟦ A ⟧ (λ a → Update (B a) (f a) (g a))
+  Update (`Π A B) f (thereΠ g) = (a : ⟦ A ⟧) → Update (B a) (f a) (g a)
   Update (`μ D) (init xs) (thereμ i) = Updateα D D xs i
   
   Updateα R (`Arg A D) (a , xs) (thereArg₁ i) =
@@ -1089,7 +1086,7 @@ module GenericClosed where
       (λ a' → Func ⟪ D a ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫) → Func ⟪ D (update A a i a') ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫))
   Updateα R (`Arg A D) (a , xs) (thereArg₂ i) = Updateα R (D a) xs i
   Updateα R (`Rec A D) (f , xs) (thereRec₁ g) =
-    Σ (Π ⟦ A ⟧ (λ a → Update (`μ R) (f a) (g a)))
+    Σ ((a : ⟦ A ⟧) → Update (`μ R) (f a) (g a))
       (λ h → Func ⟪ D (λ a → rec ⟪ R ⟫ (f a)) ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫)
         → Func ⟪ D (λ a → rec ⟪ R ⟫ (update (`μ R) (f a) (g a) (h a))) ⟫ (μ ⟪ R ⟫) (rec ⟪ R ⟫)
       )
