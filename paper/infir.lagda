@@ -492,7 +492,7 @@ define the corresponding datatypes and functions for InfIR
 
 \subsection{\AgdaDatatype{Type}}
 
-The InfIR \AgdaDatatype{Type} used in this section will be another
+The InfIR \AgdaDatatype{Type} used in this section is another
 type universe, similar to the one in \refsec{intro}. The
 \AgdaDatatype{Type} universe is still closed under functions, but now
 the base types are parameters instead of being hardcoded to
@@ -738,8 +738,62 @@ together.
     prod (suc n) f = f zero * prod n (f ∘ suc)
 \end{code}
 
+\subsection{Functions over \AgdaDatatype{ℕ}}
+
+The major difference between the base case
+\AgdaInductiveConstructor{`Num} of \AgdaDatatype{Arith}, and
+\AgdaInductiveConstructor{`Base} of \AgdaDatatype{Type}, is that the
+former contains a \AgdaDatatype{ℕ} while the latter contains a
+\AgdaDatatype{Set}. The \AgdaFunction{lookup} for \AgdaDatatype{Type}
+had no choice but to return the value of type \AgdaDatatype{Set} in
+the \AgdaInductiveConstructor{`Base} case, because the inability to
+case analyze \AgdaDatatype{Set} prevents further lookups into that
+value. In contrast, we can continue to lookup into a substructure of
+\AgdaDatatype{ℕ} in the base case \AgdaInductiveConstructor{`Num} of
+\AgdaFunction{lookup} for \AgdaDatatype{Arith}.
+For this reason, we need \AgdaDatatype{Pathℕ}, \AgdaFunction{lookupℕ},
+and \AgdaFunction{lookupℕ} definitions for natural numbers.
+
+\AgdaDatatype{Pathℕ} is an index into the number, which can point to
+that number or any smaller number. It is different from the finite set
+type \AgdaDatatype{Fin} because the number pointed to can also be
+\AgdaInductiveConstructor{zero}.
+
+\begin{code}
+  data Pathℕ : ℕ → Set where
+    here : {n : ℕ} → Pathℕ n
+    there : {n : ℕ}
+      → Pathℕ n
+      → Pathℕ (suc n)
+\end{code}
+
+The \AgdaFunction{lookup} function simply returns the
+\AgdaDatatype{ℕ} pointed to by \AgdaDatatype{Pathℕ}. It does not have
+a fancy return type, because a \AgdaDatatype{Pathℕ} always points to a
+\AgdaDatatype{ℕ}.
+
+\begin{code}
+  lookupℕ : (n : ℕ) → Pathℕ n → ℕ
+  lookupℕ n here = n
+  lookupℕ (suc n) (there i) = lookupℕ n i
+\end{code}
+
+The \AgdaFunction{update} function replaces a subnumber within a
+\AgdaDatatype{ℕ} with a \AgdaDatatype{Maybe ℕ}. The
+\AgdaInductiveConstructor{nothing} case performs an identity update,
+while \AgdaInductiveConstructor{just} \AgdaBound{n} replaces the
+subnumber with \AgdaBound{n}.
+
+\begin{code}
+  updateℕ : (n : ℕ) → Pathℕ n → Maybe ℕ → ℕ
+  updateℕ n here x = maybe id n x
+  updateℕ (suc n) (there i) x = suc (updateℕ n i x)
+\end{code}
+
+\subsection{\AgdaDatatype{Path}}
+
 For the remaining \AgdaDatatype{Path}, \AgdaFunction{lookup}, and
-\AgdaFunction{lookup} subsections, many of the definitions will be
+\AgdaFunction{lookup} subsections, many of the definitions are
 structurally identical to the corresponding definitions for
 \AgdaDatatype{Type} from \refsec{concretelarge}. Thus, we will only
 cover the \AgdaInductiveConstructor{`Num} cases of these
@@ -750,24 +804,6 @@ other cases by replacing \AgdaDatatype{Type} with
 \begin{code}
   ⟦_⟧ : Arith → Set
   ⟦ A ⟧ = Fin (eval A)
-\end{code}
-
-\subsection{}
-
-\begin{code}
-  data Pathℕ : ℕ → Set where
-    here : {n : ℕ} → Pathℕ n
-    there : {n : ℕ}
-      → Pathℕ n
-      → Pathℕ (suc n)
-  
-  lookupℕ : (n : ℕ) → Pathℕ n → ℕ
-  lookupℕ n here = n
-  lookupℕ (suc n) (there i) = lookupℕ n i
-  
-  updateℕ : (n : ℕ) → Pathℕ n → Maybe ℕ → ℕ
-  updateℕ n here x = maybe id n x
-  updateℕ (suc n) (there i) x = suc (updateℕ n i x)
 \end{code}
 
 \begin{code}
