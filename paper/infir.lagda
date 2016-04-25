@@ -182,10 +182,6 @@ functions using infinitary inductive-recursive types will help future
 dependently functional programmers with writing their own functions
 over this class of datatypes.
 
-%% trouble: non-heterogeneous answers
-%% either make the return type heterogeneous, or add
-%% a heterogeneous argument
-
 \section{The problem}
 \label{sec:problem}
 
@@ -738,7 +734,7 @@ together.
     prod (suc n) f = f zero * prod n (f ∘ suc)
 \end{code}
 
-\subsection{Functions over \AgdaDatatype{ℕ}}
+\subsection{\AgdaDatatype{Pathℕ} \& \AgdaFunction{lookupℕ} \& \AgdaFunction{updateℕ}}
 
 The major difference between the base case
 \AgdaInductiveConstructor{`Num} of \AgdaDatatype{Arith}, and
@@ -790,11 +786,11 @@ subnumber with \AgdaBound{n}.
   updateℕ (suc n) (there i) x = suc (updateℕ n i x)
 \end{code}
 
-\subsection{\AgdaDatatype{Path}}
+\subsection{\AgdaDatatype{Path} \& \AgdaFunction{lookup} \& \AgdaFunction{update}}
 
-For the remaining \AgdaDatatype{Path}, \AgdaFunction{lookup}, and
-\AgdaFunction{lookup} subsections, many of the definitions are
-structurally identical to the corresponding definitions for
+The \AgdaDatatype{Path}, \AgdaFunction{lookup}, and
+\AgdaFunction{lookup} definitions for \AgdaDatatype{Arith} are
+nearly structurally identical to the corresponding definitions for
 \AgdaDatatype{Type} from \refsec{concretelarge}. Thus, we will only
 cover the \AgdaInductiveConstructor{`Num} cases of these
 definitions. The old \AgdaDatatype{Type} definitions will work for the
@@ -806,57 +802,119 @@ other cases by replacing \AgdaDatatype{Type} with
   ⟦ A ⟧ = Fin (eval A)
 \end{code}
 
+The \AgdaInductiveConstructor{thereNum} case of
+\AgdaDatatype{Path} can point somewhere deeper into a substructure of
+the natural number contained by \AgdaInductiveConstructor{`Num} by
+using a \AgdaDatatype{Pathℕ}.
+
 \begin{code}
   data Path : Arith → Set where
-    here : {A : Arith} → Path A
     thereNum : {n : ℕ} → Pathℕ n → Path (`Num n)
+\end{code}
+    
+\AgdaHide{
+\begin{code}
+    here : {A : Arith} → Path A
     thereΠ₁ : {A : Arith} {B : ⟦ A ⟧ → Arith}
       (i : Path A)
       → Path (`Π A B)
     thereΠ₂ : {A : Arith} {B : ⟦ A ⟧ → Arith}
       (f : (a : ⟦ A ⟧) → Path (B a))
       → Path (`Π A B)
-\end{code}
+\end{code}}
 
-
-\subsection{\AgdaFunction{lookup}}
-
+\AgdaHide{
 \begin{code}
   Lookup : (A : Arith) → Path A → Set
+\end{code}}
+
+
+\AgdaHide{
+\begin{code}
   Lookup A here = Arith
-  Lookup (`Num n) (thereNum i) = ℕ 
-  Lookup (`Π A B) (thereΠ₁ i) = Lookup A i
-  Lookup (`Π A B) (thereΠ₂ f) = (a : ⟦ A ⟧) → Lookup (B a) (f a)
-\end{code}
+\end{code}}
+
+The \AgdaInductiveConstructor{`Num} case of \AgdaFunction{Lookup}
+results in a natural number.
 
 \begin{code}
-  lookup : (A : Arith) (i : Path A) → Lookup A i
-  lookup A here = A
-  lookup (`Num n) (thereNum i) = lookupℕ n i
-  lookup (`Π A B) (thereΠ₁ i) = lookup A i
-  lookup (`Π A B) (thereΠ₂ f) = λ a → lookup (B a) (f a)
+  Lookup (`Num n) (thereNum i) = ℕ
 \end{code}
 
-\subsection{\AgdaFunction{update}}
+\AgdaHide{
+\begin{code}
+  Lookup (`Π A B) (thereΠ₂ f) = (a : ⟦ A ⟧) → Lookup (B a) (f a)
+  Lookup (`Π A B) (thereΠ₁ i) = Lookup A i
+\end{code}}
 
+\AgdaHide{
+\begin{code}
+  lookup : (A : Arith) (i : Path A) → Lookup A i
+\end{code}}
+
+\AgdaHide{
+\begin{code}
+  lookup A here = A
+\end{code}}
+
+The \AgdaInductiveConstructor{`Num} case of \AgdaFunction{lookup}
+continues to \AgdaFunction{lookupℕ} the number contained
+inside. 
+
+\begin{code}
+  lookup (`Num n) (thereNum i) = lookupℕ n i
+\end{code}
+
+\AgdaHide{
+\begin{code}
+  lookup (`Π A B) (thereΠ₁ i) = lookup A i
+  lookup (`Π A B) (thereΠ₂ f) = λ a → lookup (B a) (f a)
+\end{code}}
+
+\AgdaHide{
 \begin{code}
   Update : (A : Arith) → Path A → Set
   update : (A : Arith) (i : Path A) (X : Update A i) → Arith
-  
+\end{code}}
+
+\AgdaHide{
+\begin{code}
   Update A here = Maybe Arith
+\end{code}}
+
+The \AgdaInductiveConstructor{`Num} case of \AgdaFunction{Update}
+allows the user to supply a \AgdaDatatype{Maybe ℕ}, representing
+either the identity update or a number to update with.
+
+\begin{code}
   Update (`Num n) (thereNum i) = Maybe ℕ
+\end{code}
+
+\AgdaHide{
+\begin{code}
   Update (`Π A B) (thereΠ₁ i) =
     Σ (Update A i) (λ X → ⟦ update A i X ⟧ → ⟦ A ⟧)
   Update (`Π A B) (thereΠ₂ f) =
     (a : ⟦ A ⟧) → Update (B a) (f a)
   
   update A here X = maybe id A X
+\end{code}}
+
+The \AgdaInductiveConstructor{`Num} case of \AgdaFunction{update}
+leaves \AgdaInductiveConstructor{`Num} unchanged, but replaces the
+natural number contained using \AgdaFunction{updateℕ}.
+
+\begin{code}
   update (`Num n) (thereNum i) X = `Num (updateℕ n i X)
+\end{code}
+
+\AgdaHide{
+\begin{code}
   update (`Π A B) (thereΠ₁ i) (X , f) =
     `Π (update A i X) (B ∘ f)
   update (`Π A B) (thereΠ₂ f) g =
     `Π A (λ a → update (B a) (f a) (g a))
-\end{code}
+\end{code}}
 
 
 \section{Generic Open InfIR}
