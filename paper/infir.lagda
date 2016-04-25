@@ -738,7 +738,21 @@ together.
     prod (suc n) f = f zero * prod n (f ∘ suc)
 \end{code}
 
-\subsection{\AgdaDatatype{Path}}
+For the remaining \AgdaDatatype{Path}, \AgdaFunction{lookup}, and
+\AgdaFunction{lookup} subsections, many of the definitions will be
+structurally identical to the corresponding definitions for
+\AgdaDatatype{Type} from \refsec{concretelarge}. Thus, we will only
+cover the \AgdaInductiveConstructor{`Num} cases of these
+definitions. The old \AgdaDatatype{Type} definitions will work for the
+other cases by replacing \AgdaDatatype{Type} with
+\AgdaDatatype{Arith}, and by defining the following type synonym.
+
+\begin{code}
+  ⟦_⟧ : Arith → Set
+  ⟦ A ⟧ = Fin (eval A)
+\end{code}
+
+\subsection{}
 
 \begin{code}
   data Pathℕ : ℕ → Set where
@@ -770,11 +784,6 @@ together.
 
 
 \subsection{\AgdaFunction{lookup}}
-
-\begin{code}
-  ⟦_⟧ : Arith → Set
-  ⟦ A ⟧ = Fin (eval A)
-\end{code}
 
 \begin{code}
   Lookup : (A : Arith) → Path A → Set
