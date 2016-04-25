@@ -697,11 +697,16 @@ small InfIR type called \AgdaDatatype{Arith} (it is called
 
 \subsection{\AgdaDatatype{Arith}}
 
-\begin{code}
-  prod : (n : ℕ) (f : Fin n → ℕ) → ℕ
-  prod zero f = suc zero
-  prod (suc n) f = f zero * prod n (f ∘ suc)
+The InfIR \AgdaDatatype{Arith} used in this section is structurally
+similar to \AgdaDatatype{Type} from \refsec{intro}. One difference is
+that the base constructor (\AgdaInductiveConstructor{`Num}), contains
+a \AgdaDatatype{ℕ}atural number (rather than a \AgdaDatatype{Set},
+like \AgdaInductiveConstructor{`Base}). The other difference is that
+the mutually defined function \AgdaFunction{eval} returns a
+\AgdaDatatype{ℕ} (rather than a \AgdaDatatype{Set}, like
+\AgdaFunction{⟦\_⟧}.)
 
+\begin{code}
   mutual
     data Arith : Set where
       `Num : ℕ → Arith
@@ -713,11 +718,25 @@ small InfIR type called \AgdaDatatype{Arith} (it is called
       λ a → prod (toℕ a) λ b → eval (f (inject b))
 \end{code}
 
-\begin{code}
-  ⟦_⟧ : Arith → Set
-  ⟦ A ⟧ = Fin (eval A)
-\end{code}
+Values of type \AgdaDatatype{Arith} encode ``Big
+Pi'' mathematical equations up to some finite bound, such as the one
+below.
 
+\begin{equation*}
+  \prod_{i=1}^{3} i
+\end{equation*}
+
+An equation may also be nested in its lower bound, upper bound, or
+body. The \AgdaFunction{eval} function interprets the equation as a
+natural number, using the helper function \AgdaFunction{prod} to
+multiply a finite number \AgdaBound{n} of other natural numbers
+together.
+
+\begin{code}
+    prod : (n : ℕ) (f : Fin n → ℕ) → ℕ
+    prod zero f = suc zero
+    prod (suc n) f = f zero * prod n (f ∘ suc)
+\end{code}
 
 \subsection{\AgdaDatatype{Path}}
 
@@ -751,6 +770,11 @@ small InfIR type called \AgdaDatatype{Arith} (it is called
 
 
 \subsection{\AgdaFunction{lookup}}
+
+\begin{code}
+  ⟦_⟧ : Arith → Set
+  ⟦ A ⟧ = Fin (eval A)
+\end{code}
 
 \begin{code}
   Lookup : (A : Arith) → Path A → Set
