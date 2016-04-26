@@ -143,20 +143,20 @@ infinitary inductive-recursive functions? They contain inherently
 complex properties that make programmers rather avoid thinking about
 dealing with them, so there simply aren't many examples for
 programmers to base their programs off. Their infinitary nature makes them
-\emph{higher-order} datatypes, rather than simpler first-order
+\emph{higher-order datatypes}, rather than simpler first-order
 datatypes. Their inductive-recursive nature means you need to deal
-with dependencies between arguments and mutual functions too.
+with \emph{dependencies} between arguments and \emph{mutual functions} too.
 
 Functional programming languages typically package useful datatypes
 (like \AgdaDatatype{List}s and \AgdaDatatype{Vec}tors) with useful operations
-(like \AgdaFunction{lookup}, \AgdaFunction{update} and
-\AgdaDatatype{Zipper} navigation) in their standard
+(like \AgdaFunction{lookup}, \AgdaFunction{drop} and
+\AgdaFunction{update}) in their standard
 libraries. Additionally, \emph{generic} implementations of such operations
 may exist as libraries for any other user-defined datatypes.
 
 Our \emph{primary contribution} is to show how to write analogues of common
-functional operations using common universe models of infinitary
-inductive-recursive types, and then show how to turn such operations
+functional operations defined over infinitary
+inductive-recursive types (such as \AgdaDatatype{Type} universes), and then show how to turn such operations
 over specific datatypes into generic operations over any user-defined
 datatype. More specifically, our contributions are:
 
