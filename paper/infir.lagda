@@ -942,10 +942,10 @@ module GenericOpen where
     rec : {O : Set} (D : Desc O) → μ D → O
     rec D (init xs) = recα D D xs
   
-    recα : {O : Set} (D E : Desc O) → Func D (μ E) (rec E) → O
-    recα (End o) E tt = o
-    recα (Arg A D) E (a , xs) = recα (D a) E xs
-    recα (Rec A D) E (f , xs) = recα (D (λ a → rec E (f a))) E xs
+    recα : {O : Set} (R D : Desc O) → Func D (μ R) (rec R) → O
+    recα R (End o) tt = o
+    recα R (Arg A D) (a , xs) = recα R (D a) xs
+    recα R (Rec A D) (f , xs) = recα R (D (λ a → rec R (f a))) xs
 \end{code}
 
 \subsection{\AgdaDatatype{Path}}
@@ -1065,7 +1065,7 @@ module GenericClosed where
   Func (End o) X Y = ⊤
   Func (Arg A D) X Y = Σ A (λ a → Func (D a) X Y)
   Func (Rec A D) X Y = Σ (A → X) (λ f → Func (D (Y ∘ f)) X Y)
-  
+
   mutual
     data μ {O : Set} (D : Desc O) : Set where
       init : Func D (μ D) (rec D) → μ D
@@ -1073,10 +1073,10 @@ module GenericClosed where
     rec : {O : Set} (D : Desc O) → μ D → O
     rec D (init xs) = recα D D xs
   
-    recα : {O : Set} (D E : Desc O) → Func D (μ E) (rec E) → O
-    recα (End o) E tt = o
-    recα (Arg A D) E (a , xs) = recα (D a) E xs
-    recα (Rec A D) E (f , xs) = recα (D (λ a → rec E (f a))) E xs
+    recα : {O : Set} (R D : Desc O) → Func D (μ R) (rec R) → O
+    recα R (End o) tt = o
+    recα R (Arg A D) (a , xs) = recα R (D a) xs
+    recα R (Rec A D) (f , xs) = recα R (D (λ a → rec R (f a))) xs
 \end{code}}
 
 \subsection{\AgdaDatatype{`Set} \& \AgdaDatatype{`Desc}}
