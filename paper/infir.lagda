@@ -157,27 +157,21 @@ may exist as libraries for any other user-defined datatypes.
 Our \emph{primary contribution} is to show how to write analogues of common
 functional operations defined over infinitary
 inductive-recursive types (such as \AgdaDatatype{Type} universes), and then show how to turn such operations
-over specific datatypes into generic operations over any user-defined
-datatype. More specifically, our contributions are:
+over concrete datatypes into generic operations over any user-defined
+datatype. More specifically, our contributions are the following:
 
 \begin{itemize}
-\item Concrete and generic open universe index InfIR types (\AgdaDatatype{Path}).
-\item Concrete and generic open universe
-  \AgdaFunction{lookup} and \AgdaFunction{update} functions for
-  InfIR types.
-\item Correctness proofs of \AgdaFunction{lookup} and
-  \AgdaFunction{update} with respect to each other.
-\item Concrete and generic open universe \AgdaDatatype{Zipper} InfIR types.
-\item Concrete and generic open universe \AgdaDatatype{Zipper}
-  operations for InfIR types.
-\item Concrete, generic open universe, and generic \emph{closed} universe \AgdaFunction{show}
-  functions for InfIR types. 
-\item A model of a closed universe of InfIR types. The generic closed universe
-  \AgdaFunction{show} function is another example of a
-  concrete InfIR function, where the closed universe type is itself InfIR.
+\item Index types (\AgdaDatatype{Path}s) for concrete, open universe,
+  and closed universe InfIR types.
+\item A \AgdaFunction{lookup} function with a heterogeneous return
+  type for concrete, open universe, and closed universe InfIR types.
+\item An \AgdaFunction{update} function with a heterogeneous type for
+  the value to update with, for concrete, open universe,
+  and closed universe InfIR types.
+\item A model of a closed universe of InfIR types.
 \end{itemize}
 
-Finally, we hope that seeing examples of writing both specific and generic
+Finally, we hope that seeing examples of writing both concrete and generic
 functions using infinitary inductive-recursive types will help future
 dependently functional programmers with writing their own functions
 over this class of datatypes.
@@ -491,7 +485,7 @@ define the corresponding datatypes and functions for InfIR
 The InfIR \AgdaDatatype{Type} used in this section is another
 type universe, similar to the one in \refsec{intro}. The
 \AgdaDatatype{Type} universe is still closed under functions, but now
-the base types are parameters instead of being hardcoded to
+the \AgdaInductiveConstructor{`Base} types are parameters (of type \AgdaDatatype{Set}) instead of being hardcoded to
 \AgdaDatatype{ℕ}.
 
 \begin{code}
@@ -535,7 +529,7 @@ continue traversing under.
 Above, \AgdaInductiveConstructor{thereΠ₂} represents going right
 into the codomain of \AgdaInductiveConstructor{`Π}, but only once the
 user tells you which \AgdaBound{a} to use. In a sense, going right is
-like asking for a continuation that tells you where else to go once
+like asking for a continuation that tells you where to go next, once
 you have been given \AgdaBound{a}. Also note that because the argument
 \AgdaBound{f} of \AgdaInductiveConstructor{thereΠ₂} is a function that
 returns a \AgdaDatatype{Path}, the \AgdaDatatype{Path} datatype is
@@ -545,7 +539,7 @@ infinitary (just like the \AgdaDatatype{Type} it indexes).
 
 We were able to write a total function to \AgdaFunction{lookup} any
 sub\AgdaDatatype{Tree}, but \AgdaFunction{lookup}ing up a
-sub\AgdaDatatype{Type} is not always possible. Using our methodology
+sub\AgdaDatatype{Type} is not always possible. Using the methodology
 from \refsec{problem:total}, we can make \AgdaFunction{lookup} for
 \AgdaDatatype{Type}s total by choosing to change the codomain,
 depending on the input \AgdaDatatype{Type} and \AgdaDatatype{Path}.
@@ -589,7 +583,7 @@ what the \AgdaDatatype{Path} pointed to. To make updating the InfIR
 more convenient, the type of the substitute will actually be
 \AgdaDatatype{Maybe Type}, where \AgdaInductiveConstructor{nothing}
 causes an identity update.
-You might expect to write a function like:
+We might expect to write a function like:
 
 \begin{code}
   updateNaive :
@@ -722,7 +716,7 @@ below.
   \prod_{i=1}^{3} i
 \end{equation*}
 
-An equation may also be nested in its lower bound, upper bound, or
+An equation may be nested in its lower bound, upper bound, or
 body. The \AgdaFunction{eval} function interprets the equation as a
 natural number, using the helper function \AgdaFunction{prod} to
 multiply a finite number \AgdaBound{n} of other natural numbers
