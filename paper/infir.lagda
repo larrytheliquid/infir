@@ -160,6 +160,7 @@ inductive-recursive types (such as \AgdaDatatype{Type} universes), and then show
 over concrete datatypes into generic operations over any user-defined
 datatype. More specifically, our contributions are the following:
 
+\todo[inline]{Reference sections and concrete large vs small}
 \begin{itemize}
 \item Index types (\AgdaDatatype{Path}s) for concrete, open universe,
   and closed universe InfIR types.
@@ -168,7 +169,7 @@ datatype. More specifically, our contributions are the following:
 \item An \AgdaFunction{update} function with a heterogeneous type for
   the value to update with, for concrete, open universe,
   and closed universe InfIR types.
-\item A model of a closed universe of InfIR types.
+\item A model of a closed universe of small InfIR types.
 \end{itemize}
 
 Finally, we hope that seeing examples of writing both concrete and generic
@@ -783,7 +784,7 @@ subnumber with \AgdaBound{n}.
 \subsection{\AgdaDatatype{Path} \& \AgdaFunction{lookup} \& \AgdaFunction{update}}
 
 The \AgdaDatatype{Path}, \AgdaFunction{lookup}, and
-\AgdaFunction{lookup} definitions for \AgdaDatatype{Arith} are
+\AgdaFunction{update} definitions for \AgdaDatatype{Arith} are
 nearly structurally identical to the corresponding definitions for
 \AgdaDatatype{Type} from \refsec{concretelarge}. Thus, we will only
 cover the \AgdaInductiveConstructor{`Num} cases of these
