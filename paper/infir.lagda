@@ -586,6 +586,9 @@ more convenient, the type of the substitute will actually be
 causes an identity update.
 We might expect to write a function like:
 
+\todo[inline]{explain using Maybe nothing to update one path of a type
+family}
+
 \begin{code}
   updateNaive :
     (A : Type) (i : Path A) (X : Maybe Type) → Type
@@ -709,8 +712,8 @@ the mutually defined function \AgdaFunction{eval} returns a
       λ a → prod (toℕ a) λ b → eval (f (inject b))
 \end{code}
 
-Values of type \AgdaDatatype{Arith} encode ``Big
-Pi'' mathematical arithmetic product equations up to some finite
+Values of type \AgdaDatatype{Arith} encode ``Big Pi''
+mathematical arithmetic product equations up to some finite
 bound, such as the one below.
 
 \begin{equation*}
