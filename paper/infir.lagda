@@ -710,8 +710,8 @@ the mutually defined function \AgdaFunction{eval} returns a
 \end{code}
 
 Values of type \AgdaDatatype{Arith} encode ``Big
-Pi'' mathematical equations up to some finite bound, such as the one
-below.
+Pi'' mathematical arithmetic product equations up to some finite
+bound, such as the one below.
 
 \begin{equation*}
   \prod_{i=1}^{3} i
