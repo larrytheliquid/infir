@@ -717,8 +717,9 @@ bound, such as the one below.
   \prod_{i=1}^{3} i
 \end{equation*}
 
-An equation may be nested in its lower bound, upper bound, or
-body. The \AgdaFunction{eval} function interprets the equation as a
+An equation may be nested in its upper bound or body, but the lower
+bound is always the value 1.
+The \AgdaFunction{eval} function interprets the equation as a
 natural number, using the helper function \AgdaFunction{prod} to
 multiply a finite number \AgdaBound{n} of other natural numbers
 together.
