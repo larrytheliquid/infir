@@ -1089,14 +1089,13 @@ module GenericClosed where
   mutual
     data `Set : Set where
       `⊥ `⊤ `Bool : `Set
-      `Σ `Π : (A : `Set) (B : ⟦ A ⟧ → `Set) → `Set
+      `Π : (A : `Set) (B : ⟦ A ⟧ → `Set) → `Set
       `Data : {O : `Set} (D : `Desc O) → `Set
   
     ⟦_⟧ : `Set → Set
     ⟦ `⊥ ⟧ = ⊥
     ⟦ `⊤ ⟧ = ⊤
     ⟦ `Bool ⟧ = Bool
-    ⟦ `Σ A B ⟧ = Σ ⟦ A ⟧ (λ a → ⟦ B a ⟧)
     ⟦ `Π A B ⟧ = (a : ⟦ A ⟧) → ⟦ B a ⟧
     ⟦ `Data D ⟧ = Data ⟪ D ⟫
   
@@ -1119,12 +1118,6 @@ module GenericClosed where
   
   data Path where
     here : {A : `Set} {a : ⟦ A ⟧} → Path A a
-    thereΣ₁ : {A : `Set} {B : ⟦ A ⟧ → `Set} {a : ⟦ A ⟧} {b : ⟦ B a ⟧}
-      → Path A a
-      → Path (`Σ A B) (a , b)
-    thereΣ₂ : {A : `Set} {B : ⟦ A ⟧ → `Set} {a : ⟦ A ⟧} {b : ⟦ B a ⟧}
-      → Path (B a) b
-      → Path (`Σ A B) (a , b)
     thereΠ : {A : `Set} {B : ⟦ A ⟧ → `Set} {f : (a : ⟦ A ⟧) → ⟦ B a ⟧}
       → ((a : ⟦ A ⟧) → Path (B a) (f a))
       → Path (`Π A B) f
@@ -1159,8 +1152,6 @@ module GenericClosed where
     → Path′ R D xs → Set
   
   Lookup A a here = ⟦ A ⟧
-  Lookup (`Σ A B) (a , b) (thereΣ₁ i) = Lookup A a i
-  Lookup (`Σ A B) (a , b) (thereΣ₂ i) = Lookup (B a) b i
   Lookup (`Π A B) f (thereΠ g) = (a : ⟦ A ⟧) → Lookup (B a) (f a) (g a)
   Lookup (`Data D) (con xs) (thereData i) = Lookup′ D D xs i
   
@@ -1176,8 +1167,6 @@ module GenericClosed where
     (i : Path′ R D xs) → Lookup′ R D xs i
   
   lookup A a here = a
-  lookup (`Σ A B) (a , b) (thereΣ₁ i) = lookup A a i
-  lookup (`Σ A B) (a , b) (thereΣ₂ i) = lookup (B a) b i
   lookup (`Π A B) f (thereΠ g) = λ a → lookup (B a) (f a) (g a)
   lookup (`Data D) (con xs) (thereData i) = lookup′ D D xs i
   
@@ -1201,9 +1190,6 @@ module GenericClosed where
     → Data′ ⟪ R ⟫ ⟪ D ⟫
   
   Update A a here = Maybe ⟦ A ⟧
-  Update (`Σ A B) (a , b) (thereΣ₁ i) =
-    Σ (Update A a i) (λ a' → ⟦ B a ⟧ → ⟦ B (update A a i a') ⟧)
-  Update (`Σ A B) (a , b) (thereΣ₂ i) = Update (B a) b i
   Update (`Π A B) f (thereΠ g) = (a : ⟦ A ⟧) → Update (B a) (f a) (g a)
   Update (`Data D) (con xs) (thereData i) = Update′ D D xs i
   
@@ -1219,8 +1205,6 @@ module GenericClosed where
   Update′ R (`Rec A D) (f , xs) (thereRec₂ i) = Update′ R (D (fun ⟪ R ⟫ ∘ f)) xs i
   
   update A a here X = maybe id a X
-  update (`Σ A B) (a , b) (thereΣ₁ i) (X , f) = update A a i X , f b
-  update (`Σ A B) (a , b) (thereΣ₂ i) X = a , update (B a) b i X
   update (`Π A B) f (thereΠ g) h = λ a → update (B a) (f a) (g a) (h a)
   update (`Data D) (con xs) (thereData i) X = con (update′ D D xs i X)
   
