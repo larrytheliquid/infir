@@ -154,7 +154,7 @@ Functional programming languages typically package useful datatypes
 libraries. Additionally, \emph{generic} implementations of such operations
 may exist as libraries for any other user-defined datatypes.
 
-Our \emph{primary contribution} is to show how to write analogues of common
+Our \emph{primary contribution} is to show how to write analogous of common
 functional operations defined over infinitary
 inductive-recursive types (such as \AgdaDatatype{Type} universes), and then show how to turn such operations
 over concrete datatypes into generic operations over any user-defined
@@ -1088,13 +1088,12 @@ module GenericClosed where
 \begin{code}
   mutual
     data `Set : Set where
-      `⊥ `⊤ `Bool : `Set
+      `⊥ `Bool : `Set
       `Π : (A : `Set) (B : ⟦ A ⟧ → `Set) → `Set
       `Data : {O : `Set} (D : `Desc O) → `Set
   
     ⟦_⟧ : `Set → Set
     ⟦ `⊥ ⟧ = ⊥
-    ⟦ `⊤ ⟧ = ⊤
     ⟦ `Bool ⟧ = Bool
     ⟦ `Π A B ⟧ = (a : ⟦ A ⟧) → ⟦ B a ⟧
     ⟦ `Data D ⟧ = Data ⟪ D ⟫
