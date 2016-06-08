@@ -136,7 +136,7 @@ number arguments.
 
 While defining models and example values using infinitary
 inductive-recursive types is common, writing inductively defined
-\textit{functions} over them is not!
+\textit{functions} over them is not.
 
 Why isn't there much existing work on programming functions with
 infinitary inductive-recursive functions? They contain inherently
@@ -154,10 +154,11 @@ Functional programming languages typically package useful datatypes
 libraries. Additionally, \emph{generic} implementations of such operations
 may exist as libraries for any other user-defined datatypes.
 
-Our \emph{primary contribution} is to show how to write analogous of common
-functional operations defined over infinitary
-inductive-recursive types (such as \AgdaDatatype{Type} universes), and then show how to turn such operations
-over concrete datatypes into generic operations over any user-defined
+Our \emph{primary contribution} is to show how to write common
+operations over infinitary
+inductive-recursive types (such as \AgdaDatatype{Type} universes), and
+then generalize those operations from functions over concrete
+datatypes to generic functions over any user-defined
 datatype. More specifically, our contributions are the following:
 
 \todo[inline]{Reference sections and concrete large vs small}
@@ -216,13 +217,6 @@ If we want to \AgdaFunction{lookup}
 a particular
 sub\AgdaDatatype{Tree}, we must first have a way to describe a
 \AgdaDatatype{Path} that indexes into our original tree.
-\footnote{
-  For lists, \texttt{lookup} refers to finding data in a list,
-  whereas \texttt{drop} refers to finding sublists. Nevertheless, in
-  this paper we refer to our generalization of ``drop'' to tree types
-  as \AgdaFunction{lookup} because we never define a ``lookup''
-  function for non-inductive elements of a type.
-}
 
 \begin{code}
   data Path : Tree → Set where
@@ -287,7 +281,7 @@ for \AgdaDatatype{Tree} \AgdaDatatype{Path}s. However,
 \AgdaInductiveConstructor{cons}, whereas this pointed to an inductive
 subtree in the \AgdaDatatype{Tree} scenario.
 
-In the non-dependent Haskell~\cite{TODO} language there are two
+In the (tranditionally) non-dependent Haskell~\cite{TODO} language there are two
 distinct \AgdaFunction{lookup}-like functions for lists.
 
 \begin{verbatim}
@@ -331,8 +325,8 @@ left side (domain) of a \AgdaInductiveConstructor{`Π} is easy, but
 looking up something in the right side (codomain) requires entering a
 function space.
 
-Figuring out how to write functions like \AgdaFunction{lookup}, and more
-complicated functions, for InfIR types is the subject of this
+Figuring out how to write functions like \AgdaFunction{lookup} (and more
+complicated functions) over InfIR types is the subject of this
 paper. The solution (given in the next section) involves a more
 complicated version of the computational type \AgdaFunction{Lookup} above. 
 But, let us first consider a general
@@ -361,23 +355,27 @@ We have 2 options to make this function total. We can either:
 
 \begin{enumerate}
 \item Change the domain, for example by requiring an extra default argument.
-\item Change the codomain, for example by returning a
-  \AgdaDatatype{Maybe} result.
-\end{enumerate}
 
 \begin{code}
   head₁ : {A : Set} → List A → A → A
   head₁ nil y = y
   head₁ (cons x xs) y = x
-  
+\end{code}
+
+\item Change the codomain, for example by returning a
+  \AgdaDatatype{Maybe} result.
+
+\begin{code}
   head₂ : {A : Set} → List A → Maybe A
   head₂ nil = nothing
   head₂ (cons x xs) = just x
 \end{code}
 
+\end{enumerate}
+
 Both options give us something to do when we apply
 \AgdaFunction{head} to an empty list: either get an extra argument to
-return, or we simly return
+return, or we simply return
 \AgdaInductiveConstructor{nothing}.
 However, these options are rather extreme as they require changing our
 intended type signature of \AgdaFunction{head} for \emph{all} possible
@@ -513,7 +511,8 @@ When traversing a \AgdaDatatype{Tree}, you can always go left or right at a
 \AgdaDatatype{Type}, you can immediately go to the left of a
 \AgdaInductiveConstructor{`Π}, but going right requires first knowing
 which element \AgdaBound{a} of the type family \AgdaBound{B a} to
-continue traversing under.
+continue traversing under. This requirement is neatly captured as a
+dependent function type of the \AgdaBound{f} argument below.
 
 \begin{code}
   data Path : Type → Set₁ where
@@ -618,7 +617,7 @@ problematic. We would like to keep the old
 still expects an \AgdaBound{a} of the original type
 \AgdaFunction{⟦} \AgdaBound{A} \AgdaFunction{⟧}. Therefore, the
 \AgdaInductiveConstructor{thereΠ₁} case must
-ask for an additional function \AgdaBound{f} that maps newly
+ask for a forgetful function \AgdaBound{f} that maps newly
 updated \AgdaBound{a}'s to their original type.
 
 \todo[inline]{Give an example of the domain type changing and being translated}
@@ -643,8 +642,8 @@ updated \AgdaBound{a}'s to their original type.
 \end{code}
 
 Notice that we must define \AgdaFunction{Update} and
-\AgdaFunction{update} mutually, because the translation
-function (the codomain of
+\AgdaFunction{update} mutually, because the forgetful
+function \AgdaBound{f} (the codomain of
 \AgdaDatatype{Σ} in the \AgdaInductiveConstructor{thereΠ₁} case of
 \AgdaFunction{Update}) must refer to \AgdaFunction{update} in its
 domain. Although the \AgdaInductiveConstructor{thereΠ₁} case of
@@ -652,7 +651,7 @@ domain. Although the \AgdaInductiveConstructor{thereΠ₁} case of
 \AgdaInductiveConstructor{`Π}, the type family \AgdaBound{B} in the
 codomain expects an \AgdaBound{a} of type
 \AgdaFunction{⟦} \AgdaBound{A} \AgdaFunction{⟧}, so we use the
-translation function \AgdaBound{f} to map back to \AgdaBound{a}'s
+forgetful function \AgdaBound{f} to map back to \AgdaBound{a}'s
 original type.
 
 The base cases (\AgdaInductiveConstructor{here} and
@@ -720,7 +719,7 @@ bound, such as the one below.
   \prod_{i=1}^{3} i
 \end{equation*}
 
-An equation may be nested in its upper bound or body, but the lower
+An \AgdaDatatype{Arith} equation may be nested in its upper bound or body, but the lower
 bound is always the value 1.
 The \AgdaFunction{eval} function interprets the equation as a
 natural number, using the helper function \AgdaFunction{prod} to
@@ -746,13 +745,13 @@ case analyze \AgdaDatatype{Set} prevents further lookups into that
 value. In contrast, we can continue to lookup into a substructure of
 \AgdaDatatype{ℕ} in the base case \AgdaInductiveConstructor{`Num} of
 \AgdaFunction{lookup} for \AgdaDatatype{Arith}.
-For this reason, we need \AgdaDatatype{Pathℕ}, \AgdaFunction{lookupℕ},
-and \AgdaFunction{lookupℕ} definitions for natural numbers.
+For this reason, we need the \AgdaDatatype{Pathℕ}, \AgdaFunction{lookupℕ},
+and \AgdaFunction{updateℕ} definitions for natural numbers.
 
 \AgdaDatatype{Pathℕ} is an index into the number, which can point to
-that number or any smaller number. It is different from the finite set
-type \AgdaDatatype{Fin} because the number pointed to can also be
-\AgdaInductiveConstructor{zero}.
+that number or any smaller number. It is different from the standard
+finite set type \AgdaDatatype{Fin} because the number pointed to may
+be \AgdaInductiveConstructor{zero}.
 
 \begin{code}
   data Pathℕ : ℕ → Set where
@@ -763,9 +762,9 @@ type \AgdaDatatype{Fin} because the number pointed to can also be
 \end{code}
 
 The \AgdaFunction{lookup} function simply returns the
-\AgdaDatatype{ℕ} pointed to by \AgdaDatatype{Pathℕ}. It does not have
-a fancy return type, because a \AgdaDatatype{Pathℕ} always points to a
-\AgdaDatatype{ℕ}.
+\AgdaDatatype{ℕ} pointed to by \AgdaDatatype{Pathℕ}. It has a static
+return type (not a computational return type), because a
+\AgdaDatatype{Pathℕ} always points to a \AgdaDatatype{ℕ}.
 
 \begin{code}
   lookupℕ : (n : ℕ) → Pathℕ n → ℕ
