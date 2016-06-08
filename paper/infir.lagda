@@ -764,7 +764,7 @@ be \AgdaInductiveConstructor{zero}.
   data Pathℕ : ℕ → Set where
     here : {n : ℕ} → Pathℕ n
     there : {n : ℕ}
-      → Pathℕ n
+      (i : Pathℕ n)
       → Pathℕ (suc n)
 \end{code}
 
@@ -932,14 +932,64 @@ natural number contained using \AgdaFunction{updateℕ}.
 module GenericOpen where
 \end{code}}
 
+In this section we develop generic versions of the datatypes and
+functions from previous sections, for any datatype encoded as an
+inductive-recursive Dybjer-Setzer code~\cite{TODO}.
+
 \subsection{\AgdaDatatype{Desc} \& \AgdaDatatype{Data}}
+
+First let us recall the type of datatype inductive-recursive codes
+developed by Dybjer and Setzer. We refer to values of
+\AgdaDatatype{Desc} defined below as ``codes''.
+\footnote{
+  We have renamed the original Dybjer-Setzer constructions to
+  emphasize their meaning in English. The original names of our
+  \AgdaDatatype{Desc}/\AgdaInductiveConstructor{End}/\AgdaInductiveConstructor{Arg}/\AgdaInductiveConstructor{Rec}
+  constructions are
+  \AgdaDatatype{IR}/\AgdaInductiveConstructor{$\iota$}/\AgdaInductiveConstructor{$\sigma$}/\AgdaInductiveConstructor{$\delta$}
+  respectively.
+  }
+A code simultaneously
+encodes the definition for a datatype, and a function mutually
+defined with it.
 
 \begin{code}
   data Desc {ℓ} (O : Set ℓ) : Set (↑ ℓ) where
     End : (o : O) → Desc O
-    Arg : (A : Set ℓ) (D : A → Desc O) → Desc O
+    Arg : (A : Set ℓ) (D : (a : A) → Desc O) → Desc O
     Rec : (A : Set ℓ) (D : (o : A → O) → Desc O) → Desc O  
 \end{code}
+
+To a first approximation, a datatype \AgdaDatatype{Desc}ription
+encodes the type signature of a single constructor, and the value
+returned by the case of that constructor for the mutually defined
+function. \AgdaInductiveConstructor{End} is used to specify that a
+constructor takes no further arguments. However, the user must supply
+a value \AgdaBound{o} of type \AgdaBound{O} to define the value returned by the
+mutually defined function. \AgdaInductiveConstructor{Arg} is used to
+specify a non-recursive argument of a constructor, \AgdaBound{a} of
+type \AgdaBound{A}, and the remainder of the \AgdaDatatype{Desc} may depend
+on the value \AgdaBound{a}. \AgdaInductiveConstructor{Rec} is used to
+specify a recursive argument (of the type currently being
+specified). More generally, the recursive argument may be a function
+type whose codomain is the type currently being defined but whose
+domain may be non-recursive.
+\footnote{
+  The domain is restricted to be non-recursive to enforce that encoded
+  datatypes are strictly positive.
+}
+Above, the domain of the function is some non-recursive type
+\AgdaBound{A}, and the remainder of the \AgdaDatatype{Desc} may depend
+on a function \AgdaBound{o} from \AgdaBound{A} to \AgdaBound{O},
+representing the result of applying the mutually defined function to
+the recursive argument being specified.
+
+Finally, to encode multiple constructors as a \AgdaDatatype{Desc}, you
+simply define an \AgdaInductiveConstructor{Arg} whose domain is a
+finite enumeration of types (representing each constructor), and whose
+codomain is the \AgdaDatatype{Desc} corresponding to the arguments and
+recursive cases for each constructor.
+
 
 \begin{code}
   mutual
@@ -1064,7 +1114,7 @@ module GenericClosed where
 
   data Desc (O : Set) : Set₁ where
     End : (o : O) → Desc O
-    Arg : (A : Set) (D : A → Desc O) → Desc O
+    Arg : (A : Set) (D : (a : A) → Desc O) → Desc O
     Rec : (A : Set) (D : (o : A → O) → Desc O) → Desc O
 
   mutual
