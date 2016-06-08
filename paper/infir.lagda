@@ -72,7 +72,8 @@ Dependent types; induction-recursion; generic programming.
 \AgdaHide{
 \begin{code}
 module InfIR where
-open import Level using ( _⊔_ )
+open import Level using ( _⊔_ ; Lift ; lift )
+  renaming ( zero to ∙ ; suc to ↑ )
 open import Function
 open import Data.Empty
 open import Data.Unit
@@ -926,27 +927,27 @@ module GenericOpen where
 \subsection{\AgdaDatatype{Desc} \& \AgdaDatatype{Data}}
 
 \begin{code}
-  data Desc (O : Set) : Set₁ where
+  data Desc {ℓ} (O : Set ℓ) : Set (↑ ℓ) where
     End : (o : O) → Desc O
-    Arg : (A : Set) (D : A → Desc O) → Desc O
-    Rec : (A : Set) (D : (o : A → O) → Desc O) → Desc O  
+    Arg : (A : Set ℓ) (D : A → Desc O) → Desc O
+    Rec : (A : Set ℓ) (D : (o : A → O) → Desc O) → Desc O  
 \end{code}
 
 \begin{code}
   mutual
-    data Data {O : Set} (D : Desc O) : Set where
+    data Data {ℓ} {O : Set ℓ} (D : Desc O) : Set ℓ where
       con : Data′ D D → Data D
 
-    Data′ : {O : Set} (R D : Desc O) → Set
-    Data′ R (End o) = ⊤
+    Data′ : ∀{ℓ} {O : Set ℓ} (R D : Desc O) → Set ℓ
+    Data′ R (End o) = Lift ⊤
     Data′ R (Arg A D) = Σ A (λ a → Data′ R (D a))
     Data′ R (Rec A D) = Σ (A → Data R) (λ f → Data′ R (D (fun R ∘ f)))
     
-    fun : {O : Set} (D : Desc O) → Data D → O
+    fun : ∀{ℓ} {O : Set ℓ} (D : Desc O) → Data D → O
     fun D (con xs) = fun′ D D xs
   
-    fun′ : {O : Set} (R D : Desc O) → Data′ R D → O
-    fun′ R (End o) tt = o
+    fun′ : ∀{ℓ} {O : Set ℓ} (R D : Desc O) → Data′ R D → O
+    fun′ R (End o) (lift tt) = o
     fun′ R (Arg A D) (a , xs) = fun′ R (D a) xs
     fun′ R (Rec A D) (f , xs) = fun′ R (D (λ a → fun R (f a))) xs
 \end{code}
@@ -954,43 +955,41 @@ module GenericOpen where
 \subsection{\AgdaDatatype{Path}}
 
 \begin{code}
-  data Path {O : Set} (D : Desc O) : Data D → Set₁
-  data Path′ {O : Set} (R : Desc O) : (D : Desc O) → Data′ R D → Set₁
-  
-  data Path {O} D where
-    here : {x : Data D} → Path D x
-    there : {xs : Data′ D D}
-      → Path′ D D xs
-      → Path D (con xs)
-  
-  data Path′ {O} R where
-    thereArg₁ : {A : Set} {D : A → Desc O}
-      {a : A} {xs : Data′ R (D a)}
-      → Path′ R (Arg A D) (a , xs)
-    thereArg₂ : {A : Set} {D : A → Desc O}
-      {a : A} {xs : Data′ R (D a)}
-      → Path′ R (D a) xs
-      → Path′ R (Arg A D) (a , xs)
-    thereRec₁ : {A : Set} {D : (o : A → O) → Desc O}
-      {f : A → Data R} {xs : Data′ R (D (fun R ∘ f))}
-      → ((a : A) → Path R (f a))
-      → Path′ R (Rec A D) (f , xs)
-    thereRec₂ : {A : Set} {D : (o : A → O) → Desc O}
-      {f : A → Data R} {xs : Data′ R (D (fun R ∘ f)) }
-      → Path′ R (D (fun R ∘ f)) xs
-      → Path′ R (Rec A D) (f , xs)
+  mutual
+    data Path {ℓ} {O : Set ℓ} (D : Desc O) : Data D → Set (↑ ℓ) where
+      here : {x : Data D} → Path D x
+      there : {xs : Data′ D D}
+        → Path′ D D xs
+        → Path D (con xs)
+    
+    data Path′ {ℓ} {O : Set ℓ} (R : Desc O) : (D : Desc O) → Data′ R D → Set (↑ ℓ) where
+      thereArg₁ : {A : Set ℓ} {D : A → Desc O}
+        {a : A} {xs : Data′ R (D a)}
+        → Path′ R (Arg A D) (a , xs)
+      thereArg₂ : {A : Set ℓ} {D : A → Desc O}
+        {a : A} {xs : Data′ R (D a)}
+        → Path′ R (D a) xs
+        → Path′ R (Arg A D) (a , xs)
+      thereRec₁ : {A : Set ℓ} {D : (o : A → O) → Desc O}
+        {f : A → Data R} {xs : Data′ R (D (fun R ∘ f))}
+        → ((a : A) → Path R (f a))
+        → Path′ R (Rec A D) (f , xs)
+      thereRec₂ : {A : Set ℓ} {D : (o : A → O) → Desc O}
+        {f : A → Data R} {xs : Data′ R (D (fun R ∘ f)) }
+        → Path′ R (D (fun R ∘ f)) xs
+        → Path′ R (Rec A D) (f , xs)
 \end{code}
 
 \subsection{\AgdaDatatype{lookup}}
 
 \begin{code}
-  Lookup : {O : Set} (D : Desc O) (x : Data D) → Path D x → Set
-  Lookup′ : {O : Set} (R D : Desc O) (xs : Data′ R D) → Path′ R D xs → Set
+  Lookup : ∀{ℓ} {O : Set ℓ} (D : Desc O) (x : Data D) → Path D x → Set ℓ
+  Lookup′ : ∀{ℓ} {O : Set ℓ} (R D : Desc O) (xs : Data′ R D) → Path′ R D xs → Set ℓ
   
   Lookup D x here = Data D
   Lookup D (con xs) (there i) = Lookup′ D D xs i
   
-  Lookup′ R (End o) tt ()
+  Lookup′ R (End o) (lift tt) ()
   Lookup′ R (Arg A D) (a , xs) thereArg₁ = A
   Lookup′ R (Arg A D) (a , xs) (thereArg₂ i) = Lookup′ R (D a) xs i
   Lookup′ R (Rec A D) (f , xs) (thereRec₁ g) = (a : A) → Lookup R (f a) (g a)
@@ -998,14 +997,14 @@ module GenericOpen where
 \end{code}
 
 \begin{code}
-  lookup : {O : Set} (D : Desc O) (x : Data D) (i : Path D x) → Lookup D x i
-  lookup′ : {O : Set} (R D : Desc O) (xs : Data′ R D) (i : Path′ R D xs)
+  lookup : ∀{ℓ} {O : Set ℓ} (D : Desc O) (x : Data D) (i : Path D x) → Lookup D x i
+  lookup′ : ∀{ℓ} {O : Set ℓ} (R D : Desc O) (xs : Data′ R D) (i : Path′ R D xs)
     → Lookup′ R D xs i
   
   lookup D x here = x
   lookup D (con xs) (there i) = lookup′ D D xs i
   
-  lookup′ R (End o) tt ()
+  lookup′ R (End o) (lift tt) ()
   lookup′ R (Arg A D) (a , xs) thereArg₁ = a
   lookup′ R (Arg A D) (a , xs) (thereArg₂ i) = lookup′ R (D a) xs i
   lookup′ R (Rec A D) (f , xs) (thereRec₁ g) = λ a → lookup R (f a) (g a)
@@ -1015,19 +1014,19 @@ module GenericOpen where
 \subsection{\AgdaDatatype{update}}
 
 \begin{code}
-  Update : {O : Set} (D : Desc O) (x : Data D) → Path D x → Set
-  Update′ : {O : Set} (R D : Desc O) (xs : Data′ R D) → Path′ R D xs → Set
-  update : {O : Set} (D : Desc O) (x : Data D) (i : Path D x) (X : Update D x i) → Data D
-  update′ : {O : Set} (R D : Desc O) (xs : Data′ R D) (i : Path′ R D xs)
+  Update : ∀{ℓ} {O : Set ℓ} (D : Desc O) (x : Data D) → Path D x → Set ℓ
+  Update′ : ∀{ℓ} {O : Set ℓ} (R D : Desc O) (xs : Data′ R D) → Path′ R D xs → Set ℓ
+  update : ∀{ℓ} {O : Set ℓ} (D : Desc O) (x : Data D) (i : Path D x) (X : Update D x i) → Data D
+  update′ : ∀{ℓ} {O : Set ℓ} (R D : Desc O) (xs : Data′ R D) (i : Path′ R D xs)
     → Update′ R D xs i → Data′ R D
   
   Update D x here = Maybe (Data D)
   Update D (con xs) (there i) = Update′ D D xs i
   
-  Update′ R (End o) tt ()
+  Update′ R (End o) (lift tt) ()
   Update′ R (Arg A D) (a , xs) thereArg₁ =
     Σ (Maybe A)
-      (maybe (λ a' → Data′ R (D a) → Data′ R (D a')) ⊤)
+      (maybe (λ a' → Data′ R (D a) → Data′ R (D a')) (Lift ⊤))
   Update′ R (Arg A D) (a , xs) (thereArg₂ i) = Update′ R (D a) xs i
   Update′ R (Rec A D) (f , xs) (thereRec₁ g) =
     Σ ((a : A) → Update R (f a) (g a))
@@ -1039,7 +1038,7 @@ module GenericOpen where
   update D x here X = maybe id x X
   update D (con xs) (there i) X = con (update′ D D xs i X)
   
-  update′ R (End o) tt () X
+  update′ R (End o) (lift tt) () X
   update′ R (Arg A D) (a , xs) thereArg₁ (nothing , f) = a , xs
   update′ R (Arg A D) (a , xs) thereArg₁ (just X , f) =
     X , f xs
