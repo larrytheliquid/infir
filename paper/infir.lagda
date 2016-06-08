@@ -974,13 +974,13 @@ module GenericOpen where
       thereArg₁ : ∀{A D a xs}
         → Path′ R (Arg A D) (a , xs)
       thereArg₂ : ∀{A D a xs}
-        → Path′ R (D a) xs
+        (i : Path′ R (D a) xs)
         → Path′ R (Arg A D) (a , xs)
       thereRec₁ : ∀{A D f xs}
-        → ((a : A) → Path R (f a))
+        (g : (a : A) → Path R (f a))
         → Path′ R (Rec A D) (f , xs)
       thereRec₂ : ∀{A D f xs}
-        → Path′ R (D (fun R ∘ f)) xs
+        (i : Path′ R (D (fun R ∘ f)) xs)
         → Path′ R (Rec A D) (f , xs)
 \end{code}
 
@@ -1120,24 +1120,24 @@ module GenericClosed where
   data Path where
     here : ∀{A a} → Path A a
     thereFun : ∀{A B f}
-      → ((a : ⟦ A ⟧) → Path (B a) (f a))
+      (g : (a : ⟦ A ⟧) → Path (B a) (f a))
       → Path (`Fun A B) f
     thereData : ∀{O} {D : `Desc O} {xs}
-      → Path′ D D xs
+      (i : Path′ D D xs)
       → Path (`Data D) (con xs)
   
   data Path′ {O} R where
     thereArg₁ : ∀{A D a xs}
-      → Path A a
+      (i : Path A a)
       → Path′ R (`Arg A D) (a , xs)
     thereArg₂ : ∀{A D a xs}
-      → Path′ R (D a) xs
+      (i : Path′ R (D a) xs)
       → Path′ R (`Arg A D) (a , xs)
     thereRec₁ : ∀{A D f xs}
-      → ((a : ⟦ A ⟧) → Path (`Data R) (f a))
+      (g : (a : ⟦ A ⟧) → Path (`Data R) (f a))
       → Path′ R (`Rec A D) (f , xs)
     thereRec₂ : ∀{A D f xs}
-      → Path′ R (D (fun ⟪ R ⟫ ∘ f)) xs
+      (i : Path′ R (D (fun ⟪ R ⟫ ∘ f)) xs)
       → Path′ R (`Rec A D) (f , xs)
 \end{code}
 
