@@ -97,23 +97,23 @@ dependent functions.
 \begin{code}
   mutual
     data Type : Set where
-      `ℕ : Type
-      `Π : (A : Type) (B : ⟦ A ⟧ → Type) → Type
+      `Nat : Type
+      `Fun : (A : Type) (B : ⟦ A ⟧ → Type) → Type
     
     ⟦_⟧ : Type → Set
-    ⟦ `ℕ ⟧ = ℕ
-    ⟦ `Π A B ⟧ = (a : ⟦ A ⟧) → ⟦ B a ⟧
+    ⟦ `Nat ⟧ = ℕ
+    ⟦ `Fun A B ⟧ = (a : ⟦ A ⟧) → ⟦ B a ⟧
 \end{code}
 
 \AgdaHide{
 \begin{code}
   _`→_ : (A B : Type) → Type
-  A `→ B = `Π A (λ _ → B)
+  A `→ B = `Fun A (λ _ → B)
 \end{code}}
 
 \noindent
 This \AgdaDatatype{Type} is \emph{infinitary} because the
-\AgdaInductiveConstructor{`Π} constructor's second inductive argument
+\AgdaInductiveConstructor{`Fun} constructor's second inductive argument
 (\AgdaBound{B}) is a function (hence \AgdaDatatype{Type}s can branch infinitely).
 Additionally, it is \emph{inductive-recursive} because it
 is mutually defined with a
@@ -128,11 +128,11 @@ number arguments.
 
 \begin{code}
   NumArgs : ℕ → Type
-  NumArgs zero = `ℕ
-  NumArgs (suc n) = `ℕ `→ NumArgs n
+  NumArgs zero = `Nat
+  NumArgs (suc n) = `Nat `→ NumArgs n
   
   NumFun : Type
-  NumFun = `Π `ℕ NumArgs
+  NumFun = `Fun `Nat NumArgs
 \end{code}
 
 While defining models and example values using infinitary
@@ -322,7 +322,7 @@ Once we move from finitary non-dependent types like
 \AgdaDatatype{Tree} and \AgdaDatatype{List} to an InfIR type like
 \AgdaDatatype{Type}, it is no longer obvious how to write a function like
 \AgdaFunction{lookup}. Looking up something in the
-left side (domain) of a \AgdaInductiveConstructor{`Π} is easy, but
+left side (domain) of a \AgdaInductiveConstructor{`Fun} is easy, but
 looking up something in the right side (codomain) requires entering a
 function space.
 
@@ -492,11 +492,11 @@ the \AgdaInductiveConstructor{`Base} types are parameters (of type \AgdaDatatype
   mutual
     data Type : Set₁ where
       `Base : Set → Type
-      `Π : (A : Type) (B : ⟦ A ⟧ → Type) → Type
+      `Fun : (A : Type) (B : ⟦ A ⟧ → Type) → Type
   
     ⟦_⟧ : Type → Set
     ⟦ `Base A ⟧ = A
-    ⟦ `Π A B ⟧ = (a : ⟦ A ⟧) → ⟦ B a ⟧
+    ⟦ `Fun A B ⟧ = (a : ⟦ A ⟧) → ⟦ B a ⟧
 \end{code}
 
 \subsection{\AgdaDatatype{Path}}
@@ -510,7 +510,7 @@ non-recursive \AgdaBound{A} of type \AgdaDatatype{Set} using
 When traversing a \AgdaDatatype{Tree}, you can always go left or right at a
 \AgdaInductiveConstructor{branch}. When traversing a
 \AgdaDatatype{Type}, you can immediately go to the left of a
-\AgdaInductiveConstructor{`Π}, but going right requires first knowing
+\AgdaInductiveConstructor{`Fun}, but going right requires first knowing
 which element \AgdaBound{a} of the type family \AgdaBound{B a} to
 continue traversing under. This requirement is neatly captured as a
 dependent function type of the \AgdaBound{f} argument below.
@@ -519,20 +519,20 @@ dependent function type of the \AgdaBound{f} argument below.
   data Path : Type → Set₁ where
     here : ∀{A} → Path A
     thereBase : ∀{A} → Path (`Base A)
-    thereΠ₁ : ∀{A B}
+    thereFun₁ : ∀{A B}
       (i : Path A)
-      → Path (`Π A B)
-    thereΠ₂ : ∀{A B}
+      → Path (`Fun A B)
+    thereFun₂ : ∀{A B}
       (f : (a : ⟦ A ⟧) → Path (B a))
-      → Path (`Π A B)
+      → Path (`Fun A B)
 \end{code}
 
-Above, \AgdaInductiveConstructor{thereΠ₂} represents going right
-into the codomain of \AgdaInductiveConstructor{`Π}, but only once the
+Above, \AgdaInductiveConstructor{thereFun₂} represents going right
+into the codomain of \AgdaInductiveConstructor{`Fun}, but only once the
 user tells you which \AgdaBound{a} to use. In a sense, going right is
 like asking for a continuation that tells you where to go next, once
 you have been given \AgdaBound{a}. Also note that because the argument
-\AgdaBound{f} of \AgdaInductiveConstructor{thereΠ₂} is a function that
+\AgdaBound{f} of \AgdaInductiveConstructor{thereFun₂} is a function that
 returns a \AgdaDatatype{Path}, the \AgdaDatatype{Path} datatype is
 infinitary (just like the \AgdaDatatype{Type} it indexes).
 
@@ -547,30 +547,30 @@ depending on the input \AgdaDatatype{Type} and \AgdaDatatype{Path}.
 \AgdaFunction{Lookup} computes the codomain of
 \AgdaFunction{lookup}, asking for a \AgdaDatatype{Type} or \AgdaDatatype{Set} in the base
 cases, or a continuation when looking to the right of a
-\AgdaInductiveConstructor{`Π}.
+\AgdaInductiveConstructor{`Fun}.
 
 \begin{code}
   Lookup : (A : Type) → Path A → Set₁
   Lookup A here = Type
   Lookup (`Base A) thereBase = Set
-  Lookup (`Π A B) (thereΠ₁ i) = Lookup A i
-  Lookup (`Π A B) (thereΠ₂ f) = (a : ⟦ A ⟧) → Lookup (B a) (f a)
+  Lookup (`Fun A B) (thereFun₁ i) = Lookup A i
+  Lookup (`Fun A B) (thereFun₂ f) = (a : ⟦ A ⟧) → Lookup (B a) (f a)
 \end{code}
 
 Finally, we can write \AgdaFunction{lookup} in terms of
 \AgdaDatatype{Path} and \AgdaFunction{Lookup}. Notice that users
 applying our \AgdaFunction{lookup} function need to supply
 extra \AgdaBound{a} arguments exactly when they go to the right of a
-\AgdaInductiveConstructor{`Π}. Thus, our definition can expect an
+\AgdaInductiveConstructor{`Fun}. Thus, our definition can expect an
 extra argument \AgdaBound{a} in the
-\AgdaInductiveConstructor{thereΠ₂} case.
+\AgdaInductiveConstructor{thereFun₂} case.
 
 \begin{code}
   lookup : (A : Type) (i : Path A) → Lookup A i
   lookup A here = A
   lookup (`Base A) thereBase = A
-  lookup (`Π A B) (thereΠ₁ i) = lookup A i
-  lookup (`Π A B) (thereΠ₂ f) = λ a → lookup (B a) (f a)
+  lookup (`Fun A B) (thereFun₁ i) = lookup A i
+  lookup (`Fun A B) (thereFun₂ f) = λ a → lookup (B a) (f a)
 \end{code}
 
 \subsection{\AgdaFunction{update}}
@@ -605,19 +605,19 @@ Above \AgdaBound{X} is the intended \AgdaDatatype{Type} to
 In order to write a total version of
 \AgdaFunction{updateNaive}, we need to change the domain by
 asking for an \AgdaBound{a} whenever we update within the codomain of
-a \AgdaInductiveConstructor{`Π}.
+a \AgdaInductiveConstructor{`Fun}.
 
 We call the type of the substitute
 \AgdaFunction{Update}, which asks for a \AgdaDatatype{Maybe Type} or a
 \AgdaDatatype{Maybe Set} in the base cases (\AgdaInductiveConstructor{here}
 and \AgdaInductiveConstructor{thereBase} respectively), and a continuation in the
-\AgdaInductiveConstructor{thereΠ₂} case. However, updating an element to
-the left of a \AgdaInductiveConstructor{`Π} is also
+\AgdaInductiveConstructor{thereFun₂} case. However, updating an element to
+the left of a \AgdaInductiveConstructor{`Fun} is also
 problematic. We would like to keep the old
-\AgdaInductiveConstructor{`Π} codomain \AgdaBound{B} unchanged, but it
+\AgdaInductiveConstructor{`Fun} codomain \AgdaBound{B} unchanged, but it
 still expects an \AgdaBound{a} of the original type
 \AgdaFunction{⟦} \AgdaBound{A} \AgdaFunction{⟧}. Therefore, the
-\AgdaInductiveConstructor{thereΠ₁} case must
+\AgdaInductiveConstructor{thereFun₁} case must
 ask for a forgetful function \AgdaBound{f} that maps newly
 updated \AgdaBound{a}'s to their original type.
 
@@ -629,27 +629,27 @@ updated \AgdaBound{a}'s to their original type.
   
   Update A here = Maybe Type
   Update (`Base A) thereBase = Maybe Set
-  Update (`Π A B) (thereΠ₁ i) =
+  Update (`Fun A B) (thereFun₁ i) =
     Σ (Update A i) (λ X → ⟦ update A i X ⟧ → ⟦ A ⟧)
-  Update (`Π A B) (thereΠ₂ f) =
+  Update (`Fun A B) (thereFun₂ f) =
     (a : ⟦ A ⟧) → Update (B a) (f a)
   
   update A here X = maybe id A X
   update (`Base A) thereBase X = maybe `Base (`Base A) X
-  update (`Π A B) (thereΠ₁ i) (X , f) =
-    `Π (update A i X) (λ a → B (f a))
-  update (`Π A B) (thereΠ₂ f) h =
-    `Π A (λ a → update (B a) (f a) (h a))
+  update (`Fun A B) (thereFun₁ i) (X , f) =
+    `Fun (update A i X) (λ a → B (f a))
+  update (`Fun A B) (thereFun₂ f) h =
+    `Fun A (λ a → update (B a) (f a) (h a))
 \end{code}
 
 Notice that we must define \AgdaFunction{Update} and
 \AgdaFunction{update} mutually, because the forgetful
 function \AgdaBound{f} (the codomain of
-\AgdaDatatype{Σ} in the \AgdaInductiveConstructor{thereΠ₁} case of
+\AgdaDatatype{Σ} in the \AgdaInductiveConstructor{thereFun₁} case of
 \AgdaFunction{Update}) must refer to \AgdaFunction{update} in its
-domain. Although the \AgdaInductiveConstructor{thereΠ₁} case of
+domain. Although the \AgdaInductiveConstructor{thereFun₁} case of
 \AgdaFunction{update} only updates the domain of
-\AgdaInductiveConstructor{`Π}, the type family \AgdaBound{B} in the
+\AgdaInductiveConstructor{`Fun}, the type family \AgdaBound{B} in the
 codomain expects an \AgdaBound{a} of type
 \AgdaFunction{⟦} \AgdaBound{A} \AgdaFunction{⟧}, so we use the
 forgetful function \AgdaBound{f} to map back to \AgdaBound{a}'s
@@ -659,9 +659,9 @@ The base cases (\AgdaInductiveConstructor{here} and
 \AgdaInductiveConstructor{thereBase}) of \AgdaFunction{update}
 perform updates using the
 subsitute \AgdaBound{X} (where \AgdaInductiveConstructor{nothing}
-results in an identity update). The \AgdaInductiveConstructor{thereΠ₂}
+results in an identity update). The \AgdaInductiveConstructor{thereFun₂}
 case of \AgdaFunction{update} leaves the domain of
-\AgdaInductiveConstructor{`Π} unchanged, and recursively updates the
+\AgdaInductiveConstructor{`Fun} unchanged, and recursively updates the
 codmain using the substitute continuation \AgdaBound{h}.
 
 Note that
@@ -704,11 +704,11 @@ the mutually defined function \AgdaFunction{eval} returns a
   mutual
     data Arith : Set where
       `Num : ℕ → Arith
-      `Π : (A : Arith) (f : Fin (eval A) → Arith) → Arith
+      `Prod : (A : Arith) (f : Fin (eval A) → Arith) → Arith
   
     eval : Arith → ℕ
     eval (`Num n) = n
-    eval (`Π A f) = prod (eval A)
+    eval (`Prod A f) = prod (eval A)
       λ a → prod (toℕ a) λ b → eval (f (inject b))
 \end{code}
 
@@ -719,6 +719,12 @@ bound, such as the one below.
 \begin{equation*}
   \prod_{i=1}^{3} i
 \end{equation*}
+
+\begin{code}
+    six : Arith
+    six = `Prod (`Num 3) (λ i → `Num (toℕ i))
+\end{code}
+
 
 An \AgdaDatatype{Arith} equation may be nested in its upper bound or body, but the lower
 bound is always the value 1.
@@ -794,7 +800,9 @@ nearly structurally identical to the corresponding definitions for
 cover the \AgdaInductiveConstructor{`Num} cases of these
 definitions. The old \AgdaDatatype{Type} definitions will work for the
 other cases by replacing \AgdaDatatype{Type} with
-\AgdaDatatype{Arith}, and by defining the following type synonym.
+\AgdaDatatype{Arith},
+\AgdaInductiveConstructor{`Fun} with \AgdaInductiveConstructor{`Prod},
+and by defining the following type synonym.
 
 \begin{code}
   ⟦_⟧ : Arith → Set
@@ -814,12 +822,12 @@ using a \AgdaDatatype{Pathℕ}.
 \AgdaHide{
 \begin{code}
     here : ∀{A} → Path A
-    thereΠ₁ : ∀{A B}
+    thereFun₁ : ∀{A B}
       (i : Path A)
-      → Path (`Π A B)
-    thereΠ₂ : ∀{A B}
+      → Path (`Prod A B)
+    thereFun₂ : ∀{A B}
       (f : (a : ⟦ A ⟧) → Path (B a))
-      → Path (`Π A B)
+      → Path (`Prod A B)
 \end{code}}
 
 \AgdaHide{
@@ -842,8 +850,8 @@ results in a natural number.
 
 \AgdaHide{
 \begin{code}
-  Lookup (`Π A B) (thereΠ₂ f) = (a : ⟦ A ⟧) → Lookup (B a) (f a)
-  Lookup (`Π A B) (thereΠ₁ i) = Lookup A i
+  Lookup (`Prod A B) (thereFun₂ f) = (a : ⟦ A ⟧) → Lookup (B a) (f a)
+  Lookup (`Prod A B) (thereFun₁ i) = Lookup A i
 \end{code}}
 
 \AgdaHide{
@@ -866,8 +874,8 @@ inside.
 
 \AgdaHide{
 \begin{code}
-  lookup (`Π A B) (thereΠ₁ i) = lookup A i
-  lookup (`Π A B) (thereΠ₂ f) = λ a → lookup (B a) (f a)
+  lookup (`Prod A B) (thereFun₁ i) = lookup A i
+  lookup (`Prod A B) (thereFun₂ f) = λ a → lookup (B a) (f a)
 \end{code}}
 
 \AgdaHide{
@@ -891,9 +899,9 @@ either the identity update or a number to update with.
 
 \AgdaHide{
 \begin{code}
-  Update (`Π A B) (thereΠ₁ i) =
+  Update (`Prod A B) (thereFun₁ i) =
     Σ (Update A i) (λ X → ⟦ update A i X ⟧ → ⟦ A ⟧)
-  Update (`Π A B) (thereΠ₂ f) =
+  Update (`Prod A B) (thereFun₂ f) =
     (a : ⟦ A ⟧) → Update (B a) (f a)
   
   update A here X = maybe id A X
@@ -909,10 +917,10 @@ natural number contained using \AgdaFunction{updateℕ}.
 
 \AgdaHide{
 \begin{code}
-  update (`Π A B) (thereΠ₁ i) (X , f) =
-    `Π (update A i X) (B ∘ f)
-  update (`Π A B) (thereΠ₂ f) g =
-    `Π A (λ a → update (B a) (f a) (g a))
+  update (`Prod A B) (thereFun₁ i) (X , f) =
+    `Prod (update A i X) (B ∘ f)
+  update (`Prod A B) (thereFun₂ f) g =
+    `Prod A (λ a → update (B a) (f a) (g a))
 \end{code}}
 
 
@@ -1082,14 +1090,14 @@ module GenericClosed where
 \begin{code}
   mutual
     data `Set : Set where
-      `⊥ `Bool : `Set
-      `Π : (A : `Set) (B : ⟦ A ⟧ → `Set) → `Set
+      `Bot `Bool : `Set
+      `Fun : (A : `Set) (B : ⟦ A ⟧ → `Set) → `Set
       `Data : {O : `Set} (D : `Desc O) → `Set
   
     ⟦_⟧ : `Set → Set
-    ⟦ `⊥ ⟧ = ⊥
+    ⟦ `Bot ⟧ = ⊥
     ⟦ `Bool ⟧ = Bool
-    ⟦ `Π A B ⟧ = (a : ⟦ A ⟧) → ⟦ B a ⟧
+    ⟦ `Fun A B ⟧ = (a : ⟦ A ⟧) → ⟦ B a ⟧
     ⟦ `Data D ⟧ = Data ⟪ D ⟫
   
     data `Desc (O : `Set) : Set where
@@ -1111,9 +1119,9 @@ module GenericClosed where
   
   data Path where
     here : ∀{A a} → Path A a
-    thereΠ : ∀{A B f}
+    thereFun : ∀{A B f}
       → ((a : ⟦ A ⟧) → Path (B a) (f a))
-      → Path (`Π A B) f
+      → Path (`Fun A B) f
     thereData : ∀{O} {D : `Desc O} {xs}
       → Path′ D D xs
       → Path (`Data D) (con xs)
@@ -1141,7 +1149,7 @@ module GenericClosed where
     → Path′ R D xs → Set
   
   Lookup A a here = ⟦ A ⟧
-  Lookup (`Π A B) f (thereΠ g) = (a : ⟦ A ⟧) → Lookup (B a) (f a) (g a)
+  Lookup (`Fun A B) f (thereFun g) = (a : ⟦ A ⟧) → Lookup (B a) (f a) (g a)
   Lookup (`Data D) (con xs) (thereData i) = Lookup′ D D xs i
   
   Lookup′ R (`Arg A D) (a , xs) (thereArg₁ i) = Lookup A a i
@@ -1156,7 +1164,7 @@ module GenericClosed where
     (i : Path′ R D xs) → Lookup′ R D xs i
   
   lookup A a here = a
-  lookup (`Π A B) f (thereΠ g) = λ a → lookup (B a) (f a) (g a)
+  lookup (`Fun A B) f (thereFun g) = λ a → lookup (B a) (f a) (g a)
   lookup (`Data D) (con xs) (thereData i) = lookup′ D D xs i
   
   lookup′ R (`Arg A D) (a , xs) (thereArg₁ i) = lookup A a i
@@ -1179,7 +1187,7 @@ module GenericClosed where
     → Data′ ⟪ R ⟫ ⟪ D ⟫
   
   Update A a here = Maybe ⟦ A ⟧
-  Update (`Π A B) f (thereΠ g) = (a : ⟦ A ⟧) → Update (B a) (f a) (g a)
+  Update (`Fun A B) f (thereFun g) = (a : ⟦ A ⟧) → Update (B a) (f a) (g a)
   Update (`Data D) (con xs) (thereData i) = Update′ D D xs i
   
   Update′ R (`Arg A D) (a , xs) (thereArg₁ i) =
@@ -1194,7 +1202,7 @@ module GenericClosed where
   Update′ R (`Rec A D) (f , xs) (thereRec₂ i) = Update′ R (D (fun ⟪ R ⟫ ∘ f)) xs i
   
   update A a here X = maybe id a X
-  update (`Π A B) f (thereΠ g) h = λ a → update (B a) (f a) (g a) (h a)
+  update (`Fun A B) f (thereFun g) h = λ a → update (B a) (f a) (g a) (h a)
   update (`Data D) (con xs) (thereData i) X = con (update′ D D xs i X)
   
   update′ R (`Arg A D) (a , xs) (thereArg₁ i) (X , f) = update A a i X , f xs
