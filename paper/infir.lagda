@@ -73,7 +73,7 @@ Dependent types; induction-recursion; generic programming.
 \begin{code}
 module InfIR where
 open import Level using ( _⊔_ ; Lift ; lift )
-  renaming ( zero to ∙ ; suc to ↑ )
+  renaming ( suc to ↑ )
 open import Function
 open import Data.Empty
 open import Data.Unit
@@ -704,11 +704,11 @@ the mutually defined function \AgdaFunction{eval} returns a
   mutual
     data Arith : Set where
       `Num : ℕ → Arith
-      `Prod : (A : Arith) (f : Fin (eval A) → Arith) → Arith
+      `Prod : (a : Arith) (f : Fin (eval a) → Arith) → Arith
   
     eval : Arith → ℕ
     eval (`Num n) = n
-    eval (`Prod A f) = prod (eval A)
+    eval (`Prod a f) = prod (eval a)
       λ a → prod (toℕ a) λ b → eval (f (inject b))
 \end{code}
 
@@ -990,6 +990,46 @@ finite enumeration of types (representing each constructor), and whose
 codomain is the \AgdaDatatype{Desc} corresponding to the arguments and
 recursive cases for each constructor.
 
+The abstract nature of \AgdaDatatype{Desc} makes it somewhat difficult
+to understand at first, especially the \AgdaInductiveConstructor{Rec}
+constructor. However, it's not that bad once you see a few
+examples. Below we encode \AgdaDatatype{Type} from
+\refsec{concretelarge}.
+
+\begin{code}
+  data TypeT : Set₁ where
+    BaseT FunT : TypeT
+
+  TypeD : Desc Set
+  TypeD = Arg TypeT λ
+    { BaseT → Arg Set (λ A → End A)
+    ; FunT
+      → Rec (Lift ⊤) λ A
+      → Rec (Lift (A (lift tt))) λ B
+      → End ((a : A (lift tt)) → B (lift a))
+    }
+\end{code}
+
+\AgdaHide{
+\begin{code}
+  prod : (n : ℕ) (f : Fin n → ℕ) → ℕ
+  prod zero f = suc zero
+  prod (suc n) f = f zero * prod n (f ∘ suc)
+\end{code}}
+
+\begin{code}
+  data ArithT : Set where
+    NumT ProdT : ArithT
+
+  ArithD : Desc ℕ
+  ArithD = Arg ArithT λ
+    { NumT → Arg ℕ (λ n → End n)
+    ; ProdT
+      → Rec (Lift ⊤) λ n
+      → Rec (Fin (n (lift tt))) λ f
+      → End (prod (n (lift tt)) f)
+    }
+\end{code}
 
 \begin{code}
   mutual
