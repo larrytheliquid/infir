@@ -517,12 +517,12 @@ dependent function type of the \AgdaBound{f} argument below.
 
 \begin{code}
   data Path : Type → Set₁ where
-    here : {A : Type} → Path A
-    thereBase : {A : Set} → Path (`Base A)
-    thereΠ₁ : {A : Type} {B : ⟦ A ⟧ → Type}
+    here : ∀{A} → Path A
+    thereBase : ∀{A} → Path (`Base A)
+    thereΠ₁ : ∀{A B}
       (i : Path A)
       → Path (`Π A B)
-    thereΠ₂ : {A : Type} {B : ⟦ A ⟧ → Type}
+    thereΠ₂ : ∀{A B}
       (f : (a : ⟦ A ⟧) → Path (B a))
       → Path (`Π A B)
 \end{code}
@@ -813,11 +813,11 @@ using a \AgdaDatatype{Pathℕ}.
     
 \AgdaHide{
 \begin{code}
-    here : {A : Arith} → Path A
-    thereΠ₁ : {A : Arith} {B : ⟦ A ⟧ → Arith}
+    here : ∀{A} → Path A
+    thereΠ₁ : ∀{A B}
       (i : Path A)
       → Path (`Π A B)
-    thereΠ₂ : {A : Arith} {B : ⟦ A ⟧ → Arith}
+    thereΠ₂ : ∀{A B}
       (f : (a : ⟦ A ⟧) → Path (B a))
       → Path (`Π A B)
 \end{code}}
@@ -957,25 +957,21 @@ module GenericOpen where
 \begin{code}
   mutual
     data Path {ℓ} {O : Set ℓ} (D : Desc O) : Data D → Set (↑ ℓ) where
-      here : {x : Data D} → Path D x
-      there : {xs : Data′ D D}
+      here : ∀{x} → Path D x
+      there : ∀{xs}
         → Path′ D D xs
         → Path D (con xs)
     
     data Path′ {ℓ} {O : Set ℓ} (R : Desc O) : (D : Desc O) → Data′ R D → Set (↑ ℓ) where
-      thereArg₁ : {A : Set ℓ} {D : A → Desc O}
-        {a : A} {xs : Data′ R (D a)}
+      thereArg₁ : ∀{A D a xs}
         → Path′ R (Arg A D) (a , xs)
-      thereArg₂ : {A : Set ℓ} {D : A → Desc O}
-        {a : A} {xs : Data′ R (D a)}
+      thereArg₂ : ∀{A D a xs}
         → Path′ R (D a) xs
         → Path′ R (Arg A D) (a , xs)
-      thereRec₁ : {A : Set ℓ} {D : (o : A → O) → Desc O}
-        {f : A → Data R} {xs : Data′ R (D (fun R ∘ f))}
+      thereRec₁ : ∀{A D f xs}
         → ((a : A) → Path R (f a))
         → Path′ R (Rec A D) (f , xs)
-      thereRec₂ : {A : Set ℓ} {D : (o : A → O) → Desc O}
-        {f : A → Data R} {xs : Data′ R (D (fun R ∘ f)) }
+      thereRec₂ : ∀{A D f xs}
         → Path′ R (D (fun R ∘ f)) xs
         → Path′ R (Rec A D) (f , xs)
 \end{code}
@@ -1114,29 +1110,25 @@ module GenericClosed where
   data Path′ {O : `Set} (R : `Desc O) : (D : `Desc O) → Data′ ⟪ R ⟫ ⟪ D ⟫ → Set
   
   data Path where
-    here : {A : `Set} {a : ⟦ A ⟧} → Path A a
-    thereΠ : {A : `Set} {B : ⟦ A ⟧ → `Set} {f : (a : ⟦ A ⟧) → ⟦ B a ⟧}
+    here : ∀{A a} → Path A a
+    thereΠ : ∀{A B f}
       → ((a : ⟦ A ⟧) → Path (B a) (f a))
       → Path (`Π A B) f
-    thereData : {O : `Set} {D : `Desc O} {xs : Data′ ⟪ D ⟫ ⟪ D ⟫}
+    thereData : ∀{O} {D : `Desc O} {xs}
       → Path′ D D xs
       → Path (`Data D) (con xs)
   
   data Path′ {O} R where
-    thereArg₁ : {A : `Set} {D : ⟦ A ⟧ → `Desc O}
-      {a : ⟦ A ⟧} {xs : Data′ ⟪ R ⟫ ⟪ D a ⟫}
+    thereArg₁ : ∀{A D a xs}
       → Path A a
       → Path′ R (`Arg A D) (a , xs)
-    thereArg₂ : {A : `Set} {D : ⟦ A ⟧ → `Desc O}
-      {a : ⟦ A ⟧} {xs : Data′ ⟪ R ⟫ ⟪ D a ⟫}
+    thereArg₂ : ∀{A D a xs}
       → Path′ R (D a) xs
       → Path′ R (`Arg A D) (a , xs)
-    thereRec₁ : {A : `Set} {D : (o : ⟦ A ⟧ → ⟦ O ⟧) → `Desc O}
-      {f : ⟦ A ⟧ → Data ⟪ R ⟫} {xs : Data′ ⟪ R ⟫ ⟪ D (fun ⟪ R ⟫ ∘ f) ⟫}
+    thereRec₁ : ∀{A D f xs}
       → ((a : ⟦ A ⟧) → Path (`Data R) (f a))
       → Path′ R (`Rec A D) (f , xs)
-    thereRec₂ : {A : `Set} {D : (o : ⟦ A ⟧ → ⟦ O ⟧) → `Desc O}
-      {f : ⟦ A ⟧ → Data ⟪ R ⟫} {xs : Data′ ⟪ R ⟫ ⟪ D (fun ⟪ R ⟫ ∘ f) ⟫}
+    thereRec₂ : ∀{A D f xs}
       → Path′ R (D (fun ⟪ R ⟫ ∘ f)) xs
       → Path′ R (`Rec A D) (f , xs)
 \end{code}
