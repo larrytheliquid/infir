@@ -1338,20 +1338,46 @@ one of the arguments within the constructor \AgdaCon{con} via
     Update′ R (Arg A D) (a , xs) thereArg₁ =
       Σ (Maybe A)
         (maybe (λ a' → Data′ R (D a) → Data′ R (D a')) ⊤)
-    Update′ R (Arg A D) (a , xs) (thereArg₂ i) = Update′ R (D a) xs i
+    Update′ R (Arg A D) (a , xs) (thereArg₂ i) =
+      Update′ R (D a) xs i
     Update′ R (Rec A D) (f , xs) (thereRec₁ g) =
       Σ ((a : A) → Update R (f a) (g a))
-        (λ h → Data′ R (D (fun R ∘ f))
-          → Data′ R (D (λ a → fun R (update R (f a) (g a) (h a)))))
+        (λ h → Data′ R (D (fun R ∘ f)) →
+         Data′ R (D (λ a → fun R (update R (f a) (g a) (h a)))))
     Update′ R (Rec A D) (f , xs) (thereRec₂ i) =
       Update′ R (D (fun R ∘ f)) xs i
 \end{code}
+
+The \AgdaCon{thereArg₂} and \AgdaCon{thereRec₂} cases skip past one
+argument, updating the type of a subsequent an argument pointed to
+by the index.
+
+The \AgdaCon{thereArg₁} case asks for a
+\AgdaData{Maybe} \AgdaVar{A} to update the left argument
+with. When we define \AgdaFun{update′} for this case, 
+updating with a \AgdaCon{just} \AgdaVar{a'} will require translation of
+second component of the pair \AgdaVar{xs} to be indexed by the
+new first component \AgdaVar{D} \AgdaVar{a'} rather than the old first
+component \AgdaVar{D} \AgdaVar{a}. Therefore, we also need to ask for
+a function that translates \AgdaVar{D} \AgdaVar{a} to \AgdaVar{D}
+\AgdaVar{a'}.
+
+The \AgdaCon{thereRec₁} case asks for a continuation to update the
+first component of the recursive argument, but also needs a translation
+function to \AgdaFun{update} the index in the codomain of the second
+component. The translation functions of \AgdaCon{thereArg₁} and
+\AgdaCon{therRec₁} are analogous to the forgetful function of
+\AgdaFun{Update} in \refsec{concretelarge} for the \AgdaCon{thereFun₁}
+case, only differing in variance (translating versus forgetting) due
+to the way dependencies are captured as dependent products in
+\AgdaData{Desc} codes.
 
 \begin{code}
     update′ : {O : Set} (R D : Desc O) (xs : Data′ R D)
       (i : Path′ R D xs) → Update′ R D xs i → Data′ R D
     update′ R (End o) tt () X
-    update′ R (Arg A D) (a , xs) thereArg₁ (nothing , f) = a , xs
+    update′ R (Arg A D) (a , xs) thereArg₁ (nothing , f) =
+      a , xs
     update′ R (Arg A D) (a , xs) thereArg₁ (just X , f) =
       X , f xs
     update′ R (Arg A D) (a , xs) (thereArg₂ i) X =
@@ -1361,6 +1387,14 @@ one of the arguments within the constructor \AgdaCon{con} via
     update′ R (Rec A D) (f , xs) (thereRec₂ i) X =
       f , update′ R (D (fun R ∘ f)) xs i X
 \end{code}
+
+The \AgdaCon{thereArg₂} and \AgdaCon{thereRec₂} keep the left
+argument unchanged, and update a subsequent argument pointed to
+by the index. The \AgdaCon{thereArg₁} case performs the identity
+update in the \AgdaCon{nothing} case. In the \AgdaCon{just} case, the
+left component is updated while the right comonent is translated.
+The \AgdaCon{thereRec₁} case is similar, updating the left component
+and translating the second. 
 
 \section{Generic Closed InfIR}
 \label{sec:genericclosed}
