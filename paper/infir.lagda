@@ -1463,12 +1463,12 @@ mapping each code for a type to a concrete primitive \AgdaData{Set}.
 
 Having codes for bottom \AgdaCon{`Bot}, booleans \AgdaCon{`Bool}, and
 function \AgdaCon{`Fun} is standard an similar to the \AgdaData{Type}
-universe in the introduction. However, we add a code \AgdaData{`Data}
+universe in the introduction. However, we add a code \AgdaCon{`Data}
 for inductive-recurse datatypes. The key to an adequate encoding is to
-make the argument to \AgdaData{`Data} not a primitive
+make the argument to \AgdaCon{`Data} not a primitive
 \AgdaData{Desc}, but a new type \AgdaData{`Desc} of \emph{codes} for
 descriptions. This type of codes for descriptions also has a meaning
-function \AgdaFun{⟦\_⟧}, mapping codes of descriptions to a concrete
+function \AgdaFun{⟪\_⟫}, mapping codes of descriptions to a concrete
 primitive \AgdaData{Desc}. 
 
 \begin{code}
@@ -1480,8 +1480,8 @@ primitive \AgdaData{Desc}.
   
     ⟪_⟫ : {O : `Set} → `Desc O → Desc ⟦ O ⟧
     ⟪ `End o ⟫ = End o
-    ⟪ `Arg A D ⟫ = Arg ⟦ A ⟧ λ a → ⟪ D a ⟫
-    ⟪ `Rec A D ⟫ = Rec ⟦ A ⟧ λ o → ⟪ D o ⟫
+    ⟪ `Arg A D ⟫ = Arg ⟦ A ⟧ (λ a → ⟪ D a ⟫)
+    ⟪ `Rec A D ⟫ = Rec ⟦ A ⟧ (λ o → ⟪ D o ⟫)
 \end{code}
 
 The constructors of \AgdaData{`Desc} mirror those of \AgdaData{Desc},
@@ -1495,32 +1495,49 @@ all mutually defined.
 
 \subsection{\AgdaData{Path}}
 
+The \AgdaData{Path} type for our generic closed universe is indexed by
+a type code \AgdaData{`Set} and a value of the encoded type. In
+contrast, \AgdaData{Path} from \refsec{genericopen} is indexed by a
+concrete \AgdaData{Description}.
+
+\AgdaHide{
 \begin{code}
-  data Path : (A : `Set) → ⟦ A ⟧ → Set
-  data Path′ {O : `Set} (R : `Desc O) : (D : `Desc O) → Data′ ⟪ R ⟫ ⟪ D ⟫ → Set
-  
-  data Path where
-    here : ∀{A a} → Path A a
-    thereFun : ∀{A B f}
-      (g : (a : ⟦ A ⟧) → Path (B a) (f a))
-      → Path (`Fun A B) f
-    thereData : ∀{O} {D : `Desc O} {xs}
-      (i : Path′ D D xs)
-      → Path (`Data D) (con xs)
-  
-  data Path′ {O} R where
-    thereArg₁ : ∀{A D a xs}
-      (i : Path A a)
-      → Path′ R (`Arg A D) (a , xs)
-    thereArg₂ : ∀{A D a xs}
-      (i : Path′ R (D a) xs)
-      → Path′ R (`Arg A D) (a , xs)
-    thereRec₁ : ∀{A D f xs}
-      (g : (a : ⟦ A ⟧) → Path (`Data R) (f a))
-      → Path′ R (`Rec A D) (f , xs)
-    thereRec₂ : ∀{A D f xs}
-      (i : Path′ R (D (fun ⟪ R ⟫ ∘ f)) xs)
-      → Path′ R (`Rec A D) (f , xs)
+  mutual
+\end{code}}
+
+\begin{code}
+    data Path : (A : `Set) → ⟦ A ⟧ → Set where
+      here : ∀{A a} → Path A a
+      thereFun : ∀{A B f}
+        (g : (a : ⟦ A ⟧) → Path (B a) (f a))
+        → Path (`Fun A B) f
+      thereData : ∀{O} {D : `Desc O} {xs}
+        (i : Path′ D D xs)
+        → Path (`Data D) (con xs)
+\end{code}
+
+The \AgdaCon{here} case points to the current value in our
+universe. The \AgdaCon{thereFun} case points to another value in a
+continuation. The \AgdaCon{thereData} case points into an argument of
+a inductive-recursive \AgdaCon{con}structor.
+
+\subsection{\AgdaData{Path′}}
+
+\begin{code}
+    data Path′ {O : `Set} (R : `Desc O)
+      : (D : `Desc O) → Data′ ⟪ R ⟫ ⟪ D ⟫ → Set where
+      thereArg₁ : ∀{A D a xs}
+        (i : Path A a)
+        → Path′ R (`Arg A D) (a , xs)
+      thereArg₂ : ∀{A D a xs}
+        (i : Path′ R (D a) xs)
+        → Path′ R (`Arg A D) (a , xs)
+      thereRec₁ : ∀{A D f xs}
+        (g : (a : ⟦ A ⟧) → Path (`Data R) (f a))
+        → Path′ R (`Rec A D) (f , xs)
+      thereRec₂ : ∀{A D f xs}
+        (i : Path′ R (D (fun ⟪ R ⟫ ∘ f)) xs)
+        → Path′ R (`Rec A D) (f , xs)
 \end{code}
 
 \subsection{\AgdaFun{lookup}}
