@@ -1114,14 +1114,36 @@ encoded constructor case. The \AgdaInductiveConstructor{Arg} and
 
 \subsection{\AgdaDatatype{Path}}
 
+Now we will encode a generic \AgdaDatatype{Path} type, that can be
+used to index into any inductive-recursive value encoded by applying
+\AgdaDatatype{Data} to a \AgdaDatatype{Desc}.
+
+\AgdaHide{
 \begin{code}
   mutual
+\end{code}}
+
+\begin{code}
     data Path {O : Set} (D : Desc O) : Data D → Set₁ where
       here : ∀{x} → Path D x
       there : ∀{xs}
         → Path′ D D xs
         → Path D (con xs)
-    
+\end{code}
+
+A \AgdaDatatype{Path} uses \AgdaInductiveConstructor{here} to
+immediately point to the current constructor. It uses
+\AgdaInductiveConstructor{there} to point into one of the
+arguments of the current constructor, using \AgdaDatatype{Path′} as a
+sub-index.
+
+\subsection{\AgdaDatatype{Path′}}
+
+A \AgdaDatatype{Path′} points to an argument of a constructor,
+one of the values of the dependent product computed by
+\AgdaFunction{Data′}.
+
+\begin{code}
     data Path′ {O : Set} (R : Desc O) : (D : Desc O) → Data′ R D → Set₁ where
       thereArg₁ : ∀{A D a xs}
         → Path′ R (Arg A D) (a , xs)
@@ -1136,7 +1158,26 @@ encoded constructor case. The \AgdaInductiveConstructor{Arg} and
         → Path′ R (Rec A D) (f , xs)
 \end{code}
 
-\subsection{\AgdaDatatype{lookup}}
+The \AgdaInductiveConstructor{thereArg₁} case points immediately to a
+non-recursive value of type \AgdaBound{A}. Recall
+\AgdaInductiveConstructor{thereBase} from \refsec{concretelarge},
+which points immediately to a non-recursive value of type
+\AgdaDatatype{Set}. The \AgdaInductiveConstructor{thereBase} case cannot
+index further into non-recursive \AgdaDatatype{Set}s because values of
+type \AgdaDatatype{Set} cannot be case-analyzed. Similarly, the
+\AgdaInductiveConstructor{thereArg₁} case of our open
+universe generic \AgdaDatatype{Path′} cannot index further into
+\AgdaBound{A}, because the type of \AgdaBound{A} is \AgdaDatatype{Set}
+and cannot be case-analyzed. For this reason, \AgdaDatatype{Path′}
+does not adequately capture concrete paths for types like
+\AgdaDatatype{Arith} of \refsec{concretesmall}, which has a
+\AgdaDatatype{ℕ} in the \AgdaInductiveConstructor{`Num} case that we
+would like to index into. This is a limitation due to using open
+universe \AgdaDatatype{Desc}riptions, which we remedy using a
+closed universe in \refsec{genericclosed}.
+
+
+\subsection{\AgdaFunction{lookup}}
 
 \begin{code}
   Lookup : {O : Set} (D : Desc O) (x : Data D) → Path D x → Set
@@ -1167,7 +1208,7 @@ encoded constructor case. The \AgdaInductiveConstructor{Arg} and
   lookup′ R (Rec A D) (f , xs) (thereRec₂ i) = lookup′ R (D (fun R ∘ f)) xs i
 \end{code}
 
-\subsection{\AgdaDatatype{update}}
+\subsection{\AgdaFunction{update}}
 
 \begin{code}
   Update : {O : Set} (D : Desc O) (x : Data D) → Path D x → Set
@@ -1293,7 +1334,7 @@ module GenericClosed where
       → Path′ R (`Rec A D) (f , xs)
 \end{code}
 
-\subsection{\AgdaDatatype{lookup}}
+\subsection{\AgdaFunction{lookup}}
 
 \begin{code}
   Lookup : (A : `Set) (a : ⟦ A ⟧) → Path A a → Set
@@ -1325,7 +1366,7 @@ module GenericClosed where
   lookup′ R (`Rec A D) (f , xs) (thereRec₂ i) = lookup′ R (D (fun ⟪ R ⟫ ∘ f)) xs i
 \end{code}
 
-\subsection{\AgdaDatatype{update}}
+\subsection{\AgdaFunction{update}}
 
 \begin{code}
   Update : (A : `Set) (a : ⟦ A ⟧) → Path A a → Set
