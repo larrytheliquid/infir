@@ -1194,35 +1194,63 @@ The \AgdaInductiveConstructor{thereRec₂} case points to a
 sub-argument, skipping past the recursive argument.
 
 
-\subsection{\AgdaFunction{lookup}}
+\subsection{\AgdaFunction{Lookup} \& \AgdaFunction{lookup}}
+
+As in \refsec{concretelarge} and \refsec{concretesmall}, our generic
+open universe \AgdaFunction{lookup} must have a computational return
+type, \AgdaFunction{Lookup}. 
+
+\AgdaHide{
+\begin{code}
+  mutual
+\end{code}}
 
 \begin{code}
-  Lookup : {O : Set} (D : Desc O) (x : Data D) → Path D x → Set
-  Lookup′ : {O : Set} (R D : Desc O) (xs : Data′ R D) → Path′ R D xs → Set
-  
-  Lookup D x here = Data D
-  Lookup D (con xs) (there i) = Lookup′ D D xs i
-  
-  Lookup′ R (End o) tt ()
-  Lookup′ R (Arg A D) (a , xs) thereArg₁ = A
-  Lookup′ R (Arg A D) (a , xs) (thereArg₂ i) = Lookup′ R (D a) xs i
-  Lookup′ R (Rec A D) (f , xs) (thereRec₁ g) = (a : A) → Lookup R (f a) (g a)
-  Lookup′ R (Rec A D) (f , xs) (thereRec₂ i) = Lookup′ R (D (fun R ∘ f)) xs i
+    Lookup : {O : Set} (D : Desc O) (x : Data D) → Path D x → Set
+    Lookup D x here = Data D
+    Lookup D (con xs) (there i) = Lookup′ D D xs i
+\end{code}
+
+The \AgdaInductiveConstructor{here} case returns a
+\AgdaDatatype{Data} of the encoded description \AgdaBound{D}
+currently being pointed to. The \AgdaInductiveConstructor{there} case
+should return a type \AgdaFunction{Lookup′} for one of the arguments
+to the constructor.
+
+\begin{code}
+    lookup : {O : Set} (D : Desc O) (x : Data D) (i : Path D x) → Lookup D x i
+    lookup D x here = x
+    lookup D (con xs) (there i) = lookup′ D D xs i
+\end{code}
+
+The \AgdaInductiveConstructor{here} case returns the value being pointed
+to. The \AgdaInductiveConstructor{there} case returns a value within
+one of the arguments of the current constructor via
+\AgdaFunction{lookup′}.
+
+\subsection{\AgdaFunction{Lookup′} \& \AgdaFunction{lookup′}}
+
+The function \AgdaFunction{lookup′} is used to lookup a value within
+an argument to a constructor, and has \AgdaDatatype{Lookup′} as its
+computational return type.
+
+\begin{code}
+    Lookup′ : {O : Set} (R D : Desc O) (xs : Data′ R D) → Path′ R D xs → Set
+    Lookup′ R (End o) tt ()
+    Lookup′ R (Arg A D) (a , xs) thereArg₁ = A
+    Lookup′ R (Arg A D) (a , xs) (thereArg₂ i) = Lookup′ R (D a) xs i
+    Lookup′ R (Rec A D) (f , xs) (thereRec₁ g) = (a : A) → Lookup R (f a) (g a)
+    Lookup′ R (Rec A D) (f , xs) (thereRec₂ i) = Lookup′ R (D (fun R ∘ f)) xs i
 \end{code}
 
 \begin{code}
-  lookup : {O : Set} (D : Desc O) (x : Data D) (i : Path D x) → Lookup D x i
-  lookup′ : {O : Set} (R D : Desc O) (xs : Data′ R D) (i : Path′ R D xs)
-    → Lookup′ R D xs i
-  
-  lookup D x here = x
-  lookup D (con xs) (there i) = lookup′ D D xs i
-  
-  lookup′ R (End o) tt ()
-  lookup′ R (Arg A D) (a , xs) thereArg₁ = a
-  lookup′ R (Arg A D) (a , xs) (thereArg₂ i) = lookup′ R (D a) xs i
-  lookup′ R (Rec A D) (f , xs) (thereRec₁ g) = λ a → lookup R (f a) (g a)
-  lookup′ R (Rec A D) (f , xs) (thereRec₂ i) = lookup′ R (D (fun R ∘ f)) xs i
+    lookup′ : {O : Set} (R D : Desc O) (xs : Data′ R D) (i : Path′ R D xs)
+      → Lookup′ R D xs i
+    lookup′ R (End o) tt ()
+    lookup′ R (Arg A D) (a , xs) thereArg₁ = a
+    lookup′ R (Arg A D) (a , xs) (thereArg₂ i) = lookup′ R (D a) xs i
+    lookup′ R (Rec A D) (f , xs) (thereRec₁ g) = λ a → lookup R (f a) (g a)
+    lookup′ R (Rec A D) (f , xs) (thereRec₂ i) = lookup′ R (D (fun R ∘ f)) xs i
 \end{code}
 
 \subsection{\AgdaFunction{update}}
