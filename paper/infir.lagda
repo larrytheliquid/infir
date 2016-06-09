@@ -1496,7 +1496,8 @@ all mutually defined.
 \subsection{\AgdaData{Path}}
 
 The \AgdaData{Path} type for our generic closed universe is indexed by
-a type code \AgdaData{`Set} and a value of the encoded type. In
+a type code \AgdaData{`Set} and a value of the encoded type translated
+by the meaning function \AgdaFun{⟦\_⟧}. In
 contrast, \AgdaData{Path} from \refsec{genericopen} is indexed by a
 concrete \AgdaData{Description}.
 
@@ -1519,9 +1520,13 @@ concrete \AgdaData{Description}.
 The \AgdaCon{here} case points to the current value in our
 universe. The \AgdaCon{thereFun} case points to another value in a
 continuation. The \AgdaCon{thereData} case points into an argument of
-a inductive-recursive \AgdaCon{con}structor.
+an inductive-recursive \AgdaCon{con}structor.
 
 \subsection{\AgdaData{Path′}}
+
+A \AgdaData{Path′} points to an argument of a constructor,
+a value of \AgdaFun{Data′} applied to a description translated by the
+meaning function \AgdaFun{⟪\_⟫}.
 
 \begin{code}
     data Path′ {O : `Set} (R : `Desc O)
@@ -1539,6 +1544,17 @@ a inductive-recursive \AgdaCon{con}structor.
         (i : Path′ R (D (fun ⟪ R ⟫ ∘ f)) xs)
         → Path′ R (`Rec A D) (f , xs)
 \end{code}
+
+The \AgdaCon{thereArg₁} case is the only constructor that behaves
+differently than the open universe \AgdaData{Path′} of
+\refsec{genericopen}. Crucially, it points into a non-recursive value
+by requiring a \AgdaData{Path} \AgdaVar{A} \AgdaVar{a} as an
+argument. In contrast, the open universe \AgdaCon{thereArg₁} does not
+take an argument, thus it always points to
+\AgdaVar{a} rather than some sub-value inside of it.
+\emph{This} is what allows our generic closed universe paths to
+adequately model a concrete path for a type like \AgdaData{Arith},
+where \AgdaCon{`Num} should be able to index into its \AgdaData{ℕ}!
 
 \subsection{\AgdaFun{lookup}}
 
