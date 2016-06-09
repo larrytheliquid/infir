@@ -115,18 +115,18 @@ dependent functions.
 \end{code}}
 
 \noindent
-This \AgdaDatatype{Type} is \emph{infinitary} because the
-\AgdaInductiveConstructor{`Fun} constructor's second inductive argument
-(\AgdaBound{B}) is a function (hence \AgdaDatatype{Type}s can branch infinitely).
+This \AgdaData{Type} is \emph{infinitary} because the
+\AgdaCon{`Fun} constructor's second inductive argument
+(\AgdaVar{B}) is a function (hence \AgdaData{Type}s can branch infinitely).
 Additionally, it is \emph{inductive-recursive} because it
 is mutually defined with a
-function (\AgdaFunction{⟦\_⟧}) operating over it.
+function (\AgdaFun{⟦\_⟧}) operating over it.
 
 Once you have defined a model, it is also common to provide a few
 examples of values that inhabit it.
-For example, below (\AgdaFunction{NumFun}) is a function \AgdaDatatype{Type}
-that takes a natural number \AgdaBound{n} as input, then asks you
-to construct a natural number from \AgdaBound{n} additional natural
+For example, below (\AgdaFun{NumFun}) is a function \AgdaData{Type}
+that takes a natural number \AgdaVar{n} as input, then asks you
+to construct a natural number from \AgdaVar{n} additional natural
 number arguments.
 
 \begin{code}
@@ -152,26 +152,26 @@ datatypes. Their inductive-recursive nature means you need to deal
 with \emph{dependencies} between arguments and \emph{mutual functions} too.
 
 Functional programming languages typically package useful datatypes
-(like \AgdaDatatype{List}s and \AgdaDatatype{Vec}tors) with useful operations
-(like \AgdaFunction{lookup}, \AgdaFunction{drop} and
-\AgdaFunction{update}) in their standard
+(like \AgdaData{List}s and \AgdaData{Vec}tors) with useful operations
+(like \AgdaFun{lookup}, \AgdaFun{drop} and
+\AgdaFun{update}) in their standard
 libraries. Additionally, \emph{generic} implementations of such operations
 may exist as libraries for any other user-defined datatypes.
 
 Our \emph{primary contribution} is to show how to write common
 operations over infinitary
-inductive-recursive types (such as \AgdaDatatype{Type} universes), and
+inductive-recursive types (such as \AgdaData{Type} universes), and
 then generalize those operations from functions over concrete
 datatypes to generic functions over any user-defined
 datatype. More specifically, our contributions are the following:
 
 \todo[inline]{Reference sections and concrete large vs small}
 \begin{itemize}
-\item Index types (\AgdaDatatype{Path}s) for concrete, open universe,
+\item Index types (\AgdaData{Path}s) for concrete, open universe,
   and closed universe InfIR types.
-\item A \AgdaFunction{lookup} function with a heterogeneous return
+\item A \AgdaFun{lookup} function with a heterogeneous return
   type for concrete, open universe, and closed universe InfIR types.
-\item An \AgdaFunction{update} function with a heterogeneous type for
+\item An \AgdaFun{update} function with a heterogeneous type for
   the value to update with, for concrete, open universe,
   and closed universe InfIR types.
 \item A model of a closed universe of small InfIR types.
@@ -196,9 +196,9 @@ to successfully write InfIR functions.
 \label{sec:problem:background}
 
 Instead of diving directly into the complexity of writing functions
-like \AgdaFunction{lookup} for the InfIR universe \AgdaDatatype{Type},
-let us first consider writing \AgdaFunction{lookup} for a binary
-\AgdaDatatype{Tree}.
+like \AgdaFun{lookup} for the InfIR universe \AgdaData{Type},
+let us first consider writing \AgdaFun{lookup} for a binary
+\AgdaData{Tree}.
 
 \AgdaHide{
 \begin{code}
@@ -211,16 +211,16 @@ module Tree where
     branch : (A B : Tree) → Tree
 \end{code}
 
-Our \AgdaDatatype{Tree} stores no additional data in nodes, can have
-binary \AgdaInductiveConstructor{branch}es, and ends with a
-\AgdaInductiveConstructor{leaf}. It is easy to work with because it is
+Our \AgdaData{Tree} stores no additional data in nodes, can have
+binary \AgdaCon{branch}es, and ends with a
+\AgdaCon{leaf}. It is easy to work with because it is
 first-order, has no dependencies between arguments, and has no mutually
 defined functions.
 
-If we want to \AgdaFunction{lookup}
+If we want to \AgdaFun{lookup}
 a particular
-sub\AgdaDatatype{Tree}, we must first have a way to describe a
-\AgdaDatatype{Path} that indexes into our original tree.
+sub\AgdaData{Tree}, we must first have a way to describe a
+\AgdaData{Path} that indexes into our original tree.
 
 \begin{code}
   data Path : Tree → Set where
@@ -233,16 +233,16 @@ sub\AgdaDatatype{Tree}, we must first have a way to describe a
       → Path (branch A B)
 \end{code}
 
-The \AgdaInductiveConstructor{here} constructor indicates that we have
+The \AgdaCon{here} constructor indicates that we have
 arrived at the subtree we would like to visit. The
-\AgdaInductiveConstructor{there₁} constructor tells us to take a left
-turn at a \AgdaInductiveConstructor{branch}, while
-\AgdaInductiveConstructor{there₂} tells us to take a right turn.
+\AgdaCon{there₁} constructor tells us to take a left
+turn at a \AgdaCon{branch}, while
+\AgdaCon{there₂} tells us to take a right turn.
 
-Once we have defined \AgdaDatatype{Path}s into a \AgdaDatatype{Tree},
-it is straightforward to defined \AgdaFunction{lookup} by following
-the \AgdaDatatype{Path} until we arrive at the type appearing
-\AgdaInductiveConstructor{here}.
+Once we have defined \AgdaData{Path}s into a \AgdaData{Tree},
+it is straightforward to defined \AgdaFun{lookup} by following
+the \AgdaData{Path} until we arrive at the type appearing
+\AgdaCon{here}.
 
 \begin{code}
   lookup : (A : Tree) → Path A → Tree
@@ -259,10 +259,10 @@ the \AgdaDatatype{Path} until we arrive at the type appearing
 module List where
 \end{code}}
 
-Now let's consider writing a total \AgdaFunction{lookup} function for
-polymorphic \AgdaDatatype{List}s instead of the binary
-\AgdaDatatype{Tree}s above. Below is the \AgdaDatatype{List} and its
-\AgdaDatatype{Path}.
+Now let's consider writing a total \AgdaFun{lookup} function for
+polymorphic \AgdaData{List}s instead of the binary
+\AgdaData{Tree}s above. Below is the \AgdaData{List} and its
+\AgdaData{Path}.
 
 \begin{code}
   data List (A : Set) : Set where
@@ -277,16 +277,16 @@ polymorphic \AgdaDatatype{List}s instead of the binary
       → Path (cons x xs)
 \end{code}
 
-The \AgdaInductiveConstructor{here} and
-\AgdaInductiveConstructor{there₂} constructors are analogous to those
-for \AgdaDatatype{Tree} \AgdaDatatype{Path}s. However,
-\AgdaInductiveConstructor{there₁} points to a non-inductive
-\AgdaBound{A} value, the first argument to
-\AgdaInductiveConstructor{cons}, whereas this pointed to an inductive
-subtree in the \AgdaDatatype{Tree} scenario.
+The \AgdaCon{here} and
+\AgdaCon{there₂} constructors are analogous to those
+for \AgdaData{Tree} \AgdaData{Path}s. However,
+\AgdaCon{there₁} points to a non-inductive
+\AgdaVar{A} value, the first argument to
+\AgdaCon{cons}, whereas this pointed to an inductive
+subtree in the \AgdaData{Tree} scenario.
 
 In the (tranditionally) non-dependent Haskell~\cite{TODO} language there are two
-distinct \AgdaFunction{lookup}-like functions for lists.
+distinct \AgdaFun{lookup}-like functions for lists.
 
 \begin{verbatim}
   drop :: Int -> [a] -> [a]
@@ -296,8 +296,8 @@ distinct \AgdaFunction{lookup}-like functions for lists.
 The first (\texttt{drop}) looks up inductive sublists, and the second
 \texttt{(!!)} looks up non-inductive \texttt{a} values.
 A depedently typed language like Agda allows us to a write a single
-function that may return a \AgdaDatatype{List} or an \AgdaBound{A},
-depending on what the input \AgdaDatatype{Path} points to.
+function that may return a \AgdaData{List} or an \AgdaVar{A},
+depending on what the input \AgdaData{Path} points to.
 
 \begin{code}
   Lookup : {A : Set} (xs : List A) → Path xs → Set
@@ -311,32 +311,32 @@ depending on what the input \AgdaDatatype{Path} points to.
   lookup (cons x xs) (there₂ i) = lookup xs i
 \end{code}
 
-The \AgdaFunction{Lookup} function \textit{computes} the return type
-of \AgdaFunction{lookup}, allowing \AgdaFunction{lookup} to return
-either a \AgdaDatatype{List} or an \AgdaBound{A} (the base cases of
-\AgdaFunction{Lookup}). I will refer to functions like
-\AgdaFunction{Lookup} as \textit{computational types}.
+The \AgdaFun{Lookup} function \textit{computes} the return type
+of \AgdaFun{lookup}, allowing \AgdaFun{lookup} to return
+either a \AgdaData{List} or an \AgdaVar{A} (the base cases of
+\AgdaFun{Lookup}). I will refer to functions like
+\AgdaFun{Lookup} as \textit{computational types}.
 
 
 \subsection{Writing total functions}
 \label{sec:problem:total}
 
 Once we move from finitary non-dependent types like
-\AgdaDatatype{Tree} and \AgdaDatatype{List} to an InfIR type like
-\AgdaDatatype{Type}, it is no longer obvious how to write a function like
-\AgdaFunction{lookup}. Looking up something in the
-left side (domain) of a \AgdaInductiveConstructor{`Fun} is easy, but
+\AgdaData{Tree} and \AgdaData{List} to an InfIR type like
+\AgdaData{Type}, it is no longer obvious how to write a function like
+\AgdaFun{lookup}. Looking up something in the
+left side (domain) of a \AgdaCon{`Fun} is easy, but
 looking up something in the right side (codomain) requires entering a
 function space.
 
-Figuring out how to write functions like \AgdaFunction{lookup} (and more
+Figuring out how to write functions like \AgdaFun{lookup} (and more
 complicated functions) over InfIR types is the subject of this
 paper. The solution (given in the next section) involves a more
-complicated version of the computational type \AgdaFunction{Lookup} above. 
+complicated version of the computational type \AgdaFun{Lookup} above. 
 But, let us first consider a general
 methodology for turning a would-be partial function into a total
 function. For example, say we wanted to write a total version of the
-typically partial \AgdaFunction{head} function.
+typically partial \AgdaFun{head} function.
 
 \AgdaHide{
 \begin{code}
@@ -367,7 +367,7 @@ We have 2 options to make this function total. We can either:
 \end{code}
 
 \item Change the codomain, for example by returning a
-  \AgdaDatatype{Maybe} result.
+  \AgdaData{Maybe} result.
 
 \begin{code}
   head₂ : {A : Set} → List A → Maybe A
@@ -378,23 +378,23 @@ We have 2 options to make this function total. We can either:
 \end{enumerate}
 
 Both options give us something to do when we apply
-\AgdaFunction{head} to an empty list: either get an extra argument to
+\AgdaFun{head} to an empty list: either get an extra argument to
 return, or we simply return
-\AgdaInductiveConstructor{nothing}.
+\AgdaCon{nothing}.
 However, these options are rather extreme as they require changing our
-intended type signature of \AgdaFunction{head} for \emph{all} possible
+intended type signature of \AgdaFun{head} for \emph{all} possible
 lists. The precision of dependent types allows us to instead
 conditionally ask for an extra argument, or return
-\AgdaInductiveConstructor{nothing} of computational value, only if the
+\AgdaCon{nothing} of computational value, only if the
 input list is empty!
 
 First, let's use dependent types to conditonally change the domain. We
-ask for an extra argument of type \AgdaBound{A} if the
-\AgdaDatatype{List} is empty. Otherwise, we ask for an extra
-argument of type unit (\AgdaDatatype{⊤}), which is isomorphic to not
-asking for anything extra at all. Below, \AgdaFunction{HeadDom} is
+ask for an extra argument of type \AgdaVar{A} if the
+\AgdaData{List} is empty. Otherwise, we ask for an extra
+argument of type unit (\AgdaData{⊤}), which is isomorphic to not
+asking for anything extra at all. Below, \AgdaFun{HeadDom} is
 type of the extra argument, which is dependent on the input
-\AgdaBound{xs} of type \AgdaDatatype{List}.
+\AgdaVar{xs} of type \AgdaData{List}.
 
 \begin{code}
   HeadDom : {A : Set} → List A → Set
@@ -407,12 +407,12 @@ type of the extra argument, which is dependent on the input
 \end{code}
 
 Second, let's use dependent types to conditonally change the
-codomain. \AgdaFunction{HeadCod} computes our new return type,
+codomain. \AgdaFun{HeadCod} computes our new return type,
 conditionally dependent on the input list. If the input list is empty,
-our \AgdaFunction{head₄} function returns a value of type unit (\AgdaDatatype{⊤}). If
-it is non-empty, it returns an \AgdaBound{A}. Note that returning a
-value of \AgdaDatatype{⊤} is returning nothing of computational
-significance. Hence, it is as if \AgdaFunction{head₄} is not defined
+our \AgdaFun{head₄} function returns a value of type unit (\AgdaData{⊤}). If
+it is non-empty, it returns an \AgdaVar{A}. Note that returning a
+value of \AgdaData{⊤} is returning nothing of computational
+significance. Hence, it is as if \AgdaFun{head₄} is not defined
 for empty lists.
 
 \begin{code}
@@ -427,9 +427,9 @@ for empty lists.
 
 So far we have seen how to take a partial function and make it total,
 both with and without the extra precision afforded to us by dependent
-types. Note that \AgdaFunction{HeadCod} is a computational type like
-\AgdaFunction{Lookup}. We will refer to functions like
-\AgdaFunction{HeadDom} as \textit{computational arguments}.
+types. Note that \AgdaFun{HeadCod} is a computational type like
+\AgdaFun{Lookup}. We will refer to functions like
+\AgdaFun{HeadDom} as \textit{computational arguments}.
 \footnote{It is
 possible to write dependently typed functions using either a
 computational argument or a computational type. Picking which
@@ -437,13 +437,13 @@ technique to use is a matter of preference, and determines whether the
 arguments or the return type is statically known.}
 
 Finally, we would like to emphasize that the extra argument
-\AgdaFunction{HeadDom} in \AgdaFunction{head₃} is not merely a
+\AgdaFun{HeadDom} in \AgdaFun{head₃} is not merely a
 precondition, but rather extra computational content that is required
 from the user applying the function to complete the cases that would
 normally make it a partial function.
 To see the difference, consider a total version of a function that looks up
-\AgdaFunction{elem}ents of a \AgdaDatatype{List},
-once given a natural number (\AgdaDatatype{ℕ}) index.
+\AgdaFun{elem}ents of a \AgdaData{List},
+once given a natural number (\AgdaData{ℕ}) index.
 
 \begin{code}
   elem : {A : Set} (xs : List A) (n : ℕ) → length xs < n → A
@@ -454,22 +454,22 @@ once given a natural number (\AgdaDatatype{ℕ}) index.
   elem = magic
 \end{code}}
 
-Because the natural number \AgdaBound{n} may index outside the bounds
-of the list \AgdaBound{xs}, we need an extra argument serving as a
+Because the natural number \AgdaVar{n} may index outside the bounds
+of the list \AgdaVar{xs}, we need an extra argument serving as a
 precondition. If this precondition is satisfied, it computes to the unit
-type (\AgdaDatatype{⊤}),
-but if it fails it computes to the empty type (\AgdaDatatype{⊥}). So,
-in the failure case the precondition (\AgdaDatatype{⊥}) is
-unsatisfiable, whereas the failure case of \AgdaFunction{HeadDom} is
-the extra argument \AgdaBound{A} needed to complete the otherwise
+type (\AgdaData{⊤}),
+but if it fails it computes to the empty type (\AgdaData{⊥}). So,
+in the failure case the precondition (\AgdaData{⊥}) is
+unsatisfiable, whereas the failure case of \AgdaFun{HeadDom} is
+the extra argument \AgdaVar{A} needed to complete the otherwise
 partial function.
 
 The rest of this paper expands on the ideas of this section by
-defining functions like \AgdaFunction{HeadDom} that non-trivially
+defining functions like \AgdaFun{HeadDom} that non-trivially
 compute extra arguments. These dependent extra arguments
 are the key to writing functions over InfIR datatypes.
 
-\section{Large InfIR \AgdaDatatype{Type}}
+\section{Large InfIR \AgdaData{Type}}
 \label{sec:concretelarge}
 
 \AgdaHide{
@@ -478,18 +478,18 @@ module ConcreteLarge where
 \end{code}}
 
 \refsec{problem} reviews how to
-\AgdaFunction{lookup} sub\AgdaDatatype{Tree}s, sub\AgdaDatatype{List}s,
-and subelements pointed to by \AgdaDatatype{Path}s. In this section we
+\AgdaFun{lookup} sub\AgdaData{Tree}s, sub\AgdaData{List}s,
+and subelements pointed to by \AgdaData{Path}s. In this section we
 define the corresponding datatypes and functions for InfIR
-\AgdaDatatype{Type}s.
+\AgdaData{Type}s.
 
-\subsection{\AgdaDatatype{Type}}
+\subsection{\AgdaData{Type}}
 
-The InfIR \AgdaDatatype{Type} used in this section is another
+The InfIR \AgdaData{Type} used in this section is another
 type universe, similar to the one in \refsec{intro}. The
-\AgdaDatatype{Type} universe is still closed under functions, but now
-the \AgdaInductiveConstructor{`Base} types are parameters (of type \AgdaDatatype{Set}) instead of being hardcoded to
-\AgdaDatatype{ℕ}.
+\AgdaData{Type} universe is still closed under functions, but now
+the \AgdaCon{`Base} types are parameters (of type \AgdaData{Set}) instead of being hardcoded to
+\AgdaData{ℕ}.
 
 \begin{code}
   mutual
@@ -502,21 +502,21 @@ the \AgdaInductiveConstructor{`Base} types are parameters (of type \AgdaDatatype
     ⟦ `Fun A B ⟧ = (a : ⟦ A ⟧) → ⟦ B a ⟧
 \end{code}
 
-\subsection{\AgdaDatatype{Path}}
+\subsection{\AgdaData{Path}}
 
-Let's reconsider what it means to be a \AgdaDatatype{Path}.
-You can still point to a recursive \AgdaDatatype{Type} using
-\AgdaInductiveConstructor{here}. Now you can also point to a
-non-recursive \AgdaBound{A} of type \AgdaDatatype{Set} using
-\AgdaInductiveConstructor{thereBase}.
+Let's reconsider what it means to be a \AgdaData{Path}.
+You can still point to a recursive \AgdaData{Type} using
+\AgdaCon{here}. Now you can also point to a
+non-recursive \AgdaVar{A} of type \AgdaData{Set} using
+\AgdaCon{thereBase}.
 
-When traversing a \AgdaDatatype{Tree}, you can always go left or right at a
-\AgdaInductiveConstructor{branch}. When traversing a
-\AgdaDatatype{Type}, you can immediately go to the left of a
-\AgdaInductiveConstructor{`Fun}, but going right requires first knowing
-which element \AgdaBound{a} of the type family \AgdaBound{B a} to
+When traversing a \AgdaData{Tree}, you can always go left or right at a
+\AgdaCon{branch}. When traversing a
+\AgdaData{Type}, you can immediately go to the left of a
+\AgdaCon{`Fun}, but going right requires first knowing
+which element \AgdaVar{a} of the type family \AgdaVar{B a} to
 continue traversing under. This requirement is neatly captured as a
-dependent function type of the \AgdaBound{f} argument below.
+dependent function type of the \AgdaVar{f} argument below.
 
 \begin{code}
   data Path : Type → Set₁ where
@@ -530,27 +530,27 @@ dependent function type of the \AgdaBound{f} argument below.
       → Path (`Fun A B)
 \end{code}
 
-Above, \AgdaInductiveConstructor{thereFun₂} represents going right
-into the codomain of \AgdaInductiveConstructor{`Fun}, but only once the
-user tells you which \AgdaBound{a} to use. In a sense, going right is
+Above, \AgdaCon{thereFun₂} represents going right
+into the codomain of \AgdaCon{`Fun}, but only once the
+user tells you which \AgdaVar{a} to use. In a sense, going right is
 like asking for a continuation that tells you where to go next, once
-you have been given \AgdaBound{a}. Also note that because the argument
-\AgdaBound{f} of \AgdaInductiveConstructor{thereFun₂} is a function that
-returns a \AgdaDatatype{Path}, the \AgdaDatatype{Path} datatype is
-infinitary (just like the \AgdaDatatype{Type} it indexes).
+you have been given \AgdaVar{a}. Also note that because the argument
+\AgdaVar{f} of \AgdaCon{thereFun₂} is a function that
+returns a \AgdaData{Path}, the \AgdaData{Path} datatype is
+infinitary (just like the \AgdaData{Type} it indexes).
 
-\subsection{\AgdaFunction{lookup}}
+\subsection{\AgdaFun{lookup}}
 
-We were able to write a total function to \AgdaFunction{lookup} any
-sub\AgdaDatatype{Tree}, but \AgdaFunction{lookup}ing up a
-sub\AgdaDatatype{Type} is not always possible. Using the methodology
-from \refsec{problem:total}, we can make \AgdaFunction{lookup} for
-\AgdaDatatype{Type}s total by choosing to change the codomain,
-depending on the input \AgdaDatatype{Type} and \AgdaDatatype{Path}.
-\AgdaFunction{Lookup} computes the codomain of
-\AgdaFunction{lookup}, asking for a \AgdaDatatype{Type} or \AgdaDatatype{Set} in the base
+We were able to write a total function to \AgdaFun{lookup} any
+sub\AgdaData{Tree}, but \AgdaFun{lookup}ing up a
+sub\AgdaData{Type} is not always possible. Using the methodology
+from \refsec{problem:total}, we can make \AgdaFun{lookup} for
+\AgdaData{Type}s total by choosing to change the codomain,
+depending on the input \AgdaData{Type} and \AgdaData{Path}.
+\AgdaFun{Lookup} computes the codomain of
+\AgdaFun{lookup}, asking for a \AgdaData{Type} or \AgdaData{Set} in the base
 cases, or a continuation when looking to the right of a
-\AgdaInductiveConstructor{`Fun}.
+\AgdaCon{`Fun}.
 
 \begin{code}
   Lookup : (A : Type) → Path A → Set₁
@@ -560,13 +560,13 @@ cases, or a continuation when looking to the right of a
   Lookup (`Fun A B) (thereFun₂ f) = (a : ⟦ A ⟧) → Lookup (B a) (f a)
 \end{code}
 
-Finally, we can write \AgdaFunction{lookup} in terms of
-\AgdaDatatype{Path} and \AgdaFunction{Lookup}. Notice that users
-applying our \AgdaFunction{lookup} function need to supply
-extra \AgdaBound{a} arguments exactly when they go to the right of a
-\AgdaInductiveConstructor{`Fun}. Thus, our definition can expect an
-extra argument \AgdaBound{a} in the
-\AgdaInductiveConstructor{thereFun₂} case.
+Finally, we can write \AgdaFun{lookup} in terms of
+\AgdaData{Path} and \AgdaFun{Lookup}. Notice that users
+applying our \AgdaFun{lookup} function need to supply
+extra \AgdaVar{a} arguments exactly when they go to the right of a
+\AgdaCon{`Fun}. Thus, our definition can expect an
+extra argument \AgdaVar{a} in the
+\AgdaCon{thereFun₂} case.
 
 \begin{code}
   lookup : (A : Type) (i : Path A) → Lookup A i
@@ -576,16 +576,16 @@ extra argument \AgdaBound{a} in the
   lookup (`Fun A B) (thereFun₂ f) = λ a → lookup (B a) (f a)
 \end{code}
 
-\subsection{\AgdaFunction{update}}
+\subsection{\AgdaFun{update}}
 
-Now we will write an \AgdaFunction{update} function for
-\AgdaDatatype{Type}s. After supplying a \AgdaDatatype{Path} and a
-substitute \AgdaDatatype{Type}, \AgdaFunction{update} should return
-the original \AgdaDatatype{Type} but with the substitute replacing
-what the \AgdaDatatype{Path} pointed to. To make updating the InfIR
-\AgdaDatatype{Type}
+Now we will write an \AgdaFun{update} function for
+\AgdaData{Type}s. After supplying a \AgdaData{Path} and a
+substitute \AgdaData{Type}, \AgdaFun{update} should return
+the original \AgdaData{Type} but with the substitute replacing
+what the \AgdaData{Path} pointed to. To make updating the InfIR
+\AgdaData{Type}
 more convenient, the type of the substitute will actually be
-\AgdaDatatype{Maybe Type}, where \AgdaInductiveConstructor{nothing}
+\AgdaData{Maybe Type}, where \AgdaCon{nothing}
 causes an identity update.
 We might expect to write a function like:
 
@@ -603,26 +603,26 @@ family}
 \end{code}}
 
 \noindent
-Above \AgdaBound{X} is the intended \AgdaDatatype{Type} to
-\AgdaDatatype{Maybe} substitute at position \AgdaBound{i}.
+Above \AgdaVar{X} is the intended \AgdaData{Type} to
+\AgdaData{Maybe} substitute at position \AgdaVar{i}.
 In order to write a total version of
-\AgdaFunction{updateNaive}, we need to change the domain by
-asking for an \AgdaBound{a} whenever we update within the codomain of
-a \AgdaInductiveConstructor{`Fun}.
+\AgdaFun{updateNaive}, we need to change the domain by
+asking for an \AgdaVar{a} whenever we update within the codomain of
+a \AgdaCon{`Fun}.
 
 We call the type of the substitute
-\AgdaFunction{Update}, which asks for a \AgdaDatatype{Maybe Type} or a
-\AgdaDatatype{Maybe Set} in the base cases (\AgdaInductiveConstructor{here}
-and \AgdaInductiveConstructor{thereBase} respectively), and a continuation in the
-\AgdaInductiveConstructor{thereFun₂} case. However, updating an element to
-the left of a \AgdaInductiveConstructor{`Fun} is also
+\AgdaFun{Update}, which asks for a \AgdaData{Maybe Type} or a
+\AgdaData{Maybe Set} in the base cases (\AgdaCon{here}
+and \AgdaCon{thereBase} respectively), and a continuation in the
+\AgdaCon{thereFun₂} case. However, updating an element to
+the left of a \AgdaCon{`Fun} is also
 problematic. We would like to keep the old
-\AgdaInductiveConstructor{`Fun} codomain \AgdaBound{B} unchanged, but it
-still expects an \AgdaBound{a} of the original type
-\AgdaFunction{⟦} \AgdaBound{A} \AgdaFunction{⟧}. Therefore, the
-\AgdaInductiveConstructor{thereFun₁} case must
-ask for a forgetful function \AgdaBound{f} that maps newly
-updated \AgdaBound{a}'s to their original type.
+\AgdaCon{`Fun} codomain \AgdaVar{B} unchanged, but it
+still expects an \AgdaVar{a} of the original type
+\AgdaFun{⟦} \AgdaVar{A} \AgdaFun{⟧}. Therefore, the
+\AgdaCon{thereFun₁} case must
+ask for a forgetful function \AgdaVar{f} that maps newly
+updated \AgdaVar{a}'s to their original type.
 
 \todo[inline]{Give an example of the domain type changing and being translated}
 
@@ -645,36 +645,36 @@ updated \AgdaBound{a}'s to their original type.
     `Fun A (λ a → update (B a) (f a) (h a))
 \end{code}
 
-Notice that we must define \AgdaFunction{Update} and
-\AgdaFunction{update} mutually, because the forgetful
-function \AgdaBound{f} (the codomain of
-\AgdaDatatype{Σ} in the \AgdaInductiveConstructor{thereFun₁} case of
-\AgdaFunction{Update}) must refer to \AgdaFunction{update} in its
-domain. Although the \AgdaInductiveConstructor{thereFun₁} case of
-\AgdaFunction{update} only updates the domain of
-\AgdaInductiveConstructor{`Fun}, the type family \AgdaBound{B} in the
-codomain expects an \AgdaBound{a} of type
-\AgdaFunction{⟦} \AgdaBound{A} \AgdaFunction{⟧}, so we use the
-forgetful function \AgdaBound{f} to map back to \AgdaBound{a}'s
+Notice that we must define \AgdaFun{Update} and
+\AgdaFun{update} mutually, because the forgetful
+function \AgdaVar{f} (the codomain of
+\AgdaData{Σ} in the \AgdaCon{thereFun₁} case of
+\AgdaFun{Update}) must refer to \AgdaFun{update} in its
+domain. Although the \AgdaCon{thereFun₁} case of
+\AgdaFun{update} only updates the domain of
+\AgdaCon{`Fun}, the type family \AgdaVar{B} in the
+codomain expects an \AgdaVar{a} of type
+\AgdaFun{⟦} \AgdaVar{A} \AgdaFun{⟧}, so we use the
+forgetful function \AgdaVar{f} to map back to \AgdaVar{a}'s
 original type.
 
-The base cases (\AgdaInductiveConstructor{here} and
-\AgdaInductiveConstructor{thereBase}) of \AgdaFunction{update}
+The base cases (\AgdaCon{here} and
+\AgdaCon{thereBase}) of \AgdaFun{update}
 perform updates using the
-subsitute \AgdaBound{X} (where \AgdaInductiveConstructor{nothing}
-results in an identity update). The \AgdaInductiveConstructor{thereFun₂}
-case of \AgdaFunction{update} leaves the domain of
-\AgdaInductiveConstructor{`Fun} unchanged, and recursively updates the
-codmain using the substitute continuation \AgdaBound{h}.
+subsitute \AgdaVar{X} (where \AgdaCon{nothing}
+results in an identity update). The \AgdaCon{thereFun₂}
+case of \AgdaFun{update} leaves the domain of
+\AgdaCon{`Fun} unchanged, and recursively updates the
+codmain using the substitute continuation \AgdaVar{h}.
 
 Note that
-we could have defined \AgdaFunction{Update} as an inductive type,
+we could have defined \AgdaFun{Update} as an inductive type,
 rather than a computational type. If we had done so,
-then it would be an InfIR type with \AgdaFunction{update} as its
+then it would be an InfIR type with \AgdaFun{update} as its
 mutually defined function!
 
 
-\section{Small InfIR \AgdaDatatype{Arith}}
+\section{Small InfIR \AgdaData{Arith}}
 \label{sec:concretesmall}
 
 \AgdaHide{
@@ -683,25 +683,25 @@ module ConcreteSmall where
 \end{code}}
 
 \refsec{concretelarge} shows how to define
-\AgdaFunction{lookup} and \AgdaFunction{update} for the large InfIR
-\AgdaDatatype{Type}. \AgdaDatatype{Type} is called \textit{large}
-because the codomain of its IR function \AgdaFunction{⟦\_⟧} has type
-\AgdaDatatype{Set}. In this section we adapt our work to a
-small InfIR type called \AgdaDatatype{Arith} (it is called
+\AgdaFun{lookup} and \AgdaFun{update} for the large InfIR
+\AgdaData{Type}. \AgdaData{Type} is called \textit{large}
+because the codomain of its IR function \AgdaFun{⟦\_⟧} has type
+\AgdaData{Set}. In this section we adapt our work to a
+small InfIR type called \AgdaData{Arith} (it is called
 \textit{small} because the codomain of its IR function is \textit{not}
-\AgdaDatatype{Set}), which is structurally similar to
-\AgdaDatatype{Type}.
+\AgdaData{Set}), which is structurally similar to
+\AgdaData{Type}.
 
-\subsection{\AgdaDatatype{Arith}}
+\subsection{\AgdaData{Arith}}
 
-The InfIR \AgdaDatatype{Arith} used in this section is structurally
-similar to \AgdaDatatype{Type} from \refsec{intro}. One difference is
-that the base constructor (\AgdaInductiveConstructor{`Num}), contains
-a \AgdaDatatype{ℕ}atural number (rather than a \AgdaDatatype{Set},
-like \AgdaInductiveConstructor{`Base}). The other difference is that
-the mutually defined function \AgdaFunction{eval} returns a
-\AgdaDatatype{ℕ} (rather than a \AgdaDatatype{Set}, like
-\AgdaFunction{⟦\_⟧}.)
+The InfIR \AgdaData{Arith} used in this section is structurally
+similar to \AgdaData{Type} from \refsec{intro}. One difference is
+that the base constructor (\AgdaCon{`Num}), contains
+a \AgdaData{ℕ}atural number (rather than a \AgdaData{Set},
+like \AgdaCon{`Base}). The other difference is that
+the mutually defined function \AgdaFun{eval} returns a
+\AgdaData{ℕ} (rather than a \AgdaData{Set}, like
+\AgdaFun{⟦\_⟧}.)
 
 \begin{code}
   mutual
@@ -715,7 +715,7 @@ the mutually defined function \AgdaFunction{eval} returns a
       λ a → prod (toℕ a) λ b → eval (f (inject b))
 \end{code}
 
-Values of type \AgdaDatatype{Arith} encode ``Big Pi''
+Values of type \AgdaData{Arith} encode ``Big Pi''
 mathematical arithmetic product equations up to some finite
 bound, such as the one below.
 
@@ -729,11 +729,11 @@ bound, such as the one below.
 \end{code}
 
 
-An \AgdaDatatype{Arith} equation may be nested in its upper bound or body, but the lower
+An \AgdaData{Arith} equation may be nested in its upper bound or body, but the lower
 bound is always the value 1.
-The \AgdaFunction{eval} function interprets the equation as a
-natural number, using the helper function \AgdaFunction{prod} to
-multiply a finite number \AgdaBound{n} of other natural numbers
+The \AgdaFun{eval} function interprets the equation as a
+natural number, using the helper function \AgdaFun{prod} to
+multiply a finite number \AgdaVar{n} of other natural numbers
 together.
 
 \begin{code}
@@ -742,26 +742,26 @@ together.
     prod (suc n) f = f zero * prod n (f ∘ suc)
 \end{code}
 
-\subsection{\AgdaDatatype{Pathℕ} \& \AgdaFunction{lookupℕ} \& \AgdaFunction{updateℕ}}
+\subsection{\AgdaData{Pathℕ} \& \AgdaFun{lookupℕ} \& \AgdaFun{updateℕ}}
 
 The major difference between the base case
-\AgdaInductiveConstructor{`Num} of \AgdaDatatype{Arith}, and
-\AgdaInductiveConstructor{`Base} of \AgdaDatatype{Type}, is that the
-former contains a \AgdaDatatype{ℕ} while the latter contains a
-\AgdaDatatype{Set}. The \AgdaFunction{lookup} for \AgdaDatatype{Type}
-had no choice but to return the value of type \AgdaDatatype{Set} in
-the \AgdaInductiveConstructor{`Base} case, because the inability to
-case analyze \AgdaDatatype{Set} prevents further lookups into that
+\AgdaCon{`Num} of \AgdaData{Arith}, and
+\AgdaCon{`Base} of \AgdaData{Type}, is that the
+former contains a \AgdaData{ℕ} while the latter contains a
+\AgdaData{Set}. The \AgdaFun{lookup} for \AgdaData{Type}
+had no choice but to return the value of type \AgdaData{Set} in
+the \AgdaCon{`Base} case, because the inability to
+case analyze \AgdaData{Set} prevents further lookups into that
 value. In contrast, we can continue to lookup into a substructure of
-\AgdaDatatype{ℕ} in the base case \AgdaInductiveConstructor{`Num} of
-\AgdaFunction{lookup} for \AgdaDatatype{Arith}.
-For this reason, we need the \AgdaDatatype{Pathℕ}, \AgdaFunction{lookupℕ},
-and \AgdaFunction{updateℕ} definitions for natural numbers.
+\AgdaData{ℕ} in the base case \AgdaCon{`Num} of
+\AgdaFun{lookup} for \AgdaData{Arith}.
+For this reason, we need the \AgdaData{Pathℕ}, \AgdaFun{lookupℕ},
+and \AgdaFun{updateℕ} definitions for natural numbers.
 
-\AgdaDatatype{Pathℕ} is an index into the number, which can point to
+\AgdaData{Pathℕ} is an index into the number, which can point to
 that number or any smaller number. It is different from the standard
-finite set type \AgdaDatatype{Fin} because the number pointed to may
-be \AgdaInductiveConstructor{zero}.
+finite set type \AgdaData{Fin} because the number pointed to may
+be \AgdaCon{zero}.
 
 \begin{code}
   data Pathℕ : ℕ → Set where
@@ -771,10 +771,10 @@ be \AgdaInductiveConstructor{zero}.
       → Pathℕ (suc n)
 \end{code}
 
-The \AgdaFunction{lookup} function simply returns the
-\AgdaDatatype{ℕ} pointed to by \AgdaDatatype{Pathℕ}. It has a static
+The \AgdaFun{lookup} function simply returns the
+\AgdaData{ℕ} pointed to by \AgdaData{Pathℕ}. It has a static
 return type (not a computational return type), because a
-\AgdaDatatype{Pathℕ} always points to a \AgdaDatatype{ℕ}.
+\AgdaData{Pathℕ} always points to a \AgdaData{ℕ}.
 
 \begin{code}
   lookupℕ : (n : ℕ) → Pathℕ n → ℕ
@@ -782,11 +782,11 @@ return type (not a computational return type), because a
   lookupℕ (suc n) (there i) = lookupℕ n i
 \end{code}
 
-The \AgdaFunction{update} function replaces a subnumber within a
-\AgdaDatatype{ℕ} with a \AgdaDatatype{Maybe ℕ}. The
-\AgdaInductiveConstructor{nothing} case performs an identity update,
-while \AgdaInductiveConstructor{just} \AgdaBound{n} replaces the
-subnumber with \AgdaBound{n}.
+The \AgdaFun{update} function replaces a subnumber within a
+\AgdaData{ℕ} with a \AgdaData{Maybe ℕ}. The
+\AgdaCon{nothing} case performs an identity update,
+while \AgdaCon{just} \AgdaVar{n} replaces the
+subnumber with \AgdaVar{n}.
 
 \begin{code}
   updateℕ : (n : ℕ) → Pathℕ n → Maybe ℕ → ℕ
@@ -794,17 +794,17 @@ subnumber with \AgdaBound{n}.
   updateℕ (suc n) (there i) x = suc (updateℕ n i x)
 \end{code}
 
-\subsection{\AgdaDatatype{Path} \& \AgdaFunction{lookup} \& \AgdaFunction{update}}
+\subsection{\AgdaData{Path} \& \AgdaFun{lookup} \& \AgdaFun{update}}
 
-The \AgdaDatatype{Path}, \AgdaFunction{lookup}, and
-\AgdaFunction{update} definitions for \AgdaDatatype{Arith} are
+The \AgdaData{Path}, \AgdaFun{lookup}, and
+\AgdaFun{update} definitions for \AgdaData{Arith} are
 nearly structurally identical to the corresponding definitions for
-\AgdaDatatype{Type} from \refsec{concretelarge}. Thus, we will only
-cover the \AgdaInductiveConstructor{`Num} cases of these
-definitions. The old \AgdaDatatype{Type} definitions will work for the
-other cases by replacing \AgdaDatatype{Type} with
-\AgdaDatatype{Arith},
-\AgdaInductiveConstructor{`Fun} with \AgdaInductiveConstructor{`Prod},
+\AgdaData{Type} from \refsec{concretelarge}. Thus, we will only
+cover the \AgdaCon{`Num} cases of these
+definitions. The old \AgdaData{Type} definitions will work for the
+other cases by replacing \AgdaData{Type} with
+\AgdaData{Arith},
+\AgdaCon{`Fun} with \AgdaCon{`Prod},
 and by defining the following type synonym.
 
 \begin{code}
@@ -812,10 +812,10 @@ and by defining the following type synonym.
   ⟦ A ⟧ = Fin (eval A)
 \end{code}
 
-The \AgdaInductiveConstructor{thereNum} case of
-\AgdaDatatype{Path} can point somewhere deeper into a substructure of
-the natural number contained by \AgdaInductiveConstructor{`Num} by
-using a \AgdaDatatype{Pathℕ}.
+The \AgdaCon{thereNum} case of
+\AgdaData{Path} can point somewhere deeper into a substructure of
+the natural number contained by \AgdaCon{`Num} by
+using a \AgdaData{Pathℕ}.
 
 \begin{code}
   data Path : Arith → Set where
@@ -844,7 +844,7 @@ using a \AgdaDatatype{Pathℕ}.
   Lookup A here = Arith
 \end{code}}
 
-The \AgdaInductiveConstructor{`Num} case of \AgdaFunction{Lookup}
+The \AgdaCon{`Num} case of \AgdaFun{Lookup}
 results in a natural number.
 
 \begin{code}
@@ -867,8 +867,8 @@ results in a natural number.
   lookup A here = A
 \end{code}}
 
-The \AgdaInductiveConstructor{`Num} case of \AgdaFunction{lookup}
-continues to \AgdaFunction{lookupℕ} the number contained
+The \AgdaCon{`Num} case of \AgdaFun{lookup}
+continues to \AgdaFun{lookupℕ} the number contained
 inside. 
 
 \begin{code}
@@ -892,8 +892,8 @@ inside.
   Update A here = Maybe Arith
 \end{code}}
 
-The \AgdaInductiveConstructor{`Num} case of \AgdaFunction{Update}
-allows the user to supply a \AgdaDatatype{Maybe ℕ}, representing
+The \AgdaCon{`Num} case of \AgdaFun{Update}
+allows the user to supply a \AgdaData{Maybe ℕ}, representing
 either the identity update or a number to update with.
 
 \begin{code}
@@ -910,9 +910,9 @@ either the identity update or a number to update with.
   update A here X = maybe id A X
 \end{code}}
 
-The \AgdaInductiveConstructor{`Num} case of \AgdaFunction{update}
-leaves \AgdaInductiveConstructor{`Num} unchanged, but replaces the
-natural number contained using \AgdaFunction{updateℕ}.
+The \AgdaCon{`Num} case of \AgdaFun{update}
+leaves \AgdaCon{`Num} unchanged, but replaces the
+natural number contained using \AgdaFun{updateℕ}.
 
 \begin{code}
   update (`Num n) (thereNum i) X = `Num (updateℕ n i X)
@@ -939,17 +939,17 @@ In this section we develop generic versions of the datatypes and
 functions from previous sections, for any datatype encoded as an
 inductive-recursive Dybjer-Setzer code~\cite{TODO}.
 
-\subsection{\AgdaDatatype{Desc}}
+\subsection{\AgdaData{Desc}}
 
 First let us recall the type of datatype inductive-recursive codes
 developed by Dybjer and Setzer. We refer to values of
-\AgdaDatatype{Desc} defined below as ``codes''.
+\AgdaData{Desc} defined below as ``codes''.
 \footnote{
   We have renamed the original Dybjer-Setzer constructions to
   emphasize their meaning in English. The original names of our
-  \AgdaDatatype{Desc}/\AgdaInductiveConstructor{End}/\AgdaInductiveConstructor{Arg}/\AgdaInductiveConstructor{Rec}
+  \AgdaData{Desc}/\AgdaCon{End}/\AgdaCon{Arg}/\AgdaCon{Rec}
   constructions are
-  \AgdaDatatype{IR}/\AgdaInductiveConstructor{$\iota$}/\AgdaInductiveConstructor{$\sigma$}/\AgdaInductiveConstructor{$\delta$}
+  \AgdaData{IR}/\AgdaCon{$\iota$}/\AgdaCon{$\sigma$}/\AgdaCon{$\delta$}
   respectively.
   }
 A code simultaneously
@@ -963,16 +963,16 @@ defined with it.
     Rec : (A : Set) (D : (o : A → O) → Desc O) → Desc O  
 \end{code}
 
-To a first approximation, a datatype \AgdaDatatype{Desc}ription
+To a first approximation, a datatype \AgdaData{Desc}ription
 encodes the type signature of a single constructor, and the value
 returned by the case of that constructor for the mutually defined
-function. \AgdaInductiveConstructor{End} is used to specify that a
+function. \AgdaCon{End} is used to specify that a
 constructor takes no further arguments. However, the user must supply
-a value \AgdaBound{o} of type \AgdaBound{O} to define the value returned by the
-mutually defined function. \AgdaInductiveConstructor{Arg} is used to
-specify a non-recursive argument of a constructor, \AgdaBound{a} of
-type \AgdaBound{A}, and the remainder of the \AgdaDatatype{Desc} may depend
-on the value \AgdaBound{a}. \AgdaInductiveConstructor{Rec} is used to
+a value \AgdaVar{o} of type \AgdaVar{O} to define the value returned by the
+mutually defined function. \AgdaCon{Arg} is used to
+specify a non-recursive argument of a constructor, \AgdaVar{a} of
+type \AgdaVar{A}, and the remainder of the \AgdaData{Desc} may depend
+on the value \AgdaVar{a}. \AgdaCon{Rec} is used to
 specify a recursive argument (of the type currently being
 specified). More generally, the recursive argument may be a function
 type whose codomain is the type currently being defined but whose
@@ -982,21 +982,21 @@ domain may be non-recursive.
   datatypes are strictly positive.
 }
 Above, the domain of the function is some non-recursive type
-\AgdaBound{A}, and the remainder of the \AgdaDatatype{Desc} may depend
-on a function \AgdaBound{o} from \AgdaBound{A} to \AgdaBound{O},
+\AgdaVar{A}, and the remainder of the \AgdaData{Desc} may depend
+on a function \AgdaVar{o} from \AgdaVar{A} to \AgdaVar{O},
 representing the result of applying the mutually defined function to
 the recursive argument being specified.
 
-Finally, to encode multiple constructors as a \AgdaDatatype{Desc}, you
-simply define an \AgdaInductiveConstructor{Arg} whose domain is a
+Finally, to encode multiple constructors as a \AgdaData{Desc}, you
+simply define an \AgdaCon{Arg} whose domain is a
 finite enumeration of types (representing each constructor), and whose
-codomain is the \AgdaDatatype{Desc} corresponding to the arguments and
+codomain is the \AgdaData{Desc} corresponding to the arguments and
 recursive cases for each constructor.
 
-The abstract nature of \AgdaDatatype{Desc} makes it somewhat difficult
-to understand at first, especially the \AgdaInductiveConstructor{Rec}
-constructor. Let's try to understand \AgdaDatatype{Desc} better with an
-example, encoding \AgdaDatatype{Arith} from
+The abstract nature of \AgdaData{Desc} makes it somewhat difficult
+to understand at first, especially the \AgdaCon{Rec}
+constructor. Let's try to understand \AgdaData{Desc} better with an
+example, encoding \AgdaData{Arith} from
 \refsec{concretesmall} below .
 
 \AgdaHide{
@@ -1018,42 +1018,42 @@ example, encoding \AgdaDatatype{Arith} from
     }
 \end{code}
 
-The \AgdaDatatype{Desc} begins with an \AgdaInductiveConstructor{Arg},
-taking sub-\AgdaDatatype{Desc}s for each element of the finite
-enumeration \AgdaDatatype{ArithT}, representing the types of each
-\AgdaDatatype{Arith} constructor.
+The \AgdaData{Desc} begins with an \AgdaCon{Arg},
+taking sub-\AgdaData{Desc}s for each element of the finite
+enumeration \AgdaData{ArithT}, representing the types of each
+\AgdaData{Arith} constructor.
 
-The \AgdaInductiveConstructor{NumT} description uses
-\AgdaInductiveConstructor{Arg} to take a natural number
-(\AgdaDatatype{ℕ}), then \AgdaInductiveConstructor{End}s with that number. Ending with that
-number encodes that the \AgdaInductiveConstructor{`Num} case of the
-\AgdaFunction{eval} from \refsec{concretesmall} returns the number held
-by \AgdaInductiveConstructor{`Num} in the base case.
+The \AgdaCon{NumT} description uses
+\AgdaCon{Arg} to take a natural number
+(\AgdaData{ℕ}), then \AgdaCon{End}s with that number. Ending with that
+number encodes that the \AgdaCon{`Num} case of the
+\AgdaFun{eval} from \refsec{concretesmall} returns the number held
+by \AgdaCon{`Num} in the base case.
 
-The \AgdaInductiveConstructor{ProdT} description uses
-\AgdaInductiveConstructor{Rec} twice, taking two recursive
+The \AgdaCon{ProdT} description uses
+\AgdaCon{Rec} twice, taking two recursive
 arguments. The first recursive argument is intended to encode an
-\AgdaDatatype{Arith} rather than a function type, so we
-make its domain a value of the trivial type \AgdaDatatype{⊤}. The
+\AgdaData{Arith} rather than a function type, so we
+make its domain a value of the trivial type \AgdaData{⊤}. The
 second recursive argument is intended to encode a function from
-\AgdaDatatype{Fin} \AgdaBound{n} to \AgdaDatatype{Arith}, so we ask
-for a \AgdaDatatype{Fin} (\AgdaBound{n}
-\AgdaInductiveConstructor{tt}), where \AgdaBound{n} represents the
-value returned by applying \AgdaFunction{eval} to the first recursive
-argument. In fact, \AgdaBound{n} represents a function from the
-trivial type \AgdaDatatype{⊤} to \AgdaDatatype{ℕ}, because first-order
+\AgdaData{Fin} \AgdaVar{n} to \AgdaData{Arith}, so we ask
+for a \AgdaData{Fin} (\AgdaVar{n}
+\AgdaCon{tt}), where \AgdaVar{n} represents the
+value returned by applying \AgdaFun{eval} to the first recursive
+argument. In fact, \AgdaVar{n} represents a function from the
+trivial type \AgdaData{⊤} to \AgdaData{ℕ}, because first-order
 recursive arguments are encoded as higher-order arguments with a
-trivial domain. Finally, \AgdaInductiveConstructor{End} is used to
+trivial domain. Finally, \AgdaCon{End} is used to
 specify that there are no further arguments, and the
-\AgdaInductiveConstructor{`Prod} case of \AgdaFunction{eval} should
-result in the \AgdaFunction{prod}uct represented by the first two
+\AgdaCon{`Prod} case of \AgdaFun{eval} should
+result in the \AgdaFun{prod}uct represented by the first two
 recursive arguments.
 
-\subsection{\AgdaDatatype{Data}}
+\subsection{\AgdaData{Data}}
 
-Previously we used \AgdaDatatype{Desc} to encode a datatype and its
-mutual function. Applying \AgdaDatatype{Data} to a description results
-in the datatype it encodes, and applying \AgdaFunction{fun} to a
+Previously we used \AgdaData{Desc} to encode a datatype and its
+mutual function. Applying \AgdaData{Data} to a description results
+in the datatype it encodes, and applying \AgdaFun{fun} to a
 description results in the mutual function it encodes.
 
 \AgdaHide{
@@ -1061,21 +1061,21 @@ description results in the mutual function it encodes.
   mutual
 \end{code}}
 
-\AgdaDatatype{Data} is defined in terms of a single constructor
-\AgdaInductiveConstructor{con}, which holds a dependent product of all
+\AgdaData{Data} is defined in terms of a single constructor
+\AgdaCon{con}, which holds a dependent product of all
 arguments of a particular constructor. The computational argument type
-\AgdaFunction{Data′} encodes the type of this product, dependent on
-the \AgdaDatatype{Desc}ription that \AgdaDatatype{Data} is
+\AgdaFun{Data′} encodes the type of this product, dependent on
+the \AgdaData{Desc}ription that \AgdaData{Data} is
 parameterized by.
 
 For the remainder of the paper, we will establish a convention for
-functions ending with a prime, like \AgdaFunction{Data′}. They will be
+functions ending with a prime, like \AgdaFun{Data′}. They will be
 defined by induction over a description, but must also reference the
 original description they are inducting over in the base case. Hence,
-they take two \AgdaDatatype{Desc} arguments, where the first
-\AgdaBound{R} is the original description (to be used in
-\AgdaInductiveConstructor{Rec}ursive cases), and the second
-\AgdaBound{D} is the one we induct over.
+they take two \AgdaData{Desc} arguments, where the first
+\AgdaVar{R} is the original description (to be used in
+\AgdaCon{Rec}ursive cases), and the second
+\AgdaVar{D} is the one we induct over.
 
 \begin{code}
     data Data {O : Set} (D : Desc O) : Set where
@@ -1088,18 +1088,18 @@ they take two \AgdaDatatype{Desc} arguments, where the first
       Σ (A → Data R) (λ f → Data′ R (D (fun R ∘ f)))
 \end{code}
 
-The \AgdaInductiveConstructor{End} case means no further arguments are
-needed, so we ask for a trivial value of type \AgdaDatatype{⊤}. The
-\AgdaInductiveConstructor{Arg} case asks for a value of type
-\AgdaBound{A}, which the rest of the arguments may depend on using
-\AgdaBound{a}. The \AgdaInductiveConstructor{End} case asks for a function from
-\AgdaBound{A} to a recursive value \AgdaDatatype{Data} \AgdaBound{R},
-and the rest of the arguments may use \AgdaBound{f} to depend on the
-result of applying the mutual function (e.g. \AgdaFunction{eval}) to
-the recursive argument after applying a value of type \AgdaBound{A}.
+The \AgdaCon{End} case means no further arguments are
+needed, so we ask for a trivial value of type \AgdaData{⊤}. The
+\AgdaCon{Arg} case asks for a value of type
+\AgdaVar{A}, which the rest of the arguments may depend on using
+\AgdaVar{a}. The \AgdaCon{End} case asks for a function from
+\AgdaVar{A} to a recursive value \AgdaData{Data} \AgdaVar{R},
+and the rest of the arguments may use \AgdaVar{f} to depend on the
+result of applying the mutual function (e.g. \AgdaFun{eval}) to
+the recursive argument after applying a value of type \AgdaVar{A}.
 
-Next we define \AgdaFunction{fun} (encoding the mutual function) in
-terms of \AgdaFunction{fun′}.
+Next we define \AgdaFun{fun} (encoding the mutual function) in
+terms of \AgdaFun{fun′}.
 
 \begin{code}
     fun : {O : Set} (D : Desc O) → Data D → O
@@ -1111,17 +1111,17 @@ terms of \AgdaFunction{fun′}.
     fun′ R (Rec A D) (f , xs) = fun′ R (D (λ a → fun R (f a))) xs
 \end{code}
 
-The \AgdaInductiveConstructor{End} case gives us what we want, the
-value \AgdaBound{o} that the mutual function should return for the
-encoded constructor case. The \AgdaInductiveConstructor{Arg} and
-\AgdaInductiveConstructor{Rec} cases recurse, looking for an
-\AgdaInductiveConstructor{End}.
+The \AgdaCon{End} case gives us what we want, the
+value \AgdaVar{o} that the mutual function should return for the
+encoded constructor case. The \AgdaCon{Arg} and
+\AgdaCon{Rec} cases recurse, looking for an
+\AgdaCon{End}.
 
-\subsection{\AgdaDatatype{Path}}
+\subsection{\AgdaData{Path}}
 
-Now we will encode a generic \AgdaDatatype{Path} type, that can be
+Now we will encode a generic \AgdaData{Path} type, that can be
 used to index into any inductive-recursive value encoded by applying
-\AgdaDatatype{Data} to a \AgdaDatatype{Desc}.
+\AgdaData{Data} to a \AgdaData{Desc}.
 
 \AgdaHide{
 \begin{code}
@@ -1136,17 +1136,17 @@ used to index into any inductive-recursive value encoded by applying
         → Path D (con xs)
 \end{code}
 
-A \AgdaDatatype{Path} uses \AgdaInductiveConstructor{here} to
+A \AgdaData{Path} uses \AgdaCon{here} to
 immediately point to the current constructor. It uses
-\AgdaInductiveConstructor{there} to point into one of the
-arguments of the current constructor, using \AgdaDatatype{Path′} as a
+\AgdaCon{there} to point into one of the
+arguments of the current constructor, using \AgdaData{Path′} as a
 sub-index.
 
-\subsection{\AgdaDatatype{Path′}}
+\subsection{\AgdaData{Path′}}
 
-A \AgdaDatatype{Path′} points to an argument of a constructor,
+A \AgdaData{Path′} points to an argument of a constructor,
 one of the values of the dependent product computed by
-\AgdaFunction{Data′}.
+\AgdaFun{Data′}.
 
 \begin{code}
     data Path′ {O : Set} (R : Desc O) 
@@ -1164,47 +1164,47 @@ one of the values of the dependent product computed by
         → Path′ R (Rec A D) (f , xs)
 \end{code}
 
-The \AgdaInductiveConstructor{thereArg₁} case points immediately to a
-non-recursive value of type \AgdaBound{A}. Recall
-\AgdaInductiveConstructor{thereBase} from \refsec{concretelarge},
+The \AgdaCon{thereArg₁} case points immediately to a
+non-recursive value of type \AgdaVar{A}. Recall
+\AgdaCon{thereBase} from \refsec{concretelarge},
 which points immediately to a non-recursive value of type
-\AgdaDatatype{Set}. The \AgdaInductiveConstructor{thereBase} case cannot
-index further into non-recursive \AgdaDatatype{Set}s because values of
-type \AgdaDatatype{Set} cannot be case-analyzed. Similarly, the
-\AgdaInductiveConstructor{thereArg₁} case of our open
-universe generic \AgdaDatatype{Path′} cannot index further into
-\AgdaBound{A}, because the type of \AgdaBound{A} is \AgdaDatatype{Set}
-and cannot be case-analyzed. For this reason, \AgdaDatatype{Path′}
+\AgdaData{Set}. The \AgdaCon{thereBase} case cannot
+index further into non-recursive \AgdaData{Set}s because values of
+type \AgdaData{Set} cannot be case-analyzed. Similarly, the
+\AgdaCon{thereArg₁} case of our open
+universe generic \AgdaData{Path′} cannot index further into
+\AgdaVar{A}, because the type of \AgdaVar{A} is \AgdaData{Set}
+and cannot be case-analyzed. For this reason, \AgdaData{Path′}
 does not adequately capture concrete paths for types like
-\AgdaDatatype{Arith} of \refsec{concretesmall}, which has a
-\AgdaDatatype{ℕ} in the \AgdaInductiveConstructor{`Num} case that we
+\AgdaData{Arith} of \refsec{concretesmall}, which has a
+\AgdaData{ℕ} in the \AgdaCon{`Num} case that we
 would like to index into. This is a limitation due to using open
-universe \AgdaDatatype{Desc}riptions, which we remedy using a
+universe \AgdaData{Desc}riptions, which we remedy using a
 closed universe in \refsec{genericclosed}.
 
-The \AgdaInductiveConstructor{thereArg₂} case points to a
+The \AgdaCon{thereArg₂} case points to a
 sub-argument, skipping past the
 non-recursive argument.
 
-The \AgdaInductiveConstructor{thereRec₁}
+The \AgdaCon{thereRec₁}
 points into a recursive argument. Because the recursive argument is a
-function whose is a value of type \AgdaBound{A}, the
-sub-\AgdaDatatype{Path′} must also be a function taking an
-\AgdaBound{A}, hence \AgdaDatatype{Path′} is an infinitary type.
-Thus, \AgdaInductiveConstructor{thereRec₁} is much like
-\AgdaInductiveConstructor{thereFun₂} of \refsec{concretelarge}.
+function whose is a value of type \AgdaVar{A}, the
+sub-\AgdaData{Path′} must also be a function taking an
+\AgdaVar{A}, hence \AgdaData{Path′} is an infinitary type.
+Thus, \AgdaCon{thereRec₁} is much like
+\AgdaCon{thereFun₂} of \refsec{concretelarge}.
 
-The \AgdaInductiveConstructor{thereRec₂} case points to a
+The \AgdaCon{thereRec₂} case points to a
 sub-argument, skipping past the recursive argument.
 
 
-\subsection{\AgdaFunction{Lookup} \& \AgdaFunction{lookup}}
+\subsection{\AgdaFun{Lookup} \& \AgdaFun{lookup}}
 
 As in \refsec{concretelarge} and \refsec{concretesmall}, our generic
-open universe \AgdaFunction{lookup} must have a computational return
-type, \AgdaFunction{Lookup}. Below, the \AgdaFunction{Lookup} and
-\AgdaFunction{Lookup′} functions are mutually defined, and so are
-\AgdaFunction{lookup} and \AgdaFunction{lookup′}.
+open universe \AgdaFun{lookup} must have a computational return
+type, \AgdaFun{Lookup}. Below, the \AgdaFun{Lookup} and
+\AgdaFun{Lookup′} functions are mutually defined, and so are
+\AgdaFun{lookup} and \AgdaFun{lookup′}.
 
 \AgdaHide{
 \begin{code}
@@ -1217,36 +1217,41 @@ type, \AgdaFunction{Lookup}. Below, the \AgdaFunction{Lookup} and
     Lookup D (con xs) (there i) = Lookup′ D D xs i
 \end{code}
 
-The \AgdaInductiveConstructor{here} case returns a
-\AgdaDatatype{Data} of the encoded description \AgdaBound{D}
-currently being pointed to. The \AgdaInductiveConstructor{there} case
-should return a type \AgdaFunction{Lookup′} for one of the arguments
+The \AgdaCon{here} case returns a
+\AgdaData{Data} of the encoded description \AgdaVar{D}
+currently being pointed to. The \AgdaCon{there} case
+returns a type \AgdaFun{Lookup′} of one of the arguments
 to the constructor.
 
 \begin{code}
-    lookup : {O : Set} (D : Desc O) (x : Data D) (i : Path D x) → Lookup D x i
+    lookup : {O : Set} (D : Desc O) (x : Data D) (i : Path D x)
+      → Lookup D x i
     lookup D x here = x
     lookup D (con xs) (there i) = lookup′ D D xs i
 \end{code}
 
-The \AgdaInductiveConstructor{here} case returns the value being pointed
-to. The \AgdaInductiveConstructor{there} case returns a value within
+The \AgdaCon{here} case returns the value being pointed
+to. The \AgdaCon{there} case returns a value within
 one of the arguments of the current constructor via
-\AgdaFunction{lookup′}.
+\AgdaFun{lookup′}.
 
-\subsection{\AgdaFunction{Lookup′} \& \AgdaFunction{lookup′}}
+\subsection{\AgdaFun{Lookup′} \& \AgdaFun{lookup′}}
 
-The function \AgdaFunction{lookup′} is used to lookup a value within
-an argument to a constructor, and has \AgdaDatatype{Lookup′} as its
+The function \AgdaFun{lookup′} is used to lookup a value within
+an argument to a constructor, and has \AgdaData{Lookup′} as its
 computational return type.
 
 \begin{code}
-    Lookup′ : {O : Set} (R D : Desc O) (xs : Data′ R D) → Path′ R D xs → Set
+    Lookup′ : {O : Set} (R D : Desc O) (xs : Data′ R D)
+      → Path′ R D xs → Set
     Lookup′ R (End o) tt ()
     Lookup′ R (Arg A D) (a , xs) thereArg₁ = A
-    Lookup′ R (Arg A D) (a , xs) (thereArg₂ i) = Lookup′ R (D a) xs i
-    Lookup′ R (Rec A D) (f , xs) (thereRec₁ g) = (a : A) → Lookup R (f a) (g a)
-    Lookup′ R (Rec A D) (f , xs) (thereRec₂ i) = Lookup′ R (D (fun R ∘ f)) xs i
+    Lookup′ R (Arg A D) (a , xs) (thereArg₂ i) =
+      Lookup′ R (D a) xs i
+    Lookup′ R (Rec A D) (f , xs) (thereRec₁ g) =
+      (a : A) → Lookup R (f a) (g a)
+    Lookup′ R (Rec A D) (f , xs) (thereRec₂ i) =
+      Lookup′ R (D (fun R ∘ f)) xs i
 \end{code}
 
 The \AgdaCon{thereArg₂} and \AgdaCon{thereRec₂} cases skip past one
@@ -1256,17 +1261,20 @@ current non-recursive argument \AgdaVar{A}. The \AgdaCon{thereRec₁}
 asks for a continuation, represented as a function type from
 \AgdaVar{A} to the rest of the \AgdaFun{Lookup}. Because
 \AgdaCon{thereRec₁} points to a recursive argument, it asks for a
-\AgdaFun{Lookup} of the original description \AgdaBound{R}, rather
+\AgdaFun{Lookup} of the original description \AgdaVar{R}, rather
 than a \AgdaFun{Lookup′} of some subsequent argument description.
 
 \begin{code}
-    lookup′ : {O : Set} (R D : Desc O) (xs : Data′ R D) (i : Path′ R D xs)
-      → Lookup′ R D xs i
+    lookup′ : {O : Set} (R D : Desc O) (xs : Data′ R D)
+      (i : Path′ R D xs) → Lookup′ R D xs i
     lookup′ R (End o) tt ()
     lookup′ R (Arg A D) (a , xs) thereArg₁ = a
-    lookup′ R (Arg A D) (a , xs) (thereArg₂ i) = lookup′ R (D a) xs i
-    lookup′ R (Rec A D) (f , xs) (thereRec₁ g) = λ a → lookup R (f a) (g a)
-    lookup′ R (Rec A D) (f , xs) (thereRec₂ i) = lookup′ R (D (fun R ∘ f)) xs i
+    lookup′ R (Arg A D) (a , xs) (thereArg₂ i) =
+      lookup′ R (D a) xs i
+    lookup′ R (Rec A D) (f , xs) (thereRec₁ g) =
+      λ a → lookup R (f a) (g a)
+    lookup′ R (Rec A D) (f , xs) (thereRec₂ i) =
+      lookup′ R (D (fun R ∘ f)) xs i
 \end{code}
 
 The \AgdaCon{thereArg₂} and \AgdaCon{thereRec₂} cases skip past one
@@ -1279,7 +1287,7 @@ body of the continuation is a \AgdaFun{lookup} rather than a
 \AgdaFun{lookup′}, matching the type specified by \AgdaFun{Lookup′}
 for the \AgdaCon{thereRec₁} case.
 
-\subsection{\AgdaFunction{Update} \& \AgdaFunction{update}}
+\subsection{\AgdaFun{Update} \& \AgdaFun{update}}
 
 Now we define the generic open universe \AgdaFun{update}
 function. Note that \AgdaFun{Update}, \AgdaFun{Update′},
@@ -1287,27 +1295,45 @@ function. Note that \AgdaFun{Update}, \AgdaFun{Update′},
 be mutually defined. The mutual dependence has to with the need for a
 forgetful function, which also requires \AgdaFun{Update} and
 \AgdaFun{update} to be mutually defined in \refsec{concretelarge}.
+Note once again that \AgdaFun{Update} and \AgdaFun{Update′} are
+computational argument types, whereas \AgdaFun{Lookup} and
+\AgdaFun{Lookup′} are computational return types.
 
 \AgdaHide{
 \begin{code}
   mutual
 \end{code}}
 
-
 \begin{code}
-    Update : {O : Set} (D : Desc O) (x : Data D) → Path D x → Set
+    Update : {O : Set} (D : Desc O) (x : Data D)
+      → Path D x → Set
     Update D x here = Maybe (Data D)
     Update D (con xs) (there i) = Update′ D D xs i
 \end{code}
 
+The \AgdaCon{here} case returns a \AgdaData{Maybe}
+\AgdaData{Data} of the encoded description \AgdaVar{D}
+currently being pointed to. The \AgdaCon{there} case
+returns a type \AgdaFun{Update′} of one of the arguments
+to the constructor.
+
 \begin{code}
-    update : {O : Set} (D : Desc O) (x : Data D) (i : Path D x) (X : Update D x i) → Data D
+    update : {O : Set} (D : Desc O) (x : Data D)
+      (i : Path D x) (X : Update D x i) → Data D
     update D x here X = maybe id x X
     update D (con xs) (there i) X = con (update′ D D xs i X)
 \end{code}
 
+The \AgdaCon{here} case keeps the old value, performing an identity
+update if \AgdaVar{X} is \AgdaCon{nothing}. Otherwise, if \AgdaVar{X}
+is \AgdaCon{just} of some value, it updates by returning that value.
+The \AgdaCon{there} case updates
+one of the arguments within the constructor \AgdaCon{con} via
+\AgdaFun{update′}.
+
 \begin{code}
-    Update′ : {O : Set} (R D : Desc O) (xs : Data′ R D) → Path′ R D xs → Set
+    Update′ : {O : Set} (R D : Desc O) (xs : Data′ R D)
+      → Path′ R D xs → Set
     Update′ R (End o) tt ()
     Update′ R (Arg A D) (a , xs) thereArg₁ =
       Σ (Maybe A)
@@ -1322,8 +1348,8 @@ forgetful function, which also requires \AgdaFun{Update} and
 \end{code}
 
 \begin{code}
-    update′ : {O : Set} (R D : Desc O) (xs : Data′ R D) (i : Path′ R D xs)
-      → Update′ R D xs i → Data′ R D
+    update′ : {O : Set} (R D : Desc O) (xs : Data′ R D)
+      (i : Path′ R D xs) → Update′ R D xs i → Data′ R D
     update′ R (End o) tt () X
     update′ R (Arg A D) (a , xs) thereArg₁ (nothing , f) = a , xs
     update′ R (Arg A D) (a , xs) thereArg₁ (just X , f) =
@@ -1366,7 +1392,7 @@ module GenericClosed where
     fun′ R (Rec A D) (f , xs) = fun′ R (D (λ a → fun R (f a))) xs
 \end{code}}
 
-\subsection{\AgdaDatatype{`Set} \& \AgdaDatatype{`Desc}}
+\subsection{\AgdaData{`Set} \& \AgdaData{`Desc}}
 
 \begin{code}
   mutual
@@ -1392,7 +1418,7 @@ module GenericClosed where
     ⟪ `Rec A D ⟫ = Rec ⟦ A ⟧ λ o → ⟪ D o ⟫
 \end{code}
 
-\subsection{\AgdaDatatype{Path}}
+\subsection{\AgdaData{Path}}
 
 \begin{code}
   data Path : (A : `Set) → ⟦ A ⟧ → Set
@@ -1422,7 +1448,7 @@ module GenericClosed where
       → Path′ R (`Rec A D) (f , xs)
 \end{code}
 
-\subsection{\AgdaFunction{lookup}}
+\subsection{\AgdaFun{lookup}}
 
 \begin{code}
   Lookup : (A : `Set) (a : ⟦ A ⟧) → Path A a → Set
@@ -1454,7 +1480,7 @@ module GenericClosed where
   lookup′ R (`Rec A D) (f , xs) (thereRec₂ i) = lookup′ R (D (fun ⟪ R ⟫ ∘ f)) xs i
 \end{code}
 
-\subsection{\AgdaFunction{update}}
+\subsection{\AgdaFun{update}}
 
 \begin{code}
   Update : (A : `Set) (a : ⟦ A ⟧) → Path A a → Set
