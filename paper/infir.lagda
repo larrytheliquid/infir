@@ -23,6 +23,10 @@
 \newcommand{\cL}{{\cal L}}
 
 \newcommand{\refsec}[1]{Section \ref{sec:#1}}
+\newcommand{\AgdaData}[1]{\AgdaDatatype{#1}}
+\newcommand{\AgdaCon}[1]{\AgdaInductiveConstructor{#1}}
+\newcommand{\AgdaFun}[1]{\AgdaFunction{#1}}
+\newcommand{\AgdaVar}[1]{\AgdaBound{#1}}
 
 \begin{document}
 
@@ -1243,6 +1247,16 @@ computational return type.
     Lookup′ R (Rec A D) (f , xs) (thereRec₂ i) = Lookup′ R (D (fun R ∘ f)) xs i
 \end{code}
 
+The \AgdaCon{thereArg₂} and \AgdaCon{thereRec₂} cases skip past one
+argument, looking for the type of a subsequent an argument pointed to
+by the index. The \AgdaCon{thereArg₁} case returns the type of the
+current non-recursive argument \AgdaVar{A}. The \AgdaCon{thereRec₁}
+asks for a continuation, represented as a function type from
+\AgdaVar{A} to the rest of the \AgdaFun{Lookup}. Because
+\AgdaCon{thereRec₁} points to a recursive argument, it asks for a
+\AgdaFun{Lookup} of the original description \AgdaBound{R}, rather
+than a \AgdaFun{Lookup′} of some subsequent argument description.
+
 \begin{code}
     lookup′ : {O : Set} (R D : Desc O) (xs : Data′ R D) (i : Path′ R D xs)
       → Lookup′ R D xs i
@@ -1252,6 +1266,16 @@ computational return type.
     lookup′ R (Rec A D) (f , xs) (thereRec₁ g) = λ a → lookup R (f a) (g a)
     lookup′ R (Rec A D) (f , xs) (thereRec₂ i) = lookup′ R (D (fun R ∘ f)) xs i
 \end{code}
+
+The \AgdaCon{thereArg₂} and \AgdaCon{thereRec₂} cases skip past one
+argument, and return a lookup into a subsequent argument.
+The \AgdaCon{thereArg₁} case returns the non-recursive argument
+\AgdaVar{a} of type \AgdaVar{A} currently being pointed to.
+The \AgdaCon{thereRec₁} returns a continuation from \AgdaVar{a} of
+type \AgdaVar{A} to the rest of the \AgdaFun{lookup}. Note that the
+body of the continuation is a \AgdaFun{lookup} rather than a
+\AgdaFun{lookup′}, matching the type specified by \AgdaFun{Lookup′}
+for the \AgdaCon{thereRec₁} case.
 
 \subsection{\AgdaFunction{update}}
 
