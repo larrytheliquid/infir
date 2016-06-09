@@ -1399,6 +1399,17 @@ and translating the second.
 \section{Generic Closed InfIR}
 \label{sec:genericclosed}
 
+\refsec{genericopen} covers how to define generic constructions like
+\AgdaData{Path} over an open universe of types. The open universe does
+not adequately model the \AgdaData{Path} over the concrete
+\AgdaData{Arith} type of \refsec{concretesmall}, as it does not let
+you index into non-recursive arguments in a datatype such as the
+\AgdaData{ℕ} argument to \AgdaCon{`Num}.
+
+In this section we introduce a novel closed universe of small
+InfIR types, allowing us to adequately express generic constructions
+over datatypes like \AgdaData{Arith}.
+
 \AgdaHide{
 \begin{code}
 module GenericClosed where
@@ -1428,8 +1439,16 @@ module GenericClosed where
 
 \subsection{\AgdaData{`Set} \& \AgdaData{`Desc}}
 
+We begin by defining a universe of codes \AgdaData{`Set} for primitive
+types of our universe, along with a meaning function \AgdaFun{⟦\_⟧}
+mapping each code for a type to a concrete primitive \AgdaData{Set}.
+
+\AgdaHide{
 \begin{code}
   mutual
+\end{code}}
+
+\begin{code}
     data `Set : Set where
       `Bot `Bool : `Set
       `Fun : (A : `Set) (B : ⟦ A ⟧ → `Set) → `Set
@@ -1440,17 +1459,39 @@ module GenericClosed where
     ⟦ `Bool ⟧ = Bool
     ⟦ `Fun A B ⟧ = (a : ⟦ A ⟧) → ⟦ B a ⟧
     ⟦ `Data D ⟧ = Data ⟪ D ⟫
-  
+\end{code}
+
+Having codes for bottom \AgdaCon{`Bot}, booleans \AgdaCon{`Bool}, and
+function \AgdaCon{`Fun} is standard an similar to the \AgdaData{Type}
+universe in the introduction. However, we add a code \AgdaData{`Data}
+for inductive-recurse datatypes. The key to an adequate encoding is to
+make the argument to \AgdaData{`Data} not a primitive
+\AgdaData{Desc}, but a new type \AgdaData{`Desc} of \emph{codes} for
+descriptions. This type of codes for descriptions also has a meaning
+function \AgdaFun{⟦\_⟧}, mapping codes of descriptions to a concrete
+primitive \AgdaData{Desc}. 
+
+\begin{code}
     data `Desc (O : `Set) : Set where
       `End : (o : ⟦ O ⟧) → `Desc O
       `Arg : (A : `Set) (D : ⟦ A ⟧ → `Desc O) → `Desc O
-      `Rec : (A : `Set) (D : (o : ⟦ A ⟧ → ⟦ O ⟧) → `Desc O) → `Desc O
+      `Rec : (A : `Set) (D : (o : ⟦ A ⟧ → ⟦ O ⟧) → `Desc O)
+        → `Desc O
   
     ⟪_⟫ : {O : `Set} → `Desc O → Desc ⟦ O ⟧
     ⟪ `End o ⟫ = End o
     ⟪ `Arg A D ⟫ = Arg ⟦ A ⟧ λ a → ⟪ D a ⟫
     ⟪ `Rec A D ⟫ = Rec ⟦ A ⟧ λ o → ⟪ D o ⟫
 \end{code}
+
+The constructors of \AgdaData{`Desc} mirror those of \AgdaData{Desc},
+but the \AgdaCon{`Arg} and \AgdaCon{`Rec} constructors take a
+\AgdaData{`Set} code rather than concrete \AgdaData{Set}. This is the
+key that allows us to define an adequate \AgdaData{Path}, because
+we know how to case-analyze the type of codes \AgdaData{`Set}, so we
+can have a path index into it.
+Finally, note that the two code types and their meaning functions are
+all mutually defined.
 
 \subsection{\AgdaData{Path}}
 
