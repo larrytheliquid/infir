@@ -1202,7 +1202,9 @@ sub-argument, skipping past the recursive argument.
 
 As in \refsec{concretelarge} and \refsec{concretesmall}, our generic
 open universe \AgdaFunction{lookup} must have a computational return
-type, \AgdaFunction{Lookup}. 
+type, \AgdaFunction{Lookup}. Below, the \AgdaFunction{Lookup} and
+\AgdaFunction{Lookup′} functions are mutually defined, and so are
+\AgdaFunction{lookup} and \AgdaFunction{lookup′}.
 
 \AgdaHide{
 \begin{code}
@@ -1277,45 +1279,62 @@ body of the continuation is a \AgdaFun{lookup} rather than a
 \AgdaFun{lookup′}, matching the type specified by \AgdaFun{Lookup′}
 for the \AgdaCon{thereRec₁} case.
 
-\subsection{\AgdaFunction{update}}
+\subsection{\AgdaFunction{Update} \& \AgdaFunction{update}}
+
+Now we define the generic open universe \AgdaFun{update}
+function. Note that \AgdaFun{Update}, \AgdaFun{Update′},
+\AgdaFun{update}, and \AgdaFun{update′} \emph{all} need to
+be mutually defined. The mutual dependence has to with the need for a
+forgetful function, which also requires \AgdaFun{Update} and
+\AgdaFun{update} to be mutually defined in \refsec{concretelarge}.
+
+\AgdaHide{
+\begin{code}
+  mutual
+\end{code}}
+
 
 \begin{code}
-  Update : {O : Set} (D : Desc O) (x : Data D) → Path D x → Set
-  Update′ : {O : Set} (R D : Desc O) (xs : Data′ R D) → Path′ R D xs → Set
-  update : {O : Set} (D : Desc O) (x : Data D) (i : Path D x) (X : Update D x i) → Data D
-  update′ : {O : Set} (R D : Desc O) (xs : Data′ R D) (i : Path′ R D xs)
-    → Update′ R D xs i → Data′ R D
-  
-  Update D x here = Maybe (Data D)
-  Update D (con xs) (there i) = Update′ D D xs i
-  
-  Update′ R (End o) tt ()
-  Update′ R (Arg A D) (a , xs) thereArg₁ =
-    Σ (Maybe A)
-      (maybe (λ a' → Data′ R (D a) → Data′ R (D a')) ⊤)
-  Update′ R (Arg A D) (a , xs) (thereArg₂ i) = Update′ R (D a) xs i
-  Update′ R (Rec A D) (f , xs) (thereRec₁ g) =
-    Σ ((a : A) → Update R (f a) (g a))
-      (λ h → Data′ R (D (fun R ∘ f))
-        → Data′ R (D (λ a → fun R (update R (f a) (g a) (h a)))))
-  Update′ R (Rec A D) (f , xs) (thereRec₂ i) =
-    Update′ R (D (fun R ∘ f)) xs i
-  
-  update D x here X = maybe id x X
-  update D (con xs) (there i) X = con (update′ D D xs i X)
-  
-  update′ R (End o) tt () X
-  update′ R (Arg A D) (a , xs) thereArg₁ (nothing , f) = a , xs
-  update′ R (Arg A D) (a , xs) thereArg₁ (just X , f) =
-    X , f xs
-  update′ R (Arg A D) (a , xs) (thereArg₂ i) X =
-    a , update′ R (D a) xs i X
-  update′ R (Rec A D) (f , xs) (thereRec₁ g) (h , F) =
-    (λ a → update R (f a) (g a) (h a)) , F xs
-  update′ R (Rec A D) (f , xs) (thereRec₂ i) X =
-    f , update′ R (D (fun R ∘ f)) xs i X
+    Update : {O : Set} (D : Desc O) (x : Data D) → Path D x → Set
+    Update D x here = Maybe (Data D)
+    Update D (con xs) (there i) = Update′ D D xs i
 \end{code}
 
+\begin{code}
+    update : {O : Set} (D : Desc O) (x : Data D) (i : Path D x) (X : Update D x i) → Data D
+    update D x here X = maybe id x X
+    update D (con xs) (there i) X = con (update′ D D xs i X)
+\end{code}
+
+\begin{code}
+    Update′ : {O : Set} (R D : Desc O) (xs : Data′ R D) → Path′ R D xs → Set
+    Update′ R (End o) tt ()
+    Update′ R (Arg A D) (a , xs) thereArg₁ =
+      Σ (Maybe A)
+        (maybe (λ a' → Data′ R (D a) → Data′ R (D a')) ⊤)
+    Update′ R (Arg A D) (a , xs) (thereArg₂ i) = Update′ R (D a) xs i
+    Update′ R (Rec A D) (f , xs) (thereRec₁ g) =
+      Σ ((a : A) → Update R (f a) (g a))
+        (λ h → Data′ R (D (fun R ∘ f))
+          → Data′ R (D (λ a → fun R (update R (f a) (g a) (h a)))))
+    Update′ R (Rec A D) (f , xs) (thereRec₂ i) =
+      Update′ R (D (fun R ∘ f)) xs i
+\end{code}
+
+\begin{code}
+    update′ : {O : Set} (R D : Desc O) (xs : Data′ R D) (i : Path′ R D xs)
+      → Update′ R D xs i → Data′ R D
+    update′ R (End o) tt () X
+    update′ R (Arg A D) (a , xs) thereArg₁ (nothing , f) = a , xs
+    update′ R (Arg A D) (a , xs) thereArg₁ (just X , f) =
+      X , f xs
+    update′ R (Arg A D) (a , xs) (thereArg₂ i) X =
+      a , update′ R (D a) xs i X
+    update′ R (Rec A D) (f , xs) (thereRec₁ g) (h , F) =
+      (λ a → update R (f a) (g a) (h a)) , F xs
+    update′ R (Rec A D) (f , xs) (thereRec₂ i) X =
+      f , update′ R (D (fun R ∘ f)) xs i X
+\end{code}
 
 \section{Generic Closed InfIR}
 \label{sec:genericclosed}
