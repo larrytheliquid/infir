@@ -1080,7 +1080,8 @@ they take two \AgdaDatatype{Desc} arguments, where the first
     Data′ : {O : Set} (R D : Desc O) → Set
     Data′ R (End o) = ⊤
     Data′ R (Arg A D) = Σ A (λ a → Data′ R (D a))
-    Data′ R (Rec A D) = Σ (A → Data R) (λ f → Data′ R (D (fun R ∘ f)))
+    Data′ R (Rec A D) =
+      Σ (A → Data R) (λ f → Data′ R (D (fun R ∘ f)))
 \end{code}
 
 The \AgdaInductiveConstructor{End} case means no further arguments are
@@ -1144,7 +1145,8 @@ one of the values of the dependent product computed by
 \AgdaFunction{Data′}.
 
 \begin{code}
-    data Path′ {O : Set} (R : Desc O) : (D : Desc O) → Data′ R D → Set₁ where
+    data Path′ {O : Set} (R : Desc O) 
+      : (D : Desc O) → Data′ R D → Set₁ where
       thereArg₁ : ∀{A D a xs}
         → Path′ R (Arg A D) (a , xs)
       thereArg₂ : ∀{A D a xs}
@@ -1175,6 +1177,21 @@ does not adequately capture concrete paths for types like
 would like to index into. This is a limitation due to using open
 universe \AgdaDatatype{Desc}riptions, which we remedy using a
 closed universe in \refsec{genericclosed}.
+
+The \AgdaInductiveConstructor{thereArg₂} case points to a
+sub-argument, skipping past the
+non-recursive argument.
+
+The \AgdaInductiveConstructor{thereRec₁}
+points into a recursive argument. Because the recursive argument is a
+function whose is a value of type \AgdaBound{A}, the
+sub-\AgdaDatatype{Path′} must also be a function taking an
+\AgdaBound{A}, hence \AgdaDatatype{Path′} is an infinitary type.
+Thus, \AgdaInductiveConstructor{thereRec₁} is much like
+\AgdaInductiveConstructor{thereFun₂} of \refsec{concretelarge}.
+
+The \AgdaInductiveConstructor{thereRec₂} case points to a
+sub-argument, skipping past the recursive argument.
 
 
 \subsection{\AgdaFunction{lookup}}
