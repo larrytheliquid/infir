@@ -72,8 +72,7 @@ Dependent types; induction-recursion; generic programming.
 \AgdaHide{
 \begin{code}
 module InfIR where
-open import Level using ( _⊔_ ; Lift ; lift )
-  renaming ( suc to ↑ )
+open import Level using ( _⊔_ )
 open import Function
 open import Data.Empty
 open import Data.Unit
@@ -936,7 +935,7 @@ In this section we develop generic versions of the datatypes and
 functions from previous sections, for any datatype encoded as an
 inductive-recursive Dybjer-Setzer code~\cite{TODO}.
 
-\subsection{\AgdaDatatype{Desc} \& \AgdaDatatype{Data}}
+\subsection{\AgdaDatatype{Desc}}
 
 First let us recall the type of datatype inductive-recursive codes
 developed by Dybjer and Setzer. We refer to values of
@@ -954,10 +953,10 @@ encodes the definition for a datatype, and a function mutually
 defined with it.
 
 \begin{code}
-  data Desc {ℓ} (O : Set ℓ) : Set (↑ ℓ) where
+  data Desc (O : Set) : Set₁ where
     End : (o : O) → Desc O
-    Arg : (A : Set ℓ) (D : (a : A) → Desc O) → Desc O
-    Rec : (A : Set ℓ) (D : (o : A → O) → Desc O) → Desc O  
+    Arg : (A : Set) (D : (a : A) → Desc O) → Desc O
+    Rec : (A : Set) (D : (o : A → O) → Desc O) → Desc O  
 \end{code}
 
 To a first approximation, a datatype \AgdaDatatype{Desc}ription
@@ -992,29 +991,13 @@ recursive cases for each constructor.
 
 The abstract nature of \AgdaDatatype{Desc} makes it somewhat difficult
 to understand at first, especially the \AgdaInductiveConstructor{Rec}
-constructor. However, it's not that bad once you see a few
-examples. Below we encode \AgdaDatatype{Type} from
-\refsec{concretelarge}.
-
-\begin{code}
-  data TypeT : Set₁ where
-    BaseT FunT : TypeT
-
-  TypeD : Desc Set
-  TypeD = Arg TypeT λ
-    { BaseT → Arg Set (λ A → End A)
-    ; FunT
-      → Rec (Lift ⊤) λ A
-      → Rec (Lift (A (lift tt))) λ B
-      → End ((a : A (lift tt)) → B (lift a))
-    }
-\end{code}
+constructor. Let's try to understand \AgdaDatatype{Desc} better with an
+example, encoding \AgdaDatatype{Arith} from
+\refsec{concretesmall} below .
 
 \AgdaHide{
 \begin{code}
-  prod : (n : ℕ) (f : Fin n → ℕ) → ℕ
-  prod zero f = suc zero
-  prod (suc n) f = f zero * prod n (f ∘ suc)
+  postulate prod : (n : ℕ) (f : Fin n → ℕ) → ℕ
 \end{code}}
 
 \begin{code}
@@ -1025,42 +1008,121 @@ examples. Below we encode \AgdaDatatype{Type} from
   ArithD = Arg ArithT λ
     { NumT → Arg ℕ (λ n → End n)
     ; ProdT
-      → Rec (Lift ⊤) λ n
-      → Rec (Fin (n (lift tt))) λ f
-      → End (prod (n (lift tt)) f)
+      → Rec ⊤ λ n
+      → Rec (Fin (n tt)) λ f
+      → End (prod (n tt) f)
     }
 \end{code}
 
+The \AgdaDatatype{Desc} begins with an \AgdaInductiveConstructor{Arg},
+taking sub-\AgdaDatatype{Desc}s for each element of the finite
+enumeration \AgdaDatatype{ArithT}, representing the types of each
+\AgdaDatatype{Arith} constructor.
+
+The \AgdaInductiveConstructor{NumT} description uses
+\AgdaInductiveConstructor{Arg} to take a natural number
+(\AgdaDatatype{ℕ}), then \AgdaInductiveConstructor{End}s with that number. Ending with that
+number encodes that the \AgdaInductiveConstructor{`Num} case of the
+\AgdaFunction{eval} from \refsec{concretesmall} returns the number held
+by \AgdaInductiveConstructor{`Num} in the base case.
+
+The \AgdaInductiveConstructor{ProdT} description uses
+\AgdaInductiveConstructor{Rec} twice, taking two recursive
+arguments. The first recursive argument is intended to encode an
+\AgdaDatatype{Arith} rather than a function type, so we
+make its domain a value of the trivial type \AgdaDatatype{⊤}. The
+second recursive argument is intended to encode a function from
+\AgdaDatatype{Fin} \AgdaBound{n} to \AgdaDatatype{Arith}, so we ask
+for a \AgdaDatatype{Fin} (\AgdaBound{n}
+\AgdaInductiveConstructor{tt}), where \AgdaBound{n} represents the
+value returned by applying \AgdaFunction{eval} to the first recursive
+argument. In fact, \AgdaBound{n} represents a function from the
+trivial type \AgdaDatatype{⊤} to \AgdaDatatype{ℕ}, because first-order
+recursive arguments are encoded as higher-order arguments with a
+trivial domain. Finally, \AgdaInductiveConstructor{End} is used to
+specify that there are no further arguments, and the
+\AgdaInductiveConstructor{`Prod} case of \AgdaFunction{eval} should
+result in the \AgdaFunction{prod}uct represented by the first two
+recursive arguments.
+
+\subsection{\AgdaDatatype{Data}}
+
+Previously we used \AgdaDatatype{Desc} to encode a datatype and its
+mutual function. Applying \AgdaDatatype{Data} to a description results
+in the datatype it encodes, and applying \AgdaFunction{fun} to a
+description results in the mutual function it encodes.
+
+\AgdaHide{
 \begin{code}
   mutual
-    data Data {ℓ} {O : Set ℓ} (D : Desc O) : Set ℓ where
+\end{code}}
+
+\AgdaDatatype{Data} is defined in terms of a single constructor
+\AgdaInductiveConstructor{con}, which holds a dependent product of all
+arguments of a particular constructor. The computational argument type
+\AgdaFunction{Data′} encodes the type of this product, dependent on
+the \AgdaDatatype{Desc}ription that \AgdaDatatype{Data} is
+parameterized by.
+
+For the remainder of the paper, we will establish a convention for
+functions ending with a prime, like \AgdaFunction{Data′}. They will be
+defined by induction over a description, but must also reference the
+original description they are inducting over in the base case. Hence,
+they take two \AgdaDatatype{Desc} arguments, where the first
+\AgdaBound{R} is the original description (to be used in
+\AgdaInductiveConstructor{Rec}ursive cases), and the second
+\AgdaBound{D} is the one we induct over.
+
+\begin{code}
+    data Data {O : Set} (D : Desc O) : Set where
       con : Data′ D D → Data D
 
-    Data′ : ∀{ℓ} {O : Set ℓ} (R D : Desc O) → Set ℓ
-    Data′ R (End o) = Lift ⊤
+    Data′ : {O : Set} (R D : Desc O) → Set
+    Data′ R (End o) = ⊤
     Data′ R (Arg A D) = Σ A (λ a → Data′ R (D a))
     Data′ R (Rec A D) = Σ (A → Data R) (λ f → Data′ R (D (fun R ∘ f)))
-    
-    fun : ∀{ℓ} {O : Set ℓ} (D : Desc O) → Data D → O
+\end{code}
+
+The \AgdaInductiveConstructor{End} case means no further arguments are
+needed, so we ask for a trivial value of type \AgdaDatatype{⊤}. The
+\AgdaInductiveConstructor{Arg} case asks for a value of type
+\AgdaBound{A}, which the rest of the arguments may depend on using
+\AgdaBound{a}. The \AgdaInductiveConstructor{End} case asks for a function from
+\AgdaBound{A} to a recursive value \AgdaDatatype{Data} \AgdaBound{R},
+and the rest of the arguments may use \AgdaBound{f} to depend on the
+result of applying the mutual function (e.g. \AgdaFunction{eval}) to
+the recursive argument after applying a value of type \AgdaBound{A}.
+
+Next we define \AgdaFunction{fun} (encoding the mutual function) in
+terms of \AgdaFunction{fun′}.
+
+\begin{code}
+    fun : {O : Set} (D : Desc O) → Data D → O
     fun D (con xs) = fun′ D D xs
   
-    fun′ : ∀{ℓ} {O : Set ℓ} (R D : Desc O) → Data′ R D → O
-    fun′ R (End o) (lift tt) = o
+    fun′ : {O : Set} (R D : Desc O) → Data′ R D → O
+    fun′ R (End o) tt = o
     fun′ R (Arg A D) (a , xs) = fun′ R (D a) xs
     fun′ R (Rec A D) (f , xs) = fun′ R (D (λ a → fun R (f a))) xs
 \end{code}
+
+The \AgdaInductiveConstructor{End} case gives us what we want, the
+value \AgdaBound{o} that the mutual function should return for the
+encoded constructor case. The \AgdaInductiveConstructor{Arg} and
+\AgdaInductiveConstructor{Rec} cases recurse, looking for an
+\AgdaInductiveConstructor{End}.
 
 \subsection{\AgdaDatatype{Path}}
 
 \begin{code}
   mutual
-    data Path {ℓ} {O : Set ℓ} (D : Desc O) : Data D → Set (↑ ℓ) where
+    data Path {O : Set} (D : Desc O) : Data D → Set₁ where
       here : ∀{x} → Path D x
       there : ∀{xs}
         → Path′ D D xs
         → Path D (con xs)
     
-    data Path′ {ℓ} {O : Set ℓ} (R : Desc O) : (D : Desc O) → Data′ R D → Set (↑ ℓ) where
+    data Path′ {O : Set} (R : Desc O) : (D : Desc O) → Data′ R D → Set₁ where
       thereArg₁ : ∀{A D a xs}
         → Path′ R (Arg A D) (a , xs)
       thereArg₂ : ∀{A D a xs}
@@ -1077,13 +1139,13 @@ examples. Below we encode \AgdaDatatype{Type} from
 \subsection{\AgdaDatatype{lookup}}
 
 \begin{code}
-  Lookup : ∀{ℓ} {O : Set ℓ} (D : Desc O) (x : Data D) → Path D x → Set ℓ
-  Lookup′ : ∀{ℓ} {O : Set ℓ} (R D : Desc O) (xs : Data′ R D) → Path′ R D xs → Set ℓ
+  Lookup : {O : Set} (D : Desc O) (x : Data D) → Path D x → Set
+  Lookup′ : {O : Set} (R D : Desc O) (xs : Data′ R D) → Path′ R D xs → Set
   
   Lookup D x here = Data D
   Lookup D (con xs) (there i) = Lookup′ D D xs i
   
-  Lookup′ R (End o) (lift tt) ()
+  Lookup′ R (End o) tt ()
   Lookup′ R (Arg A D) (a , xs) thereArg₁ = A
   Lookup′ R (Arg A D) (a , xs) (thereArg₂ i) = Lookup′ R (D a) xs i
   Lookup′ R (Rec A D) (f , xs) (thereRec₁ g) = (a : A) → Lookup R (f a) (g a)
@@ -1091,14 +1153,14 @@ examples. Below we encode \AgdaDatatype{Type} from
 \end{code}
 
 \begin{code}
-  lookup : ∀{ℓ} {O : Set ℓ} (D : Desc O) (x : Data D) (i : Path D x) → Lookup D x i
-  lookup′ : ∀{ℓ} {O : Set ℓ} (R D : Desc O) (xs : Data′ R D) (i : Path′ R D xs)
+  lookup : {O : Set} (D : Desc O) (x : Data D) (i : Path D x) → Lookup D x i
+  lookup′ : {O : Set} (R D : Desc O) (xs : Data′ R D) (i : Path′ R D xs)
     → Lookup′ R D xs i
   
   lookup D x here = x
   lookup D (con xs) (there i) = lookup′ D D xs i
   
-  lookup′ R (End o) (lift tt) ()
+  lookup′ R (End o) tt ()
   lookup′ R (Arg A D) (a , xs) thereArg₁ = a
   lookup′ R (Arg A D) (a , xs) (thereArg₂ i) = lookup′ R (D a) xs i
   lookup′ R (Rec A D) (f , xs) (thereRec₁ g) = λ a → lookup R (f a) (g a)
@@ -1108,19 +1170,19 @@ examples. Below we encode \AgdaDatatype{Type} from
 \subsection{\AgdaDatatype{update}}
 
 \begin{code}
-  Update : ∀{ℓ} {O : Set ℓ} (D : Desc O) (x : Data D) → Path D x → Set ℓ
-  Update′ : ∀{ℓ} {O : Set ℓ} (R D : Desc O) (xs : Data′ R D) → Path′ R D xs → Set ℓ
-  update : ∀{ℓ} {O : Set ℓ} (D : Desc O) (x : Data D) (i : Path D x) (X : Update D x i) → Data D
-  update′ : ∀{ℓ} {O : Set ℓ} (R D : Desc O) (xs : Data′ R D) (i : Path′ R D xs)
+  Update : {O : Set} (D : Desc O) (x : Data D) → Path D x → Set
+  Update′ : {O : Set} (R D : Desc O) (xs : Data′ R D) → Path′ R D xs → Set
+  update : {O : Set} (D : Desc O) (x : Data D) (i : Path D x) (X : Update D x i) → Data D
+  update′ : {O : Set} (R D : Desc O) (xs : Data′ R D) (i : Path′ R D xs)
     → Update′ R D xs i → Data′ R D
   
   Update D x here = Maybe (Data D)
   Update D (con xs) (there i) = Update′ D D xs i
   
-  Update′ R (End o) (lift tt) ()
+  Update′ R (End o) tt ()
   Update′ R (Arg A D) (a , xs) thereArg₁ =
     Σ (Maybe A)
-      (maybe (λ a' → Data′ R (D a) → Data′ R (D a')) (Lift ⊤))
+      (maybe (λ a' → Data′ R (D a) → Data′ R (D a')) ⊤)
   Update′ R (Arg A D) (a , xs) (thereArg₂ i) = Update′ R (D a) xs i
   Update′ R (Rec A D) (f , xs) (thereRec₁ g) =
     Σ ((a : A) → Update R (f a) (g a))
@@ -1132,7 +1194,7 @@ examples. Below we encode \AgdaDatatype{Type} from
   update D x here X = maybe id x X
   update D (con xs) (there i) X = con (update′ D D xs i X)
   
-  update′ R (End o) (lift tt) () X
+  update′ R (End o) tt () X
   update′ R (Arg A D) (a , xs) thereArg₁ (nothing , f) = a , xs
   update′ R (Arg A D) (a , xs) thereArg₁ (just X , f) =
     X , f xs
