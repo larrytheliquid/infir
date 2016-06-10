@@ -94,8 +94,13 @@ module Intro where
 
 Infinitary inductive-recursive (InfIR) types are commonly used in dependently
 typed programs to model type-theoretic universes. For example,
-consider the model below of the universe of natural numbers and
-dependent functions.
+consider the Agda~\cite{TODO} model below of the universe of natural numbers and
+dependent functions
+\footnote{\raggedright{
+  This paper is written as a literate Adga program. The literate Agda
+  source file and other accompanying code can be found at
+  \tt{https://github.com/larrytheliquid/infir}
+}}.
 
 \begin{code}
   mutual
@@ -144,7 +149,7 @@ inductive-recursive types is common, writing inductively defined
 
 Why isn't there much existing work on programming functions with
 infinitary inductive-recursive functions? They contain inherently
-complex properties and there aren't enough examples to reference.
+complex properties and there aren't many examples to reference.
 Their infinitary nature makes them
 \emph{higher-order datatypes}, rather than simpler first-order
 datatypes. Their inductive-recursive nature means you need to deal
@@ -534,7 +539,7 @@ you have been given \AgdaVar{a}. Also note that because the argument
 returns a \AgdaData{Path}, the \AgdaData{Path} datatype is
 infinitary (just like the \AgdaData{Type} it indexes).
 
-\subsection{\AgdaFun{lookup}}
+\subsection{\AgdaFun{Lookup} \& \AgdaFun{lookup}}
 
 We were able to write a total function to \AgdaFun{lookup} any
 sub\AgdaData{Tree}, but \AgdaFun{lookup}ing up a
@@ -542,7 +547,7 @@ sub\AgdaData{Type} is not always possible. Using the methodology
 from \refsec{problem:total}, we can make \AgdaFun{lookup} for
 \AgdaData{Type}s total by choosing to change the codomain,
 depending on the input \AgdaData{Type} and \AgdaData{Path}.
-\AgdaFun{Lookup} computes the codomain of
+\AgdaFun{Lookup} (a computational return type) computes the codomain of
 \AgdaFun{lookup}, asking for a \AgdaData{Type} or \AgdaData{Set} in the base
 cases, or a continuation when looking to the right of a
 \AgdaCon{`Fun}.
@@ -552,7 +557,8 @@ cases, or a continuation when looking to the right of a
   Lookup A here = Type
   Lookup (`Base A) thereBase = Set
   Lookup (`Fun A B) (thereFun₁ i) = Lookup A i
-  Lookup (`Fun A B) (thereFun₂ f) = (a : ⟦ A ⟧) → Lookup (B a) (f a)
+  Lookup (`Fun A B) (thereFun₂ f) =
+    (a : ⟦ A ⟧) → Lookup (B a) (f a)
 \end{code}
 
 Finally, we can write \AgdaFun{lookup} in terms of
@@ -568,10 +574,11 @@ extra argument \AgdaVar{a} in the
   lookup A here = A
   lookup (`Base A) thereBase = A
   lookup (`Fun A B) (thereFun₁ i) = lookup A i
-  lookup (`Fun A B) (thereFun₂ f) = λ a → lookup (B a) (f a)
+  lookup (`Fun A B) (thereFun₂ f) =
+    λ a → lookup (B a) (f a)
 \end{code}
 
-\subsection{\AgdaFun{update}}
+\subsection{\AgdaFun{Update} \& \AgdaFun{update}}
 
 Now we will write an \AgdaFun{update} function for
 \AgdaData{Type}s. After supplying a \AgdaData{Path} and a
@@ -603,7 +610,7 @@ asking for an \AgdaVar{a} whenever we update within the codomain of
 a \AgdaCon{`Fun}.
 
 We call the type of the substitute
-\AgdaFun{Update}, which asks for a \AgdaData{Maybe Type} or a
+\AgdaFun{Update} (a computational argument type), which asks for a \AgdaData{Maybe Type} or a
 \AgdaData{Maybe Set} in the base cases (\AgdaCon{here}
 and \AgdaCon{thereBase} respectively), and a continuation in the
 \AgdaCon{thereFun₂} case. However, updating an element to
@@ -784,7 +791,7 @@ subnumber with \AgdaVar{n}.
   updateℕ (suc n) (there i) x = suc (updateℕ n i x)
 \end{code}
 
-\subsection{\AgdaData{Path} \& \AgdaFun{lookup} \& \AgdaFun{update}}
+\subsection{\AgdaData{Path} \& \AgdaFun{L}/\AgdaFun{lookup} \& \AgdaFun{U}/\AgdaFun{update}}
 
 The \AgdaData{Path}, \AgdaFun{lookup}, and
 \AgdaFun{update} definitions for \AgdaData{Arith} are
@@ -931,7 +938,7 @@ inductive-recursive Dybjer-Setzer code~\cite{TODO}.
 
 \subsection{\AgdaData{Desc}}
 
-First let us recall the type of datatype inductive-recursive codes
+First let us recall the type of inductive-recursive codes
 developed by Dybjer and Setzer. We refer to values of
 \AgdaData{Desc} defined below as ``codes''.
 \footnote{
@@ -942,9 +949,9 @@ developed by Dybjer and Setzer. We refer to values of
   \AgdaData{IR}/\AgdaCon{$\iota$}/\AgdaCon{$\sigma$}/\AgdaCon{$\delta$}
   respectively.
   }
-A code simultaneously
-encodes the definition for a datatype, and a function mutually
-defined with it.
+A \AgdaData{Desc} simultaneously
+encodes the definition of a datatype and a function mutually
+defined over it.
 
 \begin{code}
   data Desc (O : Set) : Set₁ where
@@ -1060,8 +1067,8 @@ parameterized by.
 
 For the remainder of the paper, we will establish a convention for
 functions ending with a prime, like \AgdaFun{Data′}. They will be
-defined by induction over a description, but must also reference the
-original description they are inducting over in the base case. Hence,
+defined by induction over a description, but must also use the
+original description they are inducting over in the \AgdaCon{Rec} case. Hence,
 they take two \AgdaData{Desc} arguments, where the first
 \AgdaVar{R} is the original description (to be used in
 \AgdaCon{Rec}ursive cases), and the second
