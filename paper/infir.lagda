@@ -1528,7 +1528,7 @@ an inductive-recursive \AgdaCon{con}structor.
 \subsection{\AgdaData{Path′}}
 
 A \AgdaData{Path′} points to an argument of a constructor,
-a value of \AgdaFun{Data′} applied to a description translated by the
+a value of \AgdaFun{Data′} applied to a description code translated by the
 meaning function \AgdaFun{⟪\_⟫}.
 
 \begin{code}
@@ -1602,6 +1602,12 @@ respectively for the \AgdaCon{here}, \AgdaCon{thereFun}, and
 
 \subsection{\AgdaFun{Lookup′} \& \AgdaFun{lookup′}}
 
+The \AgdaFun{lookup′} and \AgdaFun{Lookup′} functions are even more
+similar to their open universe generic counterparts from
+\refsec{genericopen}. They are parameterized by two
+\AgdaData{`Desc}ription codes \AgdaVar{R} and \AgdaVar{D}, rather than
+primitive \AgdaFun{Desc}riptions.
+
 \begin{code}
     Lookup′ : {O : `Set} (R D : `Desc O) (xs : Data′ ⟪ R ⟫ ⟪ D ⟫)
       → Path′ R D xs → Set
@@ -1615,6 +1621,11 @@ respectively for the \AgdaCon{here}, \AgdaCon{thereFun}, and
       Lookup′ R (D (fun ⟪ R ⟫ ∘ f)) xs i
 \end{code}
 
+The \AgdaCon{thereArg₂}, \AgdaCon{thereRec₁}, and \AgdaCon{thereRec₂}
+cases are like their generic open universe counterparts. However, the
+\AgdaCon{thereArg₁} is different as it recursively looks for a type
+within \AgdaVar{A} rather than immediately returning \AgdaVar{A}.
+
 \begin{code}
     lookup′ : {O : `Set} (R D : `Desc O) (xs : Data′ ⟪ R ⟫ ⟪ D ⟫)
       (i : Path′ R D xs) → Lookup′ R D xs i
@@ -1627,6 +1638,10 @@ respectively for the \AgdaCon{here}, \AgdaCon{thereFun}, and
     lookup′ R (`Rec A D) (f , xs) (thereRec₂ i) =
       lookup′ R (D (fun ⟪ R ⟫ ∘ f)) xs i
 \end{code}
+
+Once again, \AgdaCon{thereArg₁} is the major case that is different
+from the open universe. Here, we continue looking within \AgdaVar{a}
+rather than immediately returning \AgdaVar{a}.
 
 \subsection{\AgdaFun{update}}
 
