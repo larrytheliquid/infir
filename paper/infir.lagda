@@ -1293,14 +1293,13 @@ for the \AgdaCon{thereRec₁} case.
 \subsection{\AgdaFun{Update} \& \AgdaFun{update}}
 
 Now we define the generic open universe \AgdaFun{update}
-function. Note that \AgdaFun{Update}, \AgdaFun{Update′},
+function, updating a value in the open universe with the contents of
+the computational argument type \AgdaFun{Update}.
+Note that \AgdaFun{Update}, \AgdaFun{Update′},
 \AgdaFun{update}, and \AgdaFun{update′} \emph{all} need to
 be mutually defined. The mutual dependence has to with the need for a
 forgetful function, which also requires \AgdaFun{Update} and
 \AgdaFun{update} to be mutually defined in \refsec{concretelarge}.
-Note once again that \AgdaFun{Update} and \AgdaFun{Update′} are
-computational argument types, whereas \AgdaFun{Lookup} and
-\AgdaFun{Lookup′} are computational return types.
 
 \AgdaHide{
 \begin{code}
@@ -1334,6 +1333,13 @@ The \AgdaCon{there} case updates
 one of the arguments within the constructor \AgdaCon{con} via
 \AgdaFun{update′}.
 
+\subsection{\AgdaFun{Update′} \& \AgdaFun{update′}}
+
+The function \AgdaFun{update′} is updates
+an argument of a constructor, with the computational argument type
+\AgdaData{Update′}.
+
+
 \begin{code}
     Update′ : {O : Set} (R D : Desc O) (xs : Data′ R D)
       → Path′ R D xs → Set
@@ -1345,8 +1351,9 @@ one of the arguments within the constructor \AgdaCon{con} via
       Update′ R (D a) xs i
     Update′ R (Rec A D) (f , xs) (thereRec₁ g) =
       Σ ((a : A) → Update R (f a) (g a))
-        (λ h → Data′ R (D (fun R ∘ f)) →
-         Data′ R (D (λ a → fun R (update R (f a) (g a) (h a)))))
+        (λ h → let f' = λ a → update R (f a) (g a) (h a)
+             in Data′ R (D (fun R ∘ f))
+             →  Data′ R (D (fun R ∘ f')))
     Update′ R (Rec A D) (f , xs) (thereRec₂ i) =
       Update′ R (D (fun R ∘ f)) xs i
 \end{code}
@@ -1643,46 +1650,97 @@ Once again, \AgdaCon{thereArg₁} is the major case that is different
 from the open universe. Here, we continue looking within \AgdaVar{a}
 rather than immediately returning \AgdaVar{a}.
 
-\subsection{\AgdaFun{update}}
+\subsection{\AgdaFun{Update} \& \AgdaFun{update}}
+
+Now we define the generic closed universe \AgdaFun{update} and
+\AgdaFun{Update}. Once again, \AgdaFun{Update}, \AgdaFun{Update′},
+\AgdaFun{update}, and \AgdaFun{update′} \emph{all} need to
+be mutually defined.
+
+\AgdaHide{
+\begin{code}
+  mutual
+\end{code}}
 
 \begin{code}
-  Update : (A : `Set) (a : ⟦ A ⟧) → Path A a → Set
-  Update′ : {O : `Set} (R D : `Desc O) (xs : Data′ ⟪ R ⟫ ⟪ D ⟫)
-    → Path′ R D xs → Set
-  update : (A : `Set) (a : ⟦ A ⟧) (i : Path A a)
-    → Update A a i → ⟦ A ⟧
-  update′ : {O : `Set} (R D : `Desc O) (xs : Data′ ⟪ R ⟫ ⟪ D ⟫)
-    (i : Path′ R D xs)
-    → Update′ R D xs i
-    → Data′ ⟪ R ⟫ ⟪ D ⟫
-  
-  Update A a here = Maybe ⟦ A ⟧
-  Update (`Fun A B) f (thereFun g) = (a : ⟦ A ⟧) → Update (B a) (f a) (g a)
-  Update (`Data D) (con xs) (thereData i) = Update′ D D xs i
-  
-  Update′ R (`Arg A D) (a , xs) (thereArg₁ i) =
-    Σ (Update A a i)
-      (λ a' → Data′ ⟪ R ⟫ ⟪ D a ⟫ → Data′ ⟪ R ⟫ ⟪ D (update A a i a') ⟫)
-  Update′ R (`Arg A D) (a , xs) (thereArg₂ i) = Update′ R (D a) xs i
-  Update′ R (`Rec A D) (f , xs) (thereRec₁ g) =
-    Σ ((a : ⟦ A ⟧) → Update (`Data R) (f a) (g a))
-      (λ h → Data′ ⟪ R ⟫ ⟪ D (λ a → fun ⟪ R ⟫ (f a)) ⟫
-        → Data′ ⟪ R ⟫ ⟪ D (λ a → fun ⟪ R ⟫ (update (`Data R) (f a) (g a) (h a))) ⟫
-      )
-  Update′ R (`Rec A D) (f , xs) (thereRec₂ i) = Update′ R (D (fun ⟪ R ⟫ ∘ f)) xs i
-  
-  update A a here X = maybe id a X
-  update (`Fun A B) f (thereFun g) h = λ a → update (B a) (f a) (g a) (h a)
-  update (`Data D) (con xs) (thereData i) X = con (update′ D D xs i X)
-  
-  update′ R (`Arg A D) (a , xs) (thereArg₁ i) (X , f) = update A a i X , f xs
-  update′ R (`Arg A D) (a , xs) (thereArg₂ i) X = a , update′ R (D a) xs i X
-  update′ R (`Rec A D) (f , xs) (thereRec₁ g) (h , F) =
-    (λ a → update (`Data R) (f a) (g a) (h a)) , F xs
-  update′ R (`Rec A D) (f , xs) (thereRec₂ i) X =
-    f , update′ R (D (fun ⟪ R ⟫ ∘ f)) xs i X
+    Update : (A : `Set) (a : ⟦ A ⟧) → Path A a → Set
+    Update A a here = Maybe ⟦ A ⟧
+    Update (`Fun A B) f (thereFun g) =
+      (a : ⟦ A ⟧) → Update (B a) (f a) (g a)
+    Update (`Data D) (con xs) (thereData i) =
+      Update′ D D xs i
 \end{code}
 
+The \AgdaCon{here} case returns a \AgdaData{Maybe} of the current
+value type \AgdaVar{A}. The
+\AgdaCon{thereFun} case points further within a continuation. The
+\AgdaCon{thereData} case points into a constructor argument via
+\AgdaFun{Update′}.
+
+\begin{code}
+    update : (A : `Set) (a : ⟦ A ⟧) (i : Path A a)
+      → Update A a i → ⟦ A ⟧
+    update A a here X = maybe id a X
+    update (`Fun A B) f (thereFun g) h =
+      λ a → update (B a) (f a) (g a) (h a)
+    update (`Data D) (con xs) (thereData i) X =
+      con (update′ D D xs i X)
+\end{code}
+
+The \AgdaFun{update} function updates the current value (perhaps with
+an identity update), updates within a continuation, or uses
+\AgdaFun{update′} on a constructor argument within \AgdaCon{con}
+respectively for the \AgdaCon{here}, \AgdaCon{thereFun}, and
+\AgdaCon{thereData} cases.
+
+\subsection{\AgdaFun{Update′} \& \AgdaFun{update′}}
+
+Next we define the generic closed universe \AgdaFun{update′} and
+\AgdaFun{Update′}.
+    
+\begin{code}
+    Update′ : {O : `Set} (R D : `Desc O) (xs : Data′ ⟪ R ⟫ ⟪ D ⟫)
+      → Path′ R D xs → Set
+    Update′ R (`Arg A D) (a , xs) (thereArg₁ i) =
+      Σ (Update A a i)
+        (λ a' → Data′ ⟪ R ⟫ ⟪ D a ⟫
+              → Data′ ⟪ R ⟫ ⟪ D (update A a i a') ⟫)
+    Update′ R (`Arg A D) (a , xs) (thereArg₂ i) =
+      Update′ R (D a) xs i
+    Update′ R (`Rec A D) (f , xs) (thereRec₁ g) =
+      Σ ((a : ⟦ A ⟧) → Update (`Data R) (f a) (g a))
+        (λ h → let f' = λ a → update (`Data R) (f a) (g a) (h a)
+            in Data′ ⟪ R ⟫ ⟪ D (fun ⟪ R ⟫ ∘ f) ⟫
+            →  Data′ ⟪ R ⟫ ⟪ D (fun ⟪ R ⟫ ∘ f') ⟫)
+    Update′ R (`Rec A D) (f , xs) (thereRec₂ i) =
+      Update′ R (D (fun ⟪ R ⟫ ∘ f)) xs i
+\end{code}
+
+Like with \AgdaFun{Lookup′}, \AgdaCon{thereArg₁} is the only case that
+differs significantly from its open universe counterpart. The open
+universe asked for a \AgdaData{Maybe} of the current value type
+\AgdaVar{A} (and a translation function). Instead, the closed universe
+asks recursively asks for some type within \AgdaVar{A} (and a
+translation function).
+
+\begin{code}
+    update′ : {O : `Set} (R D : `Desc O) (xs : Data′ ⟪ R ⟫ ⟪ D ⟫)
+      (i : Path′ R D xs) → Update′ R D xs i → Data′ ⟪ R ⟫ ⟪ D ⟫
+    update′ R (`Arg A D) (a , xs) (thereArg₁ i) (X , f) =
+      update A a i X , f xs
+    update′ R (`Arg A D) (a , xs) (thereArg₂ i) X =
+      a , update′ R (D a) xs i X
+    update′ R (`Rec A D) (f , xs) (thereRec₁ g) (h , F) =
+      (λ a → update (`Data R) (f a) (g a) (h a)) , F xs
+    update′ R (`Rec A D) (f , xs) (thereRec₂ i) X =
+      f , update′ R (D (fun ⟪ R ⟫ ∘ f)) xs i X
+\end{code}
+
+Again, the only case that differs significantly from the open universe
+is \AgdaCon{thereArg₁}. Here, we recursively update something within
+the value \AgdaVar{a} (rather than immediately updating the entire
+\AgdaVar{a}), and apply the translation function to the second
+component of the pair.
 
 \acks
 
