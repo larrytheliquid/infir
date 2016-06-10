@@ -251,7 +251,7 @@ the \AgdaData{Path} until we arrive at the type appearing
   lookup (branch A B) (there₂ i) = lookup B i
 \end{code}
 
-\subsection{Writing type-changing functions}
+\subsection{\AgdaFun{lookup} with a computational return type}
 \label{sec:problem:typechanging}
 
 \AgdaHide{
@@ -315,10 +315,10 @@ The \AgdaFun{Lookup} function \textit{computes} the return type
 of \AgdaFun{lookup}, allowing \AgdaFun{lookup} to return
 either a \AgdaData{List} or an \AgdaVar{A} (the base cases of
 \AgdaFun{Lookup}). I will refer to functions like
-\AgdaFun{Lookup} as \textit{computational types}.
+\AgdaFun{Lookup} as \textit{computational return types}.
 
 
-\subsection{Writing total functions}
+\subsection{\AgdaFun{head} with a computational argument or return type}
 \label{sec:problem:total}
 
 Once we move from finitary non-dependent types like
@@ -332,7 +332,7 @@ function space.
 Figuring out how to write functions like \AgdaFun{lookup} (and more
 complicated functions) over InfIR types is the subject of this
 paper. The solution (given in the next section) involves a more
-complicated version of the computational type \AgdaFun{Lookup} above. 
+complicated version of the computational return type \AgdaFun{Lookup} above. 
 But, let us first consider a general
 methodology for turning a would-be partial function into a total
 function. For example, say we wanted to write a total version of the
@@ -392,23 +392,26 @@ First, let's use dependent types to conditonally change the domain. We
 ask for an extra argument of type \AgdaVar{A} if the
 \AgdaData{List} is empty. Otherwise, we ask for an extra
 argument of type unit (\AgdaData{⊤}), which is isomorphic to not
-asking for anything extra at all. Below, \AgdaFun{HeadDom} is
+asking for anything extra at all. Below, \AgdaFun{HeadArg} is
 type of the extra argument, which is dependent on the input
-\AgdaVar{xs} of type \AgdaData{List}.
+\AgdaVar{xs} of type \AgdaData{List}. We call functions like
+\AgdaFun{HeadArg} \emph{computational argument types}.
 
 \begin{code}
-  HeadDom : {A : Set} → List A → Set
-  HeadDom {A = A} nil = A
-  HeadDom (cons x xs) = ⊤
+  HeadArg : {A : Set} → List A → Set
+  HeadArg {A = A} nil = A
+  HeadArg (cons x xs) = ⊤
   
-  head₃ : {A : Set} (xs : List A) → HeadDom xs → A
+  head₃ : {A : Set} (xs : List A) → HeadArg xs → A
   head₃ nil y = y
   head₃ (cons x xs) tt = x
 \end{code}
 
 Second, let's use dependent types to conditonally change the
-codomain. \AgdaFun{HeadCod} computes our new return type,
-conditionally dependent on the input list. If the input list is empty,
+codomain. \AgdaFun{HeadRet} computes our new return type,
+conditionally dependent on the input list
+(it is a \emph{computational return type}).
+If the input list is empty,
 our \AgdaFun{head₄} function returns a value of type unit (\AgdaData{⊤}). If
 it is non-empty, it returns an \AgdaVar{A}. Note that returning a
 value of \AgdaData{⊤} is returning nothing of computational
@@ -416,28 +419,20 @@ significance. Hence, it is as if \AgdaFun{head₄} is not defined
 for empty lists.
 
 \begin{code}
-  HeadCod : {A : Set} → List A → Set
-  HeadCod nil = ⊤
-  HeadCod {A = A} (cons x xs) = A
+  HeadRet : {A : Set} → List A → Set
+  HeadRet nil = ⊤
+  HeadRet {A = A} (cons x xs) = A
   
-  head₄ : {A : Set} (xs : List A) → HeadCod xs
+  head₄ : {A : Set} (xs : List A) → HeadRet xs
   head₄ nil = tt
   head₄ (cons x xs) = x
 \end{code}
 
-So far we have seen how to take a partial function and make it total,
+We have seen how to take a partial function and make it total,
 both with and without the extra precision afforded to us by dependent
-types. Note that \AgdaFun{HeadCod} is a computational type like
-\AgdaFun{Lookup}. We will refer to functions like
-\AgdaFun{HeadDom} as \textit{computational arguments}.
-\footnote{It is
-possible to write dependently typed functions using either a
-computational argument or a computational type. Picking which
-technique to use is a matter of preference, and determines whether the
-arguments or the return type is statically known.}
-
-Finally, we would like to emphasize that the extra argument
-\AgdaFun{HeadDom} in \AgdaFun{head₃} is not merely a
+types (via computational argument and return types).
+We would like to emphasize that the extra argument
+\AgdaFun{HeadArg} in \AgdaFun{head₃} is not merely a
 precondition, but rather extra computational content that is required
 from the user applying the function to complete the cases that would
 normally make it a partial function.
@@ -460,12 +455,12 @@ precondition. If this precondition is satisfied, it computes to the unit
 type (\AgdaData{⊤}),
 but if it fails it computes to the empty type (\AgdaData{⊥}). So,
 in the failure case the precondition (\AgdaData{⊥}) is
-unsatisfiable, whereas the failure case of \AgdaFun{HeadDom} is
+unsatisfiable, whereas the failure case of \AgdaFun{HeadArg} is
 the extra argument \AgdaVar{A} needed to complete the otherwise
 partial function.
 
 The rest of this paper expands on the ideas of this section by
-defining functions like \AgdaFun{HeadDom} that non-trivially
+defining functions like \AgdaFun{HeadArg} that non-trivially
 compute extra arguments. These dependent extra arguments
 are the key to writing functions over InfIR datatypes.
 
