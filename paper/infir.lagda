@@ -1460,18 +1460,18 @@ mapping each code for a type to a concrete primitive \AgdaData{Set}.
 
 \begin{code}
     data `Set : Set where
-      `Bot `Bool : `Set
+      `Empty `Unit `Bool : `Set
       `Fun : (A : `Set) (B : ⟦ A ⟧ → `Set) → `Set
-      `Data : {O : `Set} (D : `Desc O) → `Set
-  
+      `Data : {O : `Set} (D : `Desc O) → `Set 
     ⟦_⟧ : `Set → Set
-    ⟦ `Bot ⟧ = ⊥
+    ⟦ `Empty ⟧ = ⊥
+    ⟦ `Unit ⟧ = ⊤
     ⟦ `Bool ⟧ = Bool
     ⟦ `Fun A B ⟧ = (a : ⟦ A ⟧) → ⟦ B a ⟧
     ⟦ `Data D ⟧ = Data ⟪ D ⟫
 \end{code}
 
-Having codes for bottom \AgdaCon{`Bot}, booleans \AgdaCon{`Bool}, and
+Having codes for the empty type \AgdaCon{`Empty}, the unit type \AgdaCon{`Unit}, booleans \AgdaCon{`Bool}, and
 function \AgdaCon{`Fun} is standard an similar to the \AgdaData{Type}
 universe in the introduction. However, we add a code \AgdaCon{`Data}
 for inductive-recurse datatypes. The key to an adequate encoding is to
@@ -1502,6 +1502,39 @@ we know how to case-analyze the type of codes \AgdaData{`Set}, so we
 can have a path index into it.
 Finally, note that the two code types and their meaning functions are
 all mutually defined.
+
+Finally, let's see a closed universe description encoding of
+\AgdaData{Arith} from \refsec{concretesmall} below .
+
+\AgdaHide{
+\begin{code}
+  postulate
+    `ℕ : `Set
+    `Fin : ⟦ `ℕ ⟧ → `Set
+    prod : (n : ⟦ `ℕ ⟧) (f : ⟦ `Fin n ⟧ → ⟦ `ℕ ⟧) → ⟦ `ℕ ⟧
+\end{code}}
+
+\begin{code}
+  ArithD : `Desc `ℕ
+  ArithD = `Arg `Bool λ
+    { true → `Arg `ℕ (λ n → `End n)
+    ; false
+      → `Rec `Unit λ n
+      → `Rec (`Fin (n tt)) λ f
+      → `End (prod (n tt) f)
+    }
+\end{code}
+
+The main difference from the open universe encoding of
+\AgdaData{Arith} from \refsec{genericopen} is that \AgdaCon{`Arg}
+takes the primitive \AgdaCon{`Bool} of type \AgdaData{`Set}, rather
+than \AgdaData{ArithT} of type \AgdaData{Set}. Because we are
+operating in a closed universe, all arguments to \AgdaCon{`Arg} and
+\AgdaCon{`Rec} must themselves be closed universe codes. For this
+reason, \AgdaData{ArithD} is also encoded in terms
+\AgdaFun{`ℕ} and \AgdaFun{`Fin}, which are \AgdaData{`Set} encodings
+of their \AgdaData{Set} countersparts whose definitions have been
+omitted.
 
 \subsection{\AgdaData{Path}}
 
