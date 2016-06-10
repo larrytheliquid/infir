@@ -311,6 +311,8 @@ The first (\texttt{drop}) looks up inductive sublists, and the second
 A depedently typed language like Agda allows us to a write a single
 function that may return a \AgdaData{List} or an \AgdaVar{A},
 depending on what the input \AgdaData{Path} points to.
+Note that below \{A = \AgdaVar{A}\} is Agda notation for binding an
+implicit argument explicitly.
 
 \begin{code}
   Lookup : {A : Set} (xs : List A) → Path xs → Set
@@ -330,7 +332,7 @@ either a \AgdaData{List} or an \AgdaVar{A} (the base cases of
 \AgdaFun{Lookup}). I will refer to functions like
 \AgdaFun{Lookup} as \textit{computational return types}.
 
-Note that in the colored version of this paper, you can spot a
+In the colored version of this paper, you can spot a
 computational type because it is a light blue \AgdaFun{Function},
 whereas a non-computational (or static) \AgdaData{Datatype} is dark
 blue. Both computational and static types are captizalized by convention.
@@ -413,9 +415,7 @@ argument of type unit (\AgdaData{⊤}), which is isomorphic to not
 asking for anything extra at all. Below, \AgdaFun{HeadArg} is
 type of the extra argument, which is dependent on the input
 \AgdaVar{xs} of type \AgdaData{List}. We call functions like
-\AgdaFun{HeadArg} \emph{computational argument types}. Note that
-below \{A = \AgdaVar{A}\} is Agda notation for binding an implicit argument
-explicitly.
+\AgdaFun{HeadArg} \emph{computational argument types}.
 
 \begin{code}
   HeadArg : {A : Set} → List A → Set
