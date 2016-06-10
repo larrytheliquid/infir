@@ -10,7 +10,7 @@
 \usepackage{ucs}
 \usepackage[utf8x]{inputenc}
 \usepackage{autofe}
-
+\usepackage{natbib}
 
 \usepackage[references]{agda}
 
@@ -92,9 +92,10 @@ postulate magic : ∀{ℓ} {A : Set ℓ} → A
 module Intro where
 \end{code}}
 
-Infinitary inductive-recursive (InfIR) types are commonly used in dependently
-typed programs to model type-theoretic universes. For example,
-consider the Agda~\cite{TODO} model below of the universe of natural numbers and
+Infinitary inductive-recursive (InfIR)
+types are commonly used in dependently
+typed programs to model type-theoretic universes~\citep{martinlof:universe}. For example,
+consider the Agda~\citep{norell:agda} model below of the universe of natural numbers and
 dependent functions
 \footnote{\raggedright{
   This paper is written as a literate Adga program. The literate Agda
@@ -298,7 +299,7 @@ for \AgdaData{Tree} \AgdaData{Path}s. However,
 \AgdaCon{cons}, whereas this pointed to an inductive
 subtree in the \AgdaData{Tree} scenario.
 
-In the (tranditionally) non-dependent Haskell~\cite{TODO} language there are two
+In the (tranditionally) non-dependent Haskell~\citep{jones:haskell} language there are two
 distinct \AgdaFun{lookup}-like functions for lists.
 
 \begin{verbatim}
@@ -339,7 +340,7 @@ blue. Both computational and static types are captizalized by convention.
 
 
 \subsection{\AgdaFun{head} with a computational argument or return type}
-\label{sec:problem:total}
+\label{sec:problem:head}
 
 Once we move from finitary non-dependent types like
 \AgdaData{Tree} and \AgdaData{List} to an InfIR type like
@@ -559,7 +560,7 @@ infinitary (just like the \AgdaData{Type} it indexes).
 We were able to write a total function to \AgdaFun{lookup} any
 sub\AgdaData{Tree}, but \AgdaFun{lookup}ing up a
 sub\AgdaData{Type} is not always possible. Using the methodology
-from \refsec{problem:total}, we can make \AgdaFun{lookup} for
+from \refsec{problem:head}, we can make \AgdaFun{lookup} for
 \AgdaData{Type}s total by choosing to change the codomain,
 depending on the input \AgdaData{Type} and \AgdaData{Path}.
 \AgdaFun{Lookup} (a computational return type) computes the codomain of
@@ -948,7 +949,7 @@ module GenericOpen where
 
 In this section we develop generic versions of the datatypes and
 functions from previous sections, for any datatype encoded as an
-inductive-recursive Dybjer-Setzer code~\cite{TODO}.
+inductive-recursive Dybjer-Setzer code~\citep{dybjer:ir1,dybjer:ir2}.
 
 \subsection{\AgdaData{Desc}}
 
@@ -1784,6 +1785,135 @@ the value \AgdaVar{a} (rather than immediately updating the entire
 \AgdaVar{a}), and apply the translation function to the second
 component of the pair.
 
+\section{Related Work}
+
+\AgdaHide{
+\begin{code}
+module RelatedWork where
+\end{code}}
+
+
+Our work concerns programming over InfIR types. We demonstrate how to
+do this by using either computational return types (like in
+\AgdaFun{lookup}) or computational argument types (like in
+\AgdaFun{update}).
+
+Recall from the background \refsec{problem:head} that we could write a
+total version of \AgdaFun{head} either by using a computational return
+\emph{or} argument type. Thus, we could have written \AgdaFun{lookup}
+using a computational argument instead. Below, imagine a computational
+argument type \AgdaFun{Lookup} that gathers a product of all the
+infinitary arguments. Then, we could write a version of
+\AgdaFun{lookup} with a computational argument type \AgdaFun{Lookup}
+and a static return type, with the following type signature.
+
+\AgdaHide{
+\begin{code}
+  postulate
+    Type : Set
+    Path : Type → Set
+    Lookup : (A : Type) → Path A → Set₁
+\end{code}}
+
+\begin{code}
+    lookup : (A : Type) (i : Path A) → Lookup A i → Type
+\end{code}
+
+There are many examples in the literature of functions like
+\AgdaFun{lookup}, which take an InfIR type and some extra information
+using a computational argument type, to extract information using the
+InfIR type. We will discuss several works that fall into this category
+below.
+
+Before we do, we point out that the way our \AgdaFun{lookup}
+works is somewhat different because it uses a computational return type,
+which is not common in the literature. However, the real novelty of our
+work is the \AgdaFun{update} function, an example of modifying an
+InfIR type. Modification of dependent types is tricky due to the
+dependencies involved, and the higher-order and mutual nature of InfIR
+types complicates the situation even more. The \AgdaFun{update}
+function solves these problems by using translation functions supplied
+by its computational \AgdaFun{Update} argument. An interesting
+property of the computation argument type \AgdaFun{Update} is that it
+needs to be mutually with the function that uses it,
+\AgdaFun{update}. We are not aware of any other examples in literature
+that perform updates to InfIR types. With that out of the way, let's
+go over work related to retrieving information using InfIR types and
+computational argument types.
+
+\paragraph{File Formats}
+
+\citet{oury:tpop} define an InfIR universe of file
+\AgdaData{Format}s, where later parts of the file format may be
+dependent on length information gathered from earlier parts of the
+file format. They define a generic function for this universe to
+\AgdaFun{parse} a list of bits to a value in this universe. They also
+define a generic \AgdaFun{print} function that translates a value of
+this universe into a list of bits. The meaning function of this
+universe computes the type of dependent pairs, but not dependent
+functions, so \AgdaFun{parse} and \AgdaFun{print} can get away with
+static arguments and return types rather than computational ones.
+
+\paragraph{Induction}
+
+\citet{chapman:levitation} define \AgdaData{Desc}riptions for
+indexed dependent types (without induction-recursion). Defining a
+generic \AgdaFun{ind}unction principles for types encoded by
+\AgdaData{Desc}riptions requires a computational argument type for all
+the inductive hypotheses (\AgdaData{All}, also called \AgdaData{Hyps}). 
+Although \AgdaData{Desc} is not inductive-recursive, it is still
+infinitary so generic functions over such types, like \AgdaFun{ind},
+share many of the same properties as our generic functions.
+
+Our previous work~\citep{diehl:gelim} expands upon the work of
+\citeauthor{chapman:levitation}, defining an alernative interface to
+induction as generic type-theoretic
+\AgdaFun{elim}inators for \AgdaData{Desc}riptions. Defining these
+eliminators involves several nested constructions, where both
+computational argument types (to collect inductive hypotheses) and return
+types (to produce custom eliminator types for each description) are
+used for information retrieval but not modification of infinitary
+descriptions.
+
+\paragraph{Termination Proofs}
+
+\citet{coquand:realizability} proves termination of Martin-L{\"o}f’s
+type theory using realizability predicates. The realizability model is
+defined as a family of InfIR type indexed by syntactic
+expressions. Proofs that correspond to \AgdaFun{reflect}ion into the model,
+\AgdaFun{reif}ication of the model, and \AgdaFun{eval}uation of expressions into the
+model all involve retrieving information contained inside the model.
+The model is represented as an InfIR type in the appendix of the
+paper. The InfIR type contains expressions, witnesses of the
+evaluation relation, and witnesses of expression normality and
+neutrality.
+
+\paragraph{Generic Programming \& Universal Algebra}
+
+\citet{benke:generic} uses Dybjer-Setzer InfIR \AgdaData{Desc}riptions to
+perform generic programming in the domain of universal
+algebra. However, a custom restriction of the \AgdaData{Desc} universe
+is used for each algebra (e.g. one-sorted term algebras, many-sorted
+term algebras, parameterized term algebras, etc.). Some of these
+algebra restrict the universe to be finitary, some remain infinitary,
+but all of them restrict the use of induction-recursion. As they
+state, their work could have been instead defined as restrictions over
+a universe of indexed inductive types without induction-recursion.
+
+\paragraph{Ornaments}
+
+\citet{mcbride:ornaments} builds a theory
+of \AgdaData{Orn}aments on top of \AgdaData{Desc}riptions for
+indexed dependent types (without induction-recursion). Ornaments allow
+a description of one type (such as a \AgdaData{Vec}tor) to be related
+to another type (such as a \AgdaData{List}) such that a \AgdaFun{forget}ful map
+from the more finely indexed type to the less finely indexed type can
+be derived as a generic function. \citet{dagand:ornaments} expand this
+work to also derive a certain class of functions with less finely
+indexed types from functions with more finely indexed types.
+
+%% retrieving information using an InfIR versus modifying an InfIR type
+
 %% \acks
 %% Acknowledgments, if needed.
 
@@ -1793,13 +1923,6 @@ component of the pair.
 
 % The bibliography should be embedded for final submission.
 
-\begin{thebibliography}{}
-\softraggedright
-
-\bibitem[Smith et~al.(2009)Smith, Jones]{smith02}
-P. Q. Smith, and X. Y. Jones. ...reference text...
-
-\end{thebibliography}
-
+\bibliography{infir}
 
 \end{document}
