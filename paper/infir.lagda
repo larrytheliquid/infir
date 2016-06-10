@@ -200,9 +200,7 @@ to successfully write InfIR functions.
 \subsection{Background}
 \label{sec:problem:background}
 
-Instead of diving directly into the complexity of writing functions
-like \AgdaFun{lookup} for the InfIR universe \AgdaData{Type},
-let us first consider writing \AgdaFun{lookup} for a binary
+Let us first consider writing \AgdaFun{lookup} for a simple binary
 \AgdaData{Tree}.
 
 \AgdaHide{
@@ -242,7 +240,10 @@ The \AgdaCon{here} constructor indicates that we have
 arrived at the subtree we would like to visit. The
 \AgdaCon{there₁} constructor tells us to take a left
 turn at a \AgdaCon{branch}, while
-\AgdaCon{there₂} tells us to take a right turn.
+\AgdaCon{there₂} tells us to take a right turn. In general, we
+adopt the convention that a numerical subscript after a
+\AgdaCon{there} constructor of a \AgdaData{Path}
+indicates which argument to point into.
 
 Once we have defined \AgdaData{Path}s into a \AgdaData{Tree},
 it is straightforward to defined \AgdaFun{lookup} by following
@@ -265,8 +266,9 @@ module List where
 \end{code}}
 
 Now let's consider writing a total \AgdaFun{lookup} function for
-polymorphic \AgdaData{List}s instead of the binary
-\AgdaData{Tree}s above. Below is the \AgdaData{List} and its
+polymorphic \AgdaData{List}s (instead of the binary
+\AgdaData{Tree}s above), where the return type of \AgdaFun{lookup}
+is dynamically computed. Below is the \AgdaData{List} and its
 \AgdaData{Path}.
 
 \begin{code}
@@ -400,7 +402,9 @@ argument of type unit (\AgdaData{⊤}), which is isomorphic to not
 asking for anything extra at all. Below, \AgdaFun{HeadArg} is
 type of the extra argument, which is dependent on the input
 \AgdaVar{xs} of type \AgdaData{List}. We call functions like
-\AgdaFun{HeadArg} \emph{computational argument types}.
+\AgdaFun{HeadArg} \emph{computational argument types}. Note that
+below \{A = \AgdaVar{A}\} is Agda notation for binding an implicit argument
+explicitly.
 
 \begin{code}
   HeadArg : {A : Set} → List A → Set
@@ -438,8 +442,8 @@ both with and without the extra precision afforded to us by dependent
 types (via computational argument and return types).
 We would like to emphasize that the extra argument
 \AgdaFun{HeadArg} in \AgdaFun{head₃} is not merely a
-precondition, but rather extra computational content that is required
-from the user applying the function to complete the cases that would
+precondition, but rather extra computational content that must be
+supplied by the program to complete the cases that would
 normally make it a partial function.
 To see the difference, consider a total version of a function that looks up
 \AgdaFun{elem}ents of a \AgdaData{List},
@@ -609,7 +613,7 @@ In order to write a total version of
 asking for an \AgdaVar{a} whenever we update within the codomain of
 a \AgdaCon{`Fun}.
 
-We call the type of the substitute
+We call the type of the value to substitute
 \AgdaFun{Update} (a computational argument type), which asks for a \AgdaData{Maybe Type} or a
 \AgdaData{Maybe Set} in the base cases (\AgdaCon{here}
 and \AgdaCon{thereBase} respectively), and a continuation in the
@@ -747,9 +751,9 @@ The major difference between the base case
 former contains a \AgdaData{ℕ} while the latter contains a
 \AgdaData{Set}. The \AgdaFun{lookup} for \AgdaData{Type}
 had no choice but to return the value of type \AgdaData{Set} in
-the \AgdaCon{`Base} case, because the inability to
-case analyze \AgdaData{Set} prevents further lookups into that
-value. In contrast, we can continue to lookup into a substructure of
+the \AgdaCon{`Base} case.
+We cannot look further into the value of type \AgdaData{Set} because Agda does
+not support type case. In contrast, we can continue to lookup into a substructure of
 \AgdaData{ℕ} in the base case \AgdaCon{`Num} of
 \AgdaFun{lookup} for \AgdaData{Arith}.
 For this reason, we need the \AgdaData{Pathℕ}, \AgdaFun{lookupℕ},
@@ -795,13 +799,12 @@ subnumber with \AgdaVar{n}.
 
 The \AgdaData{Path}, \AgdaFun{lookup}, and
 \AgdaFun{update} definitions for \AgdaData{Arith} are
-nearly structurally identical to the corresponding definitions for
+almost textually identical to the corresponding definitions for
 \AgdaData{Type} from \refsec{concretelarge}. Thus, we will only
 cover the \AgdaCon{`Num} cases of these
 definitions. The old \AgdaData{Type} definitions will work for the
-other cases by replacing \AgdaData{Type} with
-\AgdaData{Arith},
-\AgdaCon{`Fun} with \AgdaCon{`Prod},
+other cases by textually substituting \AgdaData{Arith} for \AgdaData{Type},
+\AgdaCon{`Prod} for \AgdaCon{`Fun},
 and by defining the following type synonym.
 
 \begin{code}
