@@ -144,9 +144,8 @@ inductive-recursive types is common, writing inductively defined
 
 Why isn't there much existing work on programming functions with
 infinitary inductive-recursive functions? They contain inherently
-complex properties that make programmers rather avoid thinking about
-dealing with them, so there simply aren't many examples for
-programmers to base their programs off. Their infinitary nature makes them
+complex properties and there aren't enough examples to reference.
+Their infinitary nature makes them
 \emph{higher-order datatypes}, rather than simpler first-order
 datatypes. Their inductive-recursive nature means you need to deal
 with \emph{dependencies} between arguments and \emph{mutual functions} too.
@@ -165,19 +164,17 @@ datatypes to generic functions over any user-defined
 datatype. The first operation is \AgdaFun{lookup}, allowing data
 within an InfIR type to be extracted. The second operation is
 \AgdaFun{update}, allowing a value within an InfIR type to be replaced
-by another value.
-More specifically, our contributions are the following:
+by another value. We also contribute a \AgdaData{Path} type used by
+\AgdaFun{lookup} and \AgdaFun{update} to point at a particular
+position within a datatype.
+More specifically, we contribute \AgdaData{Path}, \AgdaFun{lookup},
+and \AgdaFun{update} for:
 
-\todo[inline]{Reference sections and concrete large vs small}
 \begin{itemize}
-\item Index types (\AgdaData{Path}s) for concrete, open universe,
-  and closed universe InfIR types.
-\item A \AgdaFun{lookup} function with a heterogeneous return
-  type for concrete, open universe, and closed universe InfIR types.
-\item An \AgdaFun{update} function with a heterogeneous type for
-  the value to update with, for concrete, open universe,
-  and closed universe InfIR types.
-\item A model of a closed universe of small InfIR types.
+\item A concrete large InfIR type, \AgdaData{Type}, in \refsec{concretelarge}.
+\item A concrete small InfIR type, \AgdaData{Arith}, in \refsec{concretesmall}.
+\item A generic universe for an open theory of types, in \refsec{genericopen}.
+\item A generic universe for a closed theory of types, in \refsec{genericclosed}.
 \end{itemize}
 
 Finally, we hope that seeing examples of writing both concrete and generic
@@ -592,9 +589,6 @@ more convenient, the type of the substitute will actually be
 causes an identity update.
 We might expect to write a function like:
 
-\todo[inline]{explain using Maybe nothing to update one path of a type
-family}
-
 \begin{code}
   updateNaive :
     (A : Type) (i : Path A) (X : Maybe Type) → Type
@@ -626,8 +620,6 @@ still expects an \AgdaVar{a} of the original type
 \AgdaCon{thereFun₁} case must
 ask for a forgetful function \AgdaVar{f} that maps newly
 updated \AgdaVar{a}'s to their original type.
-
-\todo[inline]{Give an example of the domain type changing and being translated}
 
 \begin{code}
   Update : (A : Type) → Path A → Set₁
@@ -1463,6 +1455,7 @@ mapping each code for a type to a concrete primitive \AgdaData{Set}.
       `Empty `Unit `Bool : `Set
       `Fun : (A : `Set) (B : ⟦ A ⟧ → `Set) → `Set
       `Data : {O : `Set} (D : `Desc O) → `Set 
+
     ⟦_⟧ : `Set → Set
     ⟦ `Empty ⟧ = ⊥
     ⟦ `Unit ⟧ = ⊤
@@ -1775,9 +1768,8 @@ the value \AgdaVar{a} (rather than immediately updating the entire
 \AgdaVar{a}), and apply the translation function to the second
 component of the pair.
 
-\acks
-
-Acknowledgments, if needed.
+%% \acks
+%% Acknowledgments, if needed.
 
 % We recommend abbrvnat bibliography style.
 
