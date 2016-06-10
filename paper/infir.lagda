@@ -195,7 +195,13 @@ we first consider writing analogous functions over simpler
 datatypes. Thereafter we point out what becomes difficult in the
 InfIR scenario, and describe a general methodology of writing
 total functions in a dependently typed language, which can be applied
-to successfully write InfIR functions. 
+to successfully write InfIR functions.
+
+For readers of the colored version of this paper, we use the following
+Agda source code highlighting color conventions:
+\AgdaKeyword{Keywords} are orange, \AgdaData{datatypes} are
+dark blue, \AgdaCon{constructors} are green, \AgdaFun{functions} are
+light blue, and \AgdaVar{variables} are purple.
 
 \subsection{Background}
 \label{sec:problem:background}
@@ -323,6 +329,11 @@ of \AgdaFun{lookup}, allowing \AgdaFun{lookup} to return
 either a \AgdaData{List} or an \AgdaVar{A} (the base cases of
 \AgdaFun{Lookup}). I will refer to functions like
 \AgdaFun{Lookup} as \textit{computational return types}.
+
+Note that in the colored version of this paper, you can spot a
+computational type because it is a light blue \AgdaFun{Function},
+whereas a non-computational (or static) \AgdaData{Datatype} is dark
+blue. Both computational and static types are captizalized by convention.
 
 
 \subsection{\AgdaFun{head} with a computational argument or return type}
