@@ -48,8 +48,8 @@
 \titlebanner{DRAFT}        % These are ignored unless
 %% \preprintfooter{short description of paper}   % 'preprint' option specified.
 
-\title{Programming with Infinitary Inductive-Recursive Types}
-%% \subtitle{Preconditions with computational content}
+\title{Generic Lookup and Update \\for Infinitary Inductive-Recursive Types}
+%% \subtitle{Generic Lookup and Update}
 
 \authorinfo{Larry Diehl}
            {Portland State University}
@@ -140,7 +140,7 @@ number arguments.
 
 While defining models and example values using infinitary
 inductive-recursive types is common, writing inductively defined
-\textit{functions} over them is not.
+\textit{functions} over them is less so.
 
 Why isn't there much existing work on programming functions with
 infinitary inductive-recursive functions? They contain inherently
@@ -153,17 +153,20 @@ with \emph{dependencies} between arguments and \emph{mutual functions} too.
 
 Functional programming languages typically package useful datatypes
 (like \AgdaData{List}s and \AgdaData{Vec}tors) with useful operations
-(like \AgdaFun{lookup}, \AgdaFun{drop} and
-\AgdaFun{update}) in their standard
+(like \AgdaFun{lookup} and \AgdaFun{update}) in their standard
 libraries. Additionally, \emph{generic} implementations of such operations
 may exist as libraries for any other user-defined datatypes.
 
-Our \emph{primary contribution} is to show how to write common
+Our \emph{primary contribution} is to show how to write two particular
 operations over infinitary
 inductive-recursive types (such as \AgdaData{Type} universes), and
 then generalize those operations from functions over concrete
 datatypes to generic functions over any user-defined
-datatype. More specifically, our contributions are the following:
+datatype. The first operation is \AgdaFun{lookup}, allowing data
+within an InfIR type to be extracted. The second operation is
+\AgdaFun{update}, allowing a value within an InfIR type to be replaced
+by another value.
+More specifically, our contributions are the following:
 
 \todo[inline]{Reference sections and concrete large vs small}
 \begin{itemize}
@@ -1238,7 +1241,7 @@ one of the arguments of the current constructor via
 \subsection{\AgdaFun{Lookup′} \& \AgdaFun{lookup′}}
 
 The function \AgdaFun{lookup′} is used to lookup a value within
-an argument to a constructor, and has \AgdaData{Lookup′} as its
+an argument of a constructor, and has \AgdaData{Lookup′} as its
 computational return type.
 
 \begin{code}
@@ -1556,36 +1559,73 @@ take an argument, thus it always points to
 adequately model a concrete path for a type like \AgdaData{Arith},
 where \AgdaCon{`Num} should be able to index into its \AgdaData{ℕ}!
 
-\subsection{\AgdaFun{lookup}}
+\subsection{\AgdaFun{Lookup} \& \AgdaFun{lookup}}
+
+The \AgdaFun{lookup} and \AgdaFun{Lookup} functions are conceptually
+similar to their open universe generic counterparts from
+\refsec{genericopen}. However, like \AgdaData{Path}, they are
+parameterized by a value of \AgdaData{`Set} rather than an
+inductive-recursive constructor of a \AgdaData{Desc}.
+
+\AgdaHide{
+\begin{code}
+  mutual
+\end{code}}
 
 \begin{code}
-  Lookup : (A : `Set) (a : ⟦ A ⟧) → Path A a → Set
-  Lookup′ : {O : `Set} (R D : `Desc O) (xs : Data′ ⟪ R ⟫ ⟪ D ⟫)
-    → Path′ R D xs → Set
-  
-  Lookup A a here = ⟦ A ⟧
-  Lookup (`Fun A B) f (thereFun g) = (a : ⟦ A ⟧) → Lookup (B a) (f a) (g a)
-  Lookup (`Data D) (con xs) (thereData i) = Lookup′ D D xs i
-  
-  Lookup′ R (`Arg A D) (a , xs) (thereArg₁ i) = Lookup A a i
-  Lookup′ R (`Arg A D) (a , xs) (thereArg₂ i) = Lookup′ R (D a) xs i
-  Lookup′ R (`Rec A D) (f , xs) (thereRec₁ g) = (a : ⟦ A ⟧) → Lookup (`Data R) (f a) (g a)
-  Lookup′ R (`Rec A D) (f , xs) (thereRec₂ i) = Lookup′ R (D (fun ⟪ R ⟫ ∘ f)) xs i
+    Lookup : (A : `Set) (a : ⟦ A ⟧) → Path A a → Set
+    Lookup A a here = ⟦ A ⟧
+    Lookup (`Fun A B) f (thereFun g) =
+      (a : ⟦ A ⟧) → Lookup (B a) (f a) (g a)
+    Lookup (`Data D) (con xs) (thereData i) =
+      Lookup′ D D xs i
+\end{code}
+
+As always, the \AgdaCon{here} case points to the current value. The
+\AgdaCon{thereFun} case points further within a continuation. The
+\AgdaCon{thereData} case points into a constructor argument via
+\AgdaFun{Lookup′}.
+
+\begin{code}
+    lookup : (A : `Set) (a : ⟦ A ⟧) (i : Path A a) → Lookup A a i
+    lookup A a here = a
+    lookup (`Fun A B) f (thereFun g) =
+      λ a → lookup (B a) (f a) (g a)
+    lookup (`Data D) (con xs) (thereData i) =
+      lookup′ D D xs i
+\end{code}
+
+The \AgdaFun{lookup} function returns the current value, a
+continuation, or a \AgdaFun{lookup′} of a constructor argument
+respectively for the \AgdaCon{here}, \AgdaCon{thereFun}, and
+\AgdaCon{thereData} cases.
+
+\subsection{\AgdaFun{Lookup′} \& \AgdaFun{lookup′}}
+
+\begin{code}
+    Lookup′ : {O : `Set} (R D : `Desc O) (xs : Data′ ⟪ R ⟫ ⟪ D ⟫)
+      → Path′ R D xs → Set
+    Lookup′ R (`Arg A D) (a , xs) (thereArg₁ i) =
+      Lookup A a i
+    Lookup′ R (`Arg A D) (a , xs) (thereArg₂ i) =
+      Lookup′ R (D a) xs i
+    Lookup′ R (`Rec A D) (f , xs) (thereRec₁ g) =
+      (a : ⟦ A ⟧) → Lookup (`Data R) (f a) (g a)
+    Lookup′ R (`Rec A D) (f , xs) (thereRec₂ i) =
+      Lookup′ R (D (fun ⟪ R ⟫ ∘ f)) xs i
 \end{code}
 
 \begin{code}
-  lookup : (A : `Set) (a : ⟦ A ⟧) (i : Path A a) → Lookup A a i
-  lookup′ : {O : `Set} (R D : `Desc O) (xs : Data′ ⟪ R ⟫ ⟪ D ⟫)
-    (i : Path′ R D xs) → Lookup′ R D xs i
-  
-  lookup A a here = a
-  lookup (`Fun A B) f (thereFun g) = λ a → lookup (B a) (f a) (g a)
-  lookup (`Data D) (con xs) (thereData i) = lookup′ D D xs i
-  
-  lookup′ R (`Arg A D) (a , xs) (thereArg₁ i) = lookup A a i
-  lookup′ R (`Arg A D) (a , xs) (thereArg₂ i) = lookup′ R (D a) xs i
-  lookup′ R (`Rec A D) (f , xs) (thereRec₁ g) = λ a → lookup (`Data R) (f a) (g a)
-  lookup′ R (`Rec A D) (f , xs) (thereRec₂ i) = lookup′ R (D (fun ⟪ R ⟫ ∘ f)) xs i
+    lookup′ : {O : `Set} (R D : `Desc O) (xs : Data′ ⟪ R ⟫ ⟪ D ⟫)
+      (i : Path′ R D xs) → Lookup′ R D xs i
+    lookup′ R (`Arg A D) (a , xs) (thereArg₁ i) =
+      lookup A a i
+    lookup′ R (`Arg A D) (a , xs) (thereArg₂ i) =
+      lookup′ R (D a) xs i
+    lookup′ R (`Rec A D) (f , xs) (thereRec₁ g) =
+      λ a → lookup (`Data R) (f a) (g a)
+    lookup′ R (`Rec A D) (f , xs) (thereRec₂ i) =
+      lookup′ R (D (fun ⟪ R ⟫ ∘ f)) xs i
 \end{code}
 
 \subsection{\AgdaFun{update}}
