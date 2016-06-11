@@ -62,7 +62,21 @@
 \maketitle
 
 \begin{abstract}
-\lipsum[3]
+The class of Infinitary inductive-recursive (InfIR) types is commonly
+used to model type theory within itself. While it is common and
+convenient to provide examples of values within an InfIR model,
+writing functions that manipulate a InfIR types is an underexplored
+area due to their inherent complexity.
+
+Our goal in this work is to push the boundaries of programming with
+InfIR types by introducing two functions operating over them.
+The first is a lookup function to retrieve values within an
+InfIR type, and the second is an update function to change values within an InfIR
+type. We start by considering how to write such functions for concrete
+examples of InfIR types, and then show how to write generic versions
+of the functions for any datatype definable in the universe of InfIR
+types. We actually write two versions of the generic functions, one
+where the universe is open and another where the universe is closed.
 \end{abstract}
 
 \category{D.3}{Software}{Programming Languages}.
