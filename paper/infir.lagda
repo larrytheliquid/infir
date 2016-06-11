@@ -1926,6 +1926,69 @@ be derived as a generic function. \citet{dagand:ornaments} expand this
 work to also derive a certain class of functions with less finely
 indexed types from functions with more finely indexed types.
 
+\section{Extensions \& Future Work}
+
+In this section we discuss some extensions that have already been
+completed, as well as some extensions that we are in the middle of
+working on.
+
+\paragraph{Large Open Universe Hierarchy}
+
+Expert readers may have noticed that the open inductive-recursive
+\AgdaData{Desc} universe of \refsec{genericopen} can actually only
+encode small induction-recursion, where the codomain of the mutual
+function is not \AgdaData{Set}. Hence, the universe of that
+section cannot encode the large \AgdaData{Type} from
+\refsec{concretelarge}. We deliberately kept the open \AgdaData{Desc}
+universe small for pedagogical reasons, allowing the definitions and
+examples to be simple. However, we have a version of the open universe
+\AgdaData{Desc} in the accompanying source code that is universe
+polymorphic and allows the mutual function to be large.
+
+\paragraph{Small Closed Universe Hierarchy}
+
+Our novel closed universe \AgdaData{Desc} improves our previous work
+on modeling a closed universe of inductive types
+\citep{diehl:levelingup}. We mentioned in our previous work that
+certain inductive types in our closed universe needed to be raised to
+a higher universe level then should be necessary. This is remedied
+with the closed universe of \refsec{genericclosed} by introducing the
+type of \AgdaData{`Desc} codes (and their meaning function \AgdaFun{⟪\_⟫}),
+mutually defined with \AgdaData{`Set} codes
+(and their meaning function \AgdaFun{⟦\_⟧}).
+
+We are currently working on extending the closed universe \AgdaData{Desc}
+(as well as \AgdaData{Path}, \AgdaFun{lookup}, and \AgdaFun{update})
+to a universe hierarchy, and do not foresee major
+complications. However, it is unclear to us at this time how to encode
+a closed universe of \emph{large} inductive-recursive types, or
+whether it is possible to encode this within type theory at all. 
+
+\paragraph{Type Families}
+
+\citet{dybjer:indexedir} have extended their universe of
+inductive-recursive types to an indexed family of inductive-recursive
+types. We have initial results extending some of the constructions in
+this paper to that setting, and do not foresee major complications
+extending the rest.
+
+\paragraph{Corretness}
+
+In this paper we define generic \AgdaFun{lookup} and
+\AgdaFun{update} functions for InfIR types.
+Our accompanying source code also contains a proof of a correctness theorem that
+we could not include herein because it would take several additional pages
+to explain. This theorem is a
+generalization of the following theorem for more simple types.
+
+$$
+\forall \AgdaVar{x},\AgdaVar{i}.~ \AgdaFun{update}~\AgdaVar{x}~\AgdaVar{i}~(\AgdaFun{lookup}~\AgdaVar{x}~\AgdaVar{i}) = \AgdaVar{x}
+$$
+
+
+
+
+
 %% retrieving information using an InfIR versus modifying an InfIR type
 
 %% \acks
