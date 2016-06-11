@@ -1092,10 +1092,14 @@ recursive arguments.
 
 \subsection{\AgdaData{Data}}
 
-In the previous subsection we used \AgdaData{Desc} to encode a datatype and its
-mutual function. Applying \AgdaData{Data} to a description results
-in the datatype it encodes, and applying \AgdaFun{fun} to a
-description results in the mutual function it encodes.
+In the previous subsection we used \AgdaData{Desc} to encode a
+datatype (\AgdaData{Arith}) and its
+mutual function (\AgdaFun{eval}).
+In this section we define how to extract these two constructions from
+the description. Applying the \AgdaData{Data} type former to a
+description results in the datatype it encodes, and applying the
+\AgdaFun{fun} function to a description results in the mutual function
+it encodes.
 
 \AgdaHide{
 \begin{code}
@@ -1104,8 +1108,9 @@ description results in the mutual function it encodes.
 
 \AgdaData{Data} is defined in terms of a single constructor
 \AgdaCon{con}, which holds a dependent product of all
-arguments of a particular constructor. The computational argument type
-\AgdaFun{Data′} encodes the type of this product, dependent on
+arguments of a particular constructor.
+The computational argument type
+\AgdaFun{Data′} computes the type of this product, dependent on
 the \AgdaData{Desc}ription that \AgdaData{Data} is
 parameterized by.
 
@@ -1157,6 +1162,39 @@ value \AgdaVar{o} that the mutual function should return for the
 encoded constructor case. The \AgdaCon{Arg} and
 \AgdaCon{Rec} cases recurse, looking for an
 \AgdaCon{End}.
+
+\subsection{Schema for Generic Functions}
+
+In this section the schema used for writing a generic function is to
+write a pair of generic functions.
+
+\AgdaHide{
+\begin{code}
+  postulate
+    ETC : Set
+\end{code}}
+
+\begin{code}
+    generic : {O : Set} (D : Desc O) → Data D → ETC
+    generic′ : {O : Set} (R D : Desc O) → Data′ R D → ETC
+\end{code}
+
+The first function always has a type prefix
+like \AgdaFun{generic}, being defined by induction on the
+constructor of a \AgdaData{Data}type (the rest of the arguments and
+return type go in the \AgdaFun{ETC} position).
+
+The second function always has a type prefix
+like \AgdaFun{generic′}, being defined by induction on the
+\emph{arguments} of a constructor (\AgdaData{Data′}).
+
+You have
+already seen one such pair in the definition of \AgdaData{Data},
+namely \AgdaFun{fun} and \AgdaFun{fun′}.
+Furthermore, generic programs often follow a similar recursion pattern as the one
+described above for \AgdaFun{fun} and \AgdaFun{fun′}.
+For example, it is common for \AgdaFun{generic′} to call
+\AgdaFun{generic} with \AgdaVar{R} in the \AgdaCon{Rec} case.
 
 \subsection{\AgdaData{Path}}
 
@@ -1584,6 +1622,32 @@ reason, \AgdaData{ArithD} is also encoded in terms
 \AgdaFun{`ℕ} and \AgdaFun{`Fin}, which are \AgdaData{`Set} encodings
 of their \AgdaData{Set} counterparts whose definitions have been
 omitted.
+
+\subsection{Schema for Generic Functions}
+
+In this section the schema used for writing a generic function is to
+write a pair of generic functions like the following.
+
+\AgdaHide{
+\begin{code}
+  postulate
+    ETC : Set
+\end{code}}
+
+\begin{code}
+    generic : (A : `Set) (a : ⟦ A ⟧) → ETC
+    generic′ : {O : `Set} (R D : `Desc O)
+      (xs : Data′ ⟪ R ⟫ ⟪ D ⟫) → ETC
+\end{code}
+
+The first function always has a type prefix
+like \AgdaFun{generic}, being defined by induction on values of our
+closed universe \AgdaData{`Set}.
+
+The second function always has a type prefix
+like \AgdaFun{generic′}, being defined by induction on the
+\emph{arguments} of a constructor \AgdaFun{`Desc}ribed in our closed
+universe.
 
 \subsection{\AgdaData{Path}}
 
