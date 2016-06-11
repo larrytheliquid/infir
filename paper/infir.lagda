@@ -315,7 +315,7 @@ for \AgdaData{Tree} \AgdaData{Path}s. However,
 \AgdaCon{cons}, whereas this pointed to an inductive
 subtree in the \AgdaData{Tree} scenario.
 
-In the (tranditionally) non-dependent Haskell~\citep{jones:haskell} language there are two
+In the (traditionally) non-dependent Haskell~\citep{jones:haskell} language there are two
 distinct \AgdaFun{lookup}-like functions for lists.
 
 \begin{verbatim}
@@ -325,7 +325,7 @@ distinct \AgdaFun{lookup}-like functions for lists.
 
 The first (\texttt{drop}) looks up inductive sublists, and the second
 \texttt{(!!)} looks up non-inductive \texttt{a} values.
-A depedently typed language like Agda allows us to a write a single
+A dependently typed language like Agda allows us to a write a single
 function that may return a \AgdaData{List} or an \AgdaVar{A},
 depending on what the input \AgdaData{Path} points to.
 Note that below \{A = \AgdaVar{A}\} is Agda notation for binding an
@@ -352,7 +352,7 @@ either a \AgdaData{List} or an \AgdaVar{A} (the base cases of
 In the colored version of this paper, you can spot a
 computational type because it is a light blue \AgdaFun{Function},
 whereas a non-computational (or static) \AgdaData{Datatype} is dark
-blue. Both computational and static types are captizalized by convention.
+blue. Both computational and static types are capitalized by convention.
 
 
 \subsection{\AgdaFun{head} with a computational argument or return type}
@@ -425,7 +425,7 @@ conditionally ask for an extra argument, or return
 \AgdaCon{nothing} of computational value, only if the
 input list is empty!
 
-First, let's use dependent types to conditonally change the domain. We
+First, let's use dependent types to conditionally change the domain. We
 ask for an extra argument of type \AgdaVar{A} if the
 \AgdaData{List} is empty. Otherwise, we ask for an extra
 argument of type unit (\AgdaData{⊤}), which is isomorphic to not
@@ -574,7 +574,7 @@ infinitary (just like the \AgdaData{Type} it indexes).
 \subsection{\AgdaFun{Lookup} \& \AgdaFun{lookup}}
 
 We were able to write a total function to \AgdaFun{lookup} any
-sub\AgdaData{Tree}, but \AgdaFun{lookup}ing up a
+sub\AgdaData{Tree}, but looking up a
 sub\AgdaData{Type} is not always possible. Using the methodology
 from \refsec{problem:head}, we can make \AgdaFun{lookup} for
 \AgdaData{Type}s total by choosing to change the codomain,
@@ -690,11 +690,11 @@ original type.
 The base cases (\AgdaCon{here} and
 \AgdaCon{thereBase}) of \AgdaFun{update}
 perform updates using the
-subsitute \AgdaVar{X} (where \AgdaCon{nothing}
+substitute \AgdaVar{X} (where \AgdaCon{nothing}
 results in an identity update). The \AgdaCon{thereFun₂}
 case of \AgdaFun{update} leaves the domain of
 \AgdaCon{`Fun} unchanged, and recursively updates the
-codmain using the substitute continuation \AgdaVar{h}.
+codomain using the substitute continuation \AgdaVar{h}.
 
 Note that
 we could have defined \AgdaFun{Update} as an inductive type,
@@ -811,11 +811,11 @@ return type (not a computational return type), because a
   lookupℕ (suc n) (there i) = lookupℕ n i
 \end{code}
 
-The \AgdaFun{update} function replaces a subnumber within a
+The \AgdaFun{update} function replaces a sub-number within a
 \AgdaData{ℕ} with a \AgdaData{Maybe ℕ}. The
 \AgdaCon{nothing} case performs an identity update,
 while \AgdaCon{just} \AgdaVar{n} replaces the
-subnumber with \AgdaVar{n}.
+sub-number with \AgdaVar{n}.
 
 \begin{code}
   updateℕ : (n : ℕ) → Pathℕ n → Maybe ℕ → ℕ
@@ -1440,7 +1440,7 @@ The \AgdaCon{thereArg₂} and \AgdaCon{thereRec₂} keep the left
 argument unchanged, and update a subsequent argument pointed to
 by the index. The \AgdaCon{thereArg₁} case performs the identity
 update in the \AgdaCon{nothing} case. In the \AgdaCon{just} case, the
-left component is updated while the right comonent is translated.
+left component is updated while the right component is translated.
 The \AgdaCon{thereRec₁} case is similar, updating the left component
 and translating the second. 
 
@@ -1572,7 +1572,7 @@ operating in a closed universe, all arguments to \AgdaCon{`Arg} and
 \AgdaCon{`Rec} must themselves be closed universe codes. For this
 reason, \AgdaData{ArithD} is also encoded in terms
 \AgdaFun{`ℕ} and \AgdaFun{`Fin}, which are \AgdaData{`Set} encodings
-of their \AgdaData{Set} countersparts whose definitions have been
+of their \AgdaData{Set} counterparts whose definitions have been
 omitted.
 
 \subsection{\AgdaData{Path}}
