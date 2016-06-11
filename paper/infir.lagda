@@ -1013,9 +1013,20 @@ on a function \AgdaVar{o} from \AgdaVar{A} to \AgdaVar{O},
 representing the result of applying the mutually defined function to
 the recursive argument being specified.
 
+Note that we can encode a ``first-order'' recursive argument by applying
+\AgdaCon{Rec} to the unit type \AgdaData{⊤}. This will actually encode
+a higher-order recursive argument, but the domain will be trivially
+inhabited. Similarly, we can encode a ``non-inductive-recursive'' datatype
+(one without a mutual function, like \AgdaData{ℕ}) by making the
+output argument \AgdaVar{O} of \AgdaData{Desc} be the unit
+type. In fact, we will still encode a mutual function, but it will
+trivially always return unit.
+
 Finally, to encode multiple constructors as a \AgdaData{Desc}, you
 simply define an \AgdaCon{Arg} whose domain is a
-finite enumeration of types (representing each constructor), and whose
+finite enumeration of types
+(representing each constructor, like \AgdaData{ArithT} below),
+and whose
 codomain is the \AgdaData{Desc} corresponding to the arguments and
 recursive cases for each constructor.
 
@@ -1075,9 +1086,11 @@ specify that there are no further arguments, and the
 result in the \AgdaFun{prod}uct represented by the first two
 recursive arguments.
 
+
+
 \subsection{\AgdaData{Data}}
 
-Previously we used \AgdaData{Desc} to encode a datatype and its
+In the previous subsection we used \AgdaData{Desc} to encode a datatype and its
 mutual function. Applying \AgdaData{Data} to a description results
 in the datatype it encodes, and applying \AgdaFun{fun} to a
 description results in the mutual function it encodes.
