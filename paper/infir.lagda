@@ -1986,10 +1986,26 @@ $$
 $$
 
 
+\section{Conclusion}
 
+Programming with infinitary inductive-recursive (InfIR) types is
+complex due to dependencies, higher-order values, and mutual
+definitions. We have demonstrated how to program a \AgdaFun{lookup}
+function for retrieving data from InfIR types, and an \AgdaFun{update}
+function for modifying data within InfIR types. Besides defining these
+on concrete InfIR types, we have also defined them generically for
+both open and closed universes.
 
+Along the way, we introduced a novel
+closed universe of inductive-recursive types. We also emphasized a
+methodology of writing total functions by either making one of their
+argument types or return type \emph{computational}. Computational
+types allow a would-be partial function to request extra information
+necessary to make it total.
 
-%% retrieving information using an InfIR versus modifying an InfIR type
+Finally, we hope that examples of programming with InfIR types will inspire
+other dependently typed programmers to do the same.
+
 
 %% \acks
 %% Acknowledgments, if needed.
