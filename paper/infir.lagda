@@ -1960,8 +1960,8 @@ static arguments and return types rather than computational ones.
 \paragraph{Induction}
 
 \citet{chapman:levitation} define \AgdaData{Desc}riptions for
-indexed dependent types (without induction-recursion). Defining a
-generic \AgdaFun{ind}unction principles for types encoded by
+indexed dependent types (without induction-recursion). Defining
+generic \AgdaFun{ind}uction principles for types encoded by
 \AgdaData{Desc}riptions requires a computational argument type for all
 the inductive hypotheses (\AgdaData{All}, also called \AgdaData{Hyps}). 
 Although \AgdaData{Desc} is not inductive-recursive, it is still
@@ -1969,7 +1969,7 @@ infinitary so generic functions over such types, like \AgdaFun{ind},
 share many of the same properties as our generic functions.
 
 Our previous work~\citep{diehl:gelim} expands upon the work of
-\citeauthor{chapman:levitation}, defining an alernative interface to
+\citeauthor{chapman:levitation}, defining an alternative interface to
 induction as generic type-theoretic
 \AgdaFun{elim}inators for \AgdaData{Desc}riptions. Defining these
 eliminators involves several nested constructions, where both
