@@ -1452,11 +1452,21 @@ and translating the second.
 not adequately model the \AgdaData{Path} over the concrete
 \AgdaData{Arith} type of \refsec{concretesmall}, as it does not let
 you index into non-recursive arguments in a datatype such as the
-\AgdaData{ℕ} argument to \AgdaCon{`Num}.
+\AgdaData{ℕ} argument to \AgdaCon{`Num}. This is because the
+\AgdaCon{Arg} and \AgdaCon{Rec} constructors take a \AgdaData{Set}
+argument, which we cannot perform case analysis on in Agda.
 
 In this section we introduce a novel closed universe of small
 InfIR types, allowing us to adequately express generic constructions
-over datatypes like \AgdaData{Arith}.
+over datatypes like \AgdaData{Arith}. Defining \AgdaData{Desc}
+reflected datatype definitions as codes, allowing us to write limited
+forms of generic functions. The limitation is due to the
+\AgdaData{Set} arguments of \AgdaData{Desc} constructors, which are
+themselves not codes. Below we overcome this by mutually defining a
+type of codes for \AgdaData{Set}s and codes for
+\AgdaData{Desc}riptions. The constructor arguments of these new codes
+\emph{only} have other codes as arguments (they do not contain \AgdaData{Set}
+arguments), so case analysis (hence generic programming) is always possible.
 
 \AgdaHide{
 \begin{code}
