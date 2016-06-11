@@ -70,13 +70,14 @@ area due to their inherent complexity.
 
 Our goal in this work is to push the boundaries of programming with
 InfIR types by introducing two functions operating over them.
-The first is a lookup function to retrieve values within an
-InfIR type, and the second is an update function to change values within an InfIR
-type. We start by considering how to write such functions for concrete
-examples of InfIR types, and then show how to write generic versions
-of the functions for any datatype definable in the universe of InfIR
-types. We actually write two versions of the generic functions, one
-where the universe is open and another where the universe is closed.
+The first is a lookup function to extract sub-components from an
+InfIR type, and the second is an update function to replace
+sub-components within an InfIR type. We start by considering how to
+write such functions for concrete examples of InfIR types, and then
+show how to write generic versions of the functions for any datatype
+definable in the universe of InfIR types. We actually write two
+versions of the generic functions, one where the universe is open and
+another where the universe is closed.
 \end{abstract}
 
 \category{D.3}{Software}{Programming Languages}.
@@ -162,9 +163,9 @@ While defining models and example values using infinitary
 inductive-recursive types is common, writing inductively defined
 \textit{functions} over them is less so.
 
-Why isn't there much existing work on programming functions with
-infinitary inductive-recursive functions? They contain inherently
-complex properties and there aren't many examples to reference.
+Why are there so few examples of functions over infinitary
+inductive-recursive types?
+Because they contain inherently complex properties.
 Their infinitary nature makes them
 \emph{higher-order datatypes}, rather than simpler first-order
 datatypes. Their inductive-recursive nature means you need to deal
@@ -264,7 +265,8 @@ turn at a \AgdaCon{branch}, while
 \AgdaCon{there₂} tells us to take a right turn. In general, we
 adopt the convention that a numerical subscript after a
 \AgdaCon{there} constructor of a \AgdaData{Path}
-indicates which argument to point into.
+indicates which argument to point to
+(we use 1 rather than 0 based indexing).
 
 Once we have defined \AgdaData{Path}s into a \AgdaData{Tree},
 it is straightforward to defined \AgdaFun{lookup} by following
@@ -1906,7 +1908,7 @@ descriptions.
 
 \citet{coquand:realizability} proves termination of Martin-L{\"o}f’s
 type theory using realizability predicates. The realizability model is
-defined as a family of InfIR type indexed by syntactic
+defined as a family of InfIR types indexed by syntactic
 expressions. Proofs that correspond to \AgdaFun{reflect}ion into the model,
 \AgdaFun{reif}ication of the model, and \AgdaFun{eval}uation of expressions into the
 model all involve retrieving information contained inside the model.
@@ -1985,7 +1987,7 @@ types. We have initial results extending some of the constructions in
 this paper to that setting, and do not foresee major complications
 extending the rest.
 
-\paragraph{Corretness}
+\paragraph{Correctness}
 
 In this paper we define generic \AgdaFun{lookup} and
 \AgdaFun{update} functions for InfIR types.
