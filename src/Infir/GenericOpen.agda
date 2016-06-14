@@ -39,187 +39,187 @@ subst-id P refl p = refl
 
 data Desc (O : Set) : Set₁ where
   End : (o : O) → Desc O
-  Arg : (A : Set) (D : A → Desc O) → Desc O
+  Arg : (A : Set) (D : (a : A) → Desc O) → Desc O
   Rec : (A : Set) (D : (o : A → O) → Desc O) → Desc O
 
-Func : {O : Set} (D : Desc O) (X : Set) (Y : X → O) → Set
-Func (End o) X Y = ⊤
-Func (Arg A D) X Y = Σ A (λ a → Func (D a) X Y)
-Func (Rec A D) X Y = Σ (A → X) (λ f → Func (D (λ a → Y (f a))) X Y)
+mutual
+  data Data {O : Set} (D : Desc O) : Set where
+    con : Data′ D D → Data D
+
+  Data′ : {O : Set} (R D : Desc O) → Set
+  Data′ R (End o) = ⊤
+  Data′ R (Arg A D) = Σ A (λ a → Data′ R (D a))
+  Data′ R (Rec A D) = Σ (A → Data R) (λ f → Data′ R (D (fun R ∘ f)))
+  
+  fun : {O : Set} (D : Desc O) → Data D → O
+  fun D (con xs) = fun′ D D xs
+
+  fun′ : {O : Set} (R D : Desc O) → Data′ R D → O
+  fun′ R (End o) tt = o
+  fun′ R (Arg A D) (a , xs) = fun′ R (D a) xs
+  fun′ R (Rec A D) (f , xs) = fun′ R (D (λ a → fun R (f a))) xs
+
+----------------------------------------------------------------------
 
 mutual
-  data μ {O : Set} (D : Desc O) : Set where
-    init : Func D (μ D) (rec D) → μ D
-  
-  rec : {O : Set} (D : Desc O) → μ D → O
-  rec D (init xs) = recα D D xs
+  data Path {O : Set} (D : Desc O) : Data D → Set₁ where
+    here : ∀{x} → Path D x
+    there : ∀{xs}
+      → Path′ D D xs
+      → Path D (con xs)
 
-  recα : {O : Set} (D E : Desc O) → Func D (μ E) (rec E) → O
-  recα (End o) E tt = o
-  recα (Arg A D) E (a , xs) = recα (D a) E xs
-  recα (Rec A D) E (f , xs) = recα (D (λ a → rec E (f a))) E xs
-
-----------------------------------------------------------------------
-
-data Path {O : Set} (D : Desc O) : μ D → Set₁
-data Pathα {O : Set} (R : Desc O) : (D : Desc O) → Func D (μ R) (rec R) → Set₁
-
-data Path {O} D where
-  here : {x : μ D} → Path D x
-  there : {xs : Func D (μ D) (rec D)}
-    → Pathα D D xs
-    → Path D (init xs)
-
-data Pathα {O} R where
-  thereArg₁ : {A : Set} {D : A → Desc O}
-    {a : A} {xs : Func (D a) (μ R) (rec R)}
-    → Pathα R (Arg A D) (a , xs)
-  thereArg₂ : {A : Set} {D : A → Desc O}
-    {a : A} {xs : Func (D a) (μ R) (rec R)}
-    → Pathα R (D a) xs
-    → Pathα R (Arg A D) (a , xs)
-  thereRec₁ : {A : Set} {D : (o : A → O) → Desc O}
-    {f : A → μ R} {xs : Func (D (rec R ∘ f)) (μ R) (rec R)}
-    → Π A (λ a → Path R (f a))
-    → Pathα R (Rec A D) (f , xs)
-  thereRec₂ : {A : Set} {D : (o : A → O) → Desc O}
-    {f : A → μ R} {xs : Func (D (rec R ∘ f)) (μ R) (rec R)}
-    → Pathα R (D (rec R ∘ f)) xs
-    → Pathα R (Rec A D) (f , xs)
+  data Path′ {O : Set} (R : Desc O) 
+    : (D : Desc O) → Data′ R D → Set₁ where
+    thereArg₁ : ∀{A D a xs}
+      → Path′ R (Arg A D) (a , xs)
+    thereArg₂ : ∀{A D a xs}
+      (i : Path′ R (D a) xs)
+      → Path′ R (Arg A D) (a , xs)
+    thereRec₁ : ∀{A D f xs}
+      (g : (a : A) → Path R (f a))
+      → Path′ R (Rec A D) (f , xs)
+    thereRec₂ : ∀{A D f xs}
+      (i : Path′ R (D (fun R ∘ f)) xs)
+      → Path′ R (Rec A D) (f , xs)
 
 ----------------------------------------------------------------------
 
-Lookup : {O : Set} (D : Desc O) (x : μ D) → Path D x → Set
-Lookupα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R)) → Pathα R D xs → Set
+mutual
+  Lookup : {O : Set} (D : Desc O) (x : Data D) → Path D x → Set
+  Lookup D x here = Data D
+  Lookup D (con xs) (there i) = Lookup′ D D xs i
 
-Lookup D x here = μ D
-Lookup D (init xs) (there i) = Lookupα D D xs i
+  lookup : {O : Set} (D : Desc O) (x : Data D) (i : Path D x)
+    → Lookup D x i
+  lookup D x here = x
+  lookup D (con xs) (there i) = lookup′ D D xs i
 
-Lookupα R (End o) tt ()
-Lookupα R (Arg A D) (a , xs) thereArg₁ = A
-Lookupα R (Arg A D) (a , xs) (thereArg₂ i) = Lookupα R (D a) xs i
-Lookupα R (Rec A D) (f , xs) (thereRec₁ g) = Π A (λ a → Lookup R (f a) (g a))
-Lookupα R (Rec A D) (f , xs) (thereRec₂ i) = Lookupα R (D (rec R ∘ f)) xs i
+  Lookup′ : {O : Set} (R D : Desc O) (xs : Data′ R D)
+    → Path′ R D xs → Set
+  Lookup′ R (Arg A D) (a , xs) thereArg₁ = A
+  Lookup′ R (Arg A D) (a , xs) (thereArg₂ i) =
+    Lookup′ R (D a) xs i
+  Lookup′ R (Rec A D) (f , xs) (thereRec₁ g) =
+    (a : A) → Lookup R (f a) (g a)
+  Lookup′ R (Rec A D) (f , xs) (thereRec₂ i) =
+    Lookup′ R (D (fun R ∘ f)) xs i
 
-----------------------------------------------------------------------
-
-lookup : {O : Set} (D : Desc O) (x : μ D) (i : Path D x) → Lookup D x i
-lookupα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R)) (i : Pathα R D xs)
-  → Lookupα R D xs i
-
-lookup D x here = x
-lookup D (init xs) (there i) = lookupα D D xs i
-
-lookupα R (End o) tt ()
-lookupα R (Arg A D) (a , xs) thereArg₁ = a
-lookupα R (Arg A D) (a , xs) (thereArg₂ i) = lookupα R (D a) xs i
-lookupα R (Rec A D) (f , xs) (thereRec₁ g) = λ a → lookup R (f a) (g a)
-lookupα R (Rec A D) (f , xs) (thereRec₂ i) = lookupα R (D (rec R ∘ f)) xs i
-
-----------------------------------------------------------------------
-
-Update : {O : Set} (D : Desc O) (x : μ D) → Path D x → Set
-Updateα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R)) → Pathα R D xs → Set
-update : {O : Set} (D : Desc O) (x : μ D) (i : Path D x) (X : Update D x i) → μ D
-updateα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R)) (i : Pathα R D xs)
-  → Updateα R D xs i → Func D (μ R) (rec R)
+  lookup′ : {O : Set} (R D : Desc O) (xs : Data′ R D)
+    (i : Path′ R D xs) → Lookup′ R D xs i
+  lookup′ R (Arg A D) (a , xs) thereArg₁ = a
+  lookup′ R (Arg A D) (a , xs) (thereArg₂ i) =
+    lookup′ R (D a) xs i
+  lookup′ R (Rec A D) (f , xs) (thereRec₁ g) =
+    λ a → lookup R (f a) (g a)
+  lookup′ R (Rec A D) (f , xs) (thereRec₂ i) =
+    lookup′ R (D (fun R ∘ f)) xs i
 
 ----------------------------------------------------------------------
 
-Update D x here = Maybe (μ D)
-Update D (init xs) (there i) = Updateα D D xs i
+mutual
+  Update : {O : Set} (D : Desc O) (x : Data D)
+    → Path D x → Set
+  Update D x here = Maybe (Data D)
+  Update D (con xs) (there i) = Update′ D D xs i
 
-Updateα R (Arg A D) (a , xs) thereArg₁ =
-  Σ (Maybe A)
-    (maybe (λ a' → Func (D a) (μ R) (rec R) → Func (D a') (μ R) (rec R)) ⊤)
-Updateα R (Arg A D) (a , xs) (thereArg₂ i) = Updateα R (D a) xs i
-Updateα R (Rec A D) (f , xs) (thereRec₁ g) =
-  Σ (Π A (λ a → Update R (f a) (g a)))
-    (λ h → Func (D (rec R ∘ f)) (μ R) (rec R)
-      → Func (D (λ a → rec R (update R (f a) (g a) (h a)))) (μ R) (rec R))
-Updateα R (Rec A D) (f , xs) (thereRec₂ i) =
-  Updateα R (D (rec R ∘ f)) xs i
+  update : {O : Set} (D : Desc O) (x : Data D)
+    (i : Path D x) (X : Update D x i) → Data D
+  update D x here X = maybe id x X
+  update D (con xs) (there i) X = con (update′ D D xs i X)
+
+  Update′ : {O : Set} (R D : Desc O) (xs : Data′ R D)
+    → Path′ R D xs → Set
+  Update′ R (Arg A D) (a , xs) thereArg₁ =
+    Σ (Maybe A)
+      (maybe (λ a' → Data′ R (D a) → Data′ R (D a')) ⊤)
+  Update′ R (Arg A D) (a , xs) (thereArg₂ i) =
+    Update′ R (D a) xs i
+  Update′ R (Rec A D) (f , xs) (thereRec₁ g) =
+    Σ ((a : A) → Update R (f a) (g a))
+      (λ h → let f' = λ a → update R (f a) (g a) (h a)
+           in Data′ R (D (fun R ∘ f))
+           →  Data′ R (D (fun R ∘ f')))
+  Update′ R (Rec A D) (f , xs) (thereRec₂ i) =
+    Update′ R (D (fun R ∘ f)) xs i
+
+  update′ : {O : Set} (R D : Desc O) (xs : Data′ R D)
+    (i : Path′ R D xs) → Update′ R D xs i → Data′ R D
+  update′ R (Arg A D) (a , xs) thereArg₁ (nothing , f) =
+    a , xs
+  update′ R (Arg A D) (a , xs) thereArg₁ (just X , f) =
+    X , f xs
+  update′ R (Arg A D) (a , xs) (thereArg₂ i) X =
+    a , update′ R (D a) xs i X
+  update′ R (Rec A D) (f , xs) (thereRec₁ g) (h , F) =
+    (λ a → update R (f a) (g a) (h a)) , F xs
+  update′ R (Rec A D) (f , xs) (thereRec₂ i) X =
+    f , update′ R (D (fun R ∘ f)) xs i X
 
 ----------------------------------------------------------------------
 
-update D x here X = maybe id x X
-update D (init xs) (there i) X = init (updateα D D xs i X)
-
-updateα R (Arg A D) (a , xs) thereArg₁ (nothing , f) = a , xs
-updateα R (Arg A D) (a , xs) thereArg₁ (just X , f) =
-  X , f xs
-updateα R (Arg A D) (a , xs) (thereArg₂ i) X =
-  a , updateα R (D a) xs i X
-updateα R (Rec A D) (f , xs) (thereRec₁ g) (h , F) =
-  (λ a → update R (f a) (g a) (h a)) , F xs
-updateα R (Rec A D) (f , xs) (thereRec₂ i) X =
-  f , updateα R (D (rec R ∘ f)) xs i X
-
-----------------------------------------------------------------------
-
-lift : {O : Set} (D : Desc O) (x : μ D) (i : Path D x) → Update D x i
-liftα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R)) (i : Pathα R D xs)
-  → Updateα R D xs i
-lem : {O : Set} (D : Desc O) (x : μ D) (i : Path D x)
+lift : {O : Set} (D : Desc O) (x : Data D) (i : Path D x) → Update D x i
+lift′ : {O : Set} (R D : Desc O) (xs : Data′ R D) (i : Path′ R D xs)
+  → Update′ R D xs i
+lem : {O : Set} (D : Desc O) (x : Data D) (i : Path D x)
   → x ≡ update D x i (lift D x i)
-lemα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R))
-  (i : Pathα R D xs)
-  → xs ≡ updateα R D xs i (liftα R D xs i)
+lem′ : {O : Set} (R D : Desc O) (xs : Data′ R D)
+  (i : Path′ R D xs)
+  → xs ≡ update′ R D xs i (lift′ R D xs i)
 
 ----------------------------------------------------------------------
 
 lift D x here = nothing
-lift D (init xs) (there i) = liftα D D xs i
+lift D (con xs) (there i) = lift′ D D xs i
 
-liftα R (Arg A D) (a , xs) thereArg₁ = nothing , tt
-liftα R (Arg A D) (a , xs) (thereArg₂ i) = liftα R (D a) xs i
-liftα R (Rec A D) (f , xs) (thereRec₁ g) =
+lift′ R (Arg A D) (a , xs) thereArg₁ = nothing , tt
+lift′ R (Arg A D) (a , xs) (thereArg₂ i) = lift′ R (D a) xs i
+lift′ R (Rec A D) (f , xs) (thereRec₁ g) =
   (λ a → lift R (f a) (g a))
-  , subst (λ X → Func (D X) (μ R) (rec R))
-      (ext (λ a → cong (λ X → rec R X) (lem R (f a) (g a))))
-liftα R (Rec A D) (f , xs) (thereRec₂ i) = liftα R (D (rec R ∘ f)) xs i
+  , subst (λ X → Data′ R (D X))
+      (ext (λ a → cong (λ X → fun R X) (lem R (f a) (g a))))
+lift′ R (Rec A D) (f , xs) (thereRec₂ i) = lift′ R (D (fun R ∘ f)) xs i
 
 lem D x here = refl
-lem D (init xs) (there i) = cong init (lemα D D xs i)
+lem D (con xs) (there i) = cong con (lem′ D D xs i)
 
-lemα R (Arg A D) (a , xs) thereArg₁ = refl
-lemα R (Arg A D) (a , xs) (thereArg₂ i) = cong (λ X → a , X) (lemα R (D a) xs i)
-lemα R (Rec A D) (f , xs) (thereRec₁ g)
-  with ext (λ a → lem R (f a) (g a)) | ext (λ a → cong (rec R) (lem R (f a) (g a)))
-... | q₁ | q₂ = eqpair q₁ (subst-id (λ X → Func (D X) (μ R) (rec R)) q₂ xs)
-lemα R (Rec A D) (f , xs) (thereRec₂ i) =
-  cong (λ X → f , X) (lemα R (D (rec R ∘ f)) xs i)
+lem′ R (Arg A D) (a , xs) thereArg₁ = refl
+lem′ R (Arg A D) (a , xs) (thereArg₂ i) = cong (λ X → a , X) (lem′ R (D a) xs i)
+lem′ R (Rec A D) (f , xs) (thereRec₁ g)
+  with ext (λ a → lem R (f a) (g a)) | ext (λ a → cong (fun R) (lem R (f a) (g a)))
+... | q₁ | q₂ = eqpair q₁ (subst-id (λ X → Data′ R (D X)) q₂ xs)
+lem′ R (Rec A D) (f , xs) (thereRec₂ i) =
+  cong (λ X → f , X) (lem′ R (D (fun R ∘ f)) xs i)
 
 ----------------------------------------------------------------------
 
-forget : {O : Set} (D : Desc O) (x : μ D) (i : Path D x) → Update D x i → Lookup D x i
-forgetα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R))
-  (i : Pathα R D xs) → Updateα R D xs i → Lookupα R D xs i
+forget : {O : Set} (D : Desc O) (x : Data D) (i : Path D x) → Update D x i → Lookup D x i
+forget′ : {O : Set} (R D : Desc O) (xs : Data′ R D)
+  (i : Path′ R D xs) → Update′ R D xs i → Lookup′ R D xs i
 
 forget D x here nothing = x
 forget D x here (just x') = x'
-forget D (init xs) (there i) X = forgetα D D xs i X
+forget D (con xs) (there i) X = forget′ D D xs i X
 
-forgetα R (Arg A D) (a , xs) thereArg₁ (nothing , tt) = a
-forgetα R (Arg A D) (a , xs) thereArg₁ (just X , f) = X
-forgetα R (Arg A D) (a , xs) (thereArg₂ i) X = forgetα R (D a) xs i X
-forgetα R (Rec A D) (f , xs) (thereRec₁ g) (h , _) = λ a → forget R (f a) (g a) (h a)
-forgetα R (Rec A D) (f , xs) (thereRec₂ i) X = forgetα R (D (rec R ∘ f)) xs i X
+forget′ R (Arg A D) (a , xs) thereArg₁ (nothing , tt) = a
+forget′ R (Arg A D) (a , xs) thereArg₁ (just X , f) = X
+forget′ R (Arg A D) (a , xs) (thereArg₂ i) X = forget′ R (D a) xs i X
+forget′ R (Rec A D) (f , xs) (thereRec₁ g) (h , _) = λ a → forget R (f a) (g a) (h a)
+forget′ R (Rec A D) (f , xs) (thereRec₂ i) X = forget′ R (D (fun R ∘ f)) xs i X
 
 ----------------------------------------------------------------------
 
-thm : {O : Set} (D : Desc O) (x : μ D) (i : Path D x)
+thm : {O : Set} (D : Desc O) (x : Data D) (i : Path D x)
   → lookup D x i ≡ forget D x i (lift D x i) 
-thmα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R)) (i : Pathα R D xs)
-  → lookupα R D xs i ≡ forgetα R D xs i (liftα R D xs i) 
+thm′ : {O : Set} (R D : Desc O) (xs : Data′ R D) (i : Path′ R D xs)
+  → lookup′ R D xs i ≡ forget′ R D xs i (lift′ R D xs i) 
 
 thm D x here = refl
-thm D (init xs) (there i) = thmα D D xs i
+thm D (con xs) (there i) = thm′ D D xs i
 
-thmα R (Arg A D) (a , xs) thereArg₁ = refl
-thmα R (Arg A D) (a , xs) (thereArg₂ i) = thmα R (D a) xs i
-thmα R (Rec A D) (f , xs) (thereRec₁ g) = ext (λ a → thm R (f a) (g a))
-thmα R (Rec A D) (f , xs) (thereRec₂ i) = thmα R (D (rec R ∘ f)) xs i
+thm′ R (Arg A D) (a , xs) thereArg₁ = refl
+thm′ R (Arg A D) (a , xs) (thereArg₂ i) = thm′ R (D a) xs i
+thm′ R (Rec A D) (f , xs) (thereRec₁ g) = ext (λ a → thm R (f a) (g a))
+thm′ R (Rec A D) (f , xs) (thereRec₂ i) = thm′ R (D (fun R ∘ f)) xs i
 
 ----------------------------------------------------------------------
 
