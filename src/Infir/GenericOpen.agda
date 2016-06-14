@@ -129,7 +129,6 @@ updateα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R)) (i : Pathα R D
 Update D x here = Maybe (μ D)
 Update D (init xs) (there i) = Updateα D D xs i
 
-Updateα R (End o) tt ()
 Updateα R (Arg A D) (a , xs) thereArg₁ =
   Σ (Maybe A)
     (maybe (λ a' → Func (D a) (μ R) (rec R) → Func (D a') (μ R) (rec R)) ⊤)
@@ -146,7 +145,6 @@ Updateα R (Rec A D) (f , xs) (thereRec₂ i) =
 update D x here X = maybe id x X
 update D (init xs) (there i) X = init (updateα D D xs i X)
 
-updateα R (End o) tt () X
 updateα R (Arg A D) (a , xs) thereArg₁ (nothing , f) = a , xs
 updateα R (Arg A D) (a , xs) thereArg₁ (just X , f) =
   X , f xs
@@ -173,7 +171,6 @@ lemα : {O : Set} (R D : Desc O) (xs : Func D (μ R) (rec R))
 lift D x here = nothing
 lift D (init xs) (there i) = liftα D D xs i
 
-liftα R (End o) tt ()
 liftα R (Arg A D) (a , xs) thereArg₁ = nothing , tt
 liftα R (Arg A D) (a , xs) (thereArg₂ i) = liftα R (D a) xs i
 liftα R (Rec A D) (f , xs) (thereRec₁ g) =
@@ -185,7 +182,6 @@ liftα R (Rec A D) (f , xs) (thereRec₂ i) = liftα R (D (rec R ∘ f)) xs i
 lem D x here = refl
 lem D (init xs) (there i) = cong init (lemα D D xs i)
 
-lemα R (End o) tt ()
 lemα R (Arg A D) (a , xs) thereArg₁ = refl
 lemα R (Arg A D) (a , xs) (thereArg₂ i) = cong (λ X → a , X) (lemα R (D a) xs i)
 lemα R (Rec A D) (f , xs) (thereRec₁ g)
