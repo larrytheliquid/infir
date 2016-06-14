@@ -478,7 +478,7 @@ To see the difference, consider a total version of a function that looks up
 once given a natural number (\AgdaData{ℕ}) index.
 
 \begin{code}
-  elem : {A : Set} (xs : List A) (n : ℕ) → length xs < n → A
+  elem : {A : Set} (xs : List A) (n : ℕ) → length xs > n → A
 \end{code}
 
 \AgdaHide{
@@ -1138,7 +1138,7 @@ The \AgdaCon{End} case means no further arguments are
 needed, so we ask for a trivial value of type \AgdaData{⊤}. The
 \AgdaCon{Arg} case asks for a value of type
 \AgdaVar{A}, which the rest of the arguments may depend on using
-\AgdaVar{a}. The \AgdaCon{End} case asks for a function from
+\AgdaVar{a}. The \AgdaCon{Rec} case asks for a function from
 \AgdaVar{A} to a recursive value \AgdaData{Data} \AgdaVar{R},
 and the rest of the arguments may use \AgdaVar{f} to depend on the
 result of applying the mutual function (e.g. \AgdaFun{eval}) to
@@ -1323,7 +1323,6 @@ computational return type.
 \begin{code}
     Lookup′ : {O : Set} (R D : Desc O) (xs : Data′ R D)
       → Path′ R D xs → Set
-    Lookup′ R (End o) tt ()
     Lookup′ R (Arg A D) (a , xs) thereArg₁ = A
     Lookup′ R (Arg A D) (a , xs) (thereArg₂ i) =
       Lookup′ R (D a) xs i
@@ -1346,7 +1345,6 @@ than a \AgdaFun{Lookup′} of some subsequent argument description.
 \begin{code}
     lookup′ : {O : Set} (R D : Desc O) (xs : Data′ R D)
       (i : Path′ R D xs) → Lookup′ R D xs i
-    lookup′ R (End o) tt ()
     lookup′ R (Arg A D) (a , xs) thereArg₁ = a
     lookup′ R (Arg A D) (a , xs) (thereArg₂ i) =
       lookup′ R (D a) xs i
@@ -1419,7 +1417,6 @@ an argument of a constructor, with the computational argument type
 \begin{code}
     Update′ : {O : Set} (R D : Desc O) (xs : Data′ R D)
       → Path′ R D xs → Set
-    Update′ R (End o) tt ()
     Update′ R (Arg A D) (a , xs) thereArg₁ =
       Σ (Maybe A)
         (maybe (λ a' → Data′ R (D a) → Data′ R (D a')) ⊤)
@@ -1461,7 +1458,6 @@ to the way dependencies are captured as dependent products in
 \begin{code}
     update′ : {O : Set} (R D : Desc O) (xs : Data′ R D)
       (i : Path′ R D xs) → Update′ R D xs i → Data′ R D
-    update′ R (End o) tt () X
     update′ R (Arg A D) (a , xs) thereArg₁ (nothing , f) =
       a , xs
     update′ R (Arg A D) (a , xs) thereArg₁ (just X , f) =
