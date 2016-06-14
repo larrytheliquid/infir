@@ -24,7 +24,7 @@ Standalone code
 * [Generic closed universe](src/Infir/GenericClosed.agda)
   * [Correctness proof](src/Infir/GenericOpen.agda#L196-L270)
 
-Additionally, a version of the [generic open universe](src/Infir/GenericOpenHier.agda) with a hierarchy of levels.
+Additionally, a [universe polymorphic version](src/Infir/GenericOpenHier.agda) of the generic open universe.
 
 Notes
 -----
