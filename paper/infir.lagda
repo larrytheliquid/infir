@@ -1323,7 +1323,6 @@ computational return type.
 \begin{code}
     Lookup′ : {O : Set} (R D : Desc O) (xs : Data′ R D)
       → Path′ R D xs → Set
-    Lookup′ R (End o) tt ()
     Lookup′ R (Arg A D) (a , xs) thereArg₁ = A
     Lookup′ R (Arg A D) (a , xs) (thereArg₂ i) =
       Lookup′ R (D a) xs i
@@ -1346,7 +1345,6 @@ than a \AgdaFun{Lookup′} of some subsequent argument description.
 \begin{code}
     lookup′ : {O : Set} (R D : Desc O) (xs : Data′ R D)
       (i : Path′ R D xs) → Lookup′ R D xs i
-    lookup′ R (End o) tt ()
     lookup′ R (Arg A D) (a , xs) thereArg₁ = a
     lookup′ R (Arg A D) (a , xs) (thereArg₂ i) =
       lookup′ R (D a) xs i
@@ -1419,7 +1417,6 @@ an argument of a constructor, with the computational argument type
 \begin{code}
     Update′ : {O : Set} (R D : Desc O) (xs : Data′ R D)
       → Path′ R D xs → Set
-    Update′ R (End o) tt ()
     Update′ R (Arg A D) (a , xs) thereArg₁ =
       Σ (Maybe A)
         (maybe (λ a' → Data′ R (D a) → Data′ R (D a')) ⊤)
@@ -1461,7 +1458,6 @@ to the way dependencies are captured as dependent products in
 \begin{code}
     update′ : {O : Set} (R D : Desc O) (xs : Data′ R D)
       (i : Path′ R D xs) → Update′ R D xs i → Data′ R D
-    update′ R (End o) tt () X
     update′ R (Arg A D) (a , xs) thereArg₁ (nothing , f) =
       a , xs
     update′ R (Arg A D) (a , xs) thereArg₁ (just X , f) =
