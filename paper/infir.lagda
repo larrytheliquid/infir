@@ -478,7 +478,7 @@ To see the difference, consider a total version of a function that looks up
 once given a natural number (\AgdaData{ℕ}) index.
 
 \begin{code}
-  elem : {A : Set} (xs : List A) (n : ℕ) → length xs < n → A
+  elem : {A : Set} (xs : List A) (n : ℕ) → length xs > n → A
 \end{code}
 
 \AgdaHide{
@@ -1138,7 +1138,7 @@ The \AgdaCon{End} case means no further arguments are
 needed, so we ask for a trivial value of type \AgdaData{⊤}. The
 \AgdaCon{Arg} case asks for a value of type
 \AgdaVar{A}, which the rest of the arguments may depend on using
-\AgdaVar{a}. The \AgdaCon{End} case asks for a function from
+\AgdaVar{a}. The \AgdaCon{Rec} case asks for a function from
 \AgdaVar{A} to a recursive value \AgdaData{Data} \AgdaVar{R},
 and the rest of the arguments may use \AgdaVar{f} to depend on the
 result of applying the mutual function (e.g. \AgdaFun{eval}) to
