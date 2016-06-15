@@ -17,9 +17,9 @@ You can build the paper in the `paper` directory with a command like:
 Standalone code
 ---------------
 
-* [Concrete large `Type` universe](src/Infir/ConcreteLarge.agda)
+* [Concrete large `Type` type](src/Infir/ConcreteLarge.agda)
   * [Correctness proof](src/Infir/ConcreteLarge.agda#L82-L115)
-* [Concrete small `Arith` universe](src/Infir/ConcreteSmall.agda)
+* [Concrete small `Arith` type](src/Infir/ConcreteSmall.agda)
   * [Correctness proof](src/Infir/ConcreteSmall.agda#L122-L155)
 * [Generic open universe](src/Infir/GenericOpen.agda)
   * [Correctness proof](src/Infir/GenericOpen.agda#L160-L222)
