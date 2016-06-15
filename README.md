@@ -11,7 +11,7 @@ Draft
 
 You can build the paper in the `paper` directory with a command like:
 
-`agda --latex-dir=. -i /PATH/TO/AGDA-STDLIB/src/ -i . --latex infir.lagda && pdflatex infir.texagda --latex-dir=. -i /PATH/TO/AGDA-STDLIB/src/ -i . --latex infir.lagda && pdflatex infir.tex`
+`agda --latex-dir=. -i /PATH/TO/AGDA-STDLIB/src/ -i . --latex infir.lagda && pdflatex infir.tex`
 
 
 Standalone code
