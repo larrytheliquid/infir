@@ -6,7 +6,7 @@ Agda code for draft paper by Larry Diehl and Tim Sheard (submitted for considera
 Draft
 ---------------
 
-* [PDF version](https://dl.dropboxusercontent.com/u/31465260/drafts/infir.pdf)
+* [PDF version](http://www.larrytheliquid.com/drafts/infir.pdf)
 * [Literate Agda version](paper/infir.tex)
 
 You can build the paper in the `paper` directory with a command like:
