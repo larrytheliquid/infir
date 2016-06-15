@@ -7,7 +7,7 @@ Draft
 ---------------
 
 * [PDF version](http://www.larrytheliquid.com/drafts/infir.pdf)
-* [Literate Agda version](paper/infir.tex)
+* [Literate Agda version](paper/infir.lagda)
 
 You can build the paper in the `paper` directory with a command like:
 
