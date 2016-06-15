@@ -1934,7 +1934,7 @@ types complicates the situation even more. The \AgdaFun{update}
 function solves these problems by using translation functions supplied
 by its computational \AgdaFun{Update} argument. An interesting
 property of the computation argument type \AgdaFun{Update} is that it
-needs to be mutually with the function that uses it,
+needs to be mutually defined with the function that uses it,
 \AgdaFun{update}. We are not aware of any other examples in literature
 that perform updates to InfIR types. With that out of the way, let's
 go over work related to retrieving information using InfIR types and
