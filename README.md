@@ -18,7 +18,9 @@ Standalone code
 ---------------
 
 * [Concrete large `Type` universe](src/Infir/ConcreteLarge.agda)
+  * [Correctness proof](src/Infir/ConcreteLarge.agda#L82-L115)
 * [Concrete small `Arith` universe](src/Infir/ConcreteSmall.agda)
+  * [Correctness proof](src/Infir/ConcreteSmall.agda#L122-L155)
 * [Generic open universe](src/Infir/GenericOpen.agda)
   * [Correctness proof](src/Infir/GenericOpen.agda#L160-L222)
 * [Generic closed universe](src/Infir/GenericClosed.agda)
