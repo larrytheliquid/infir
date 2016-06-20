@@ -65,7 +65,7 @@
 The class of Infinitary inductive-recursive (InfIR) types is commonly
 used to model type theory within itself. While it is common and
 convenient to provide examples of values within an InfIR model,
-writing functions that manipulate a InfIR types is an underexplored
+writing functions that manipulate InfIR types is an underexplored
 area due to their inherent complexity.
 
 Our goal in this work is to push the boundaries of programming with
