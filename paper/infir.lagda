@@ -111,12 +111,11 @@ Infinitary inductive-recursive (InfIR)
 types are commonly used in dependently
 typed programs to model type-theoretic universes~\citep{martinlof:universe}. For example,
 consider the Agda~\citep{norell:agda} model below of the universe of natural numbers and
-dependent functions
-\footnote{\raggedright{
+dependent functions.\footnote{\raggedright{
   This paper is written as a literate Adga program. The literate Agda
   source file and other accompanying code can be found at
   \tt{https://github.com/larrytheliquid/infir}
-}}.
+}}
 
 \begin{code}
   mutual
@@ -128,12 +127,6 @@ dependent functions
     ⟦ `Nat ⟧ = ℕ
     ⟦ `Fun A B ⟧ = (a : ⟦ A ⟧) → ⟦ B a ⟧
 \end{code}
-
-\AgdaHide{
-\begin{code}
-  _`→_ : (A B : Type) → Type
-  A `→ B = `Fun A (λ _ → B)
-\end{code}}
 
 \noindent
 This \AgdaData{Type} is \emph{infinitary} because the
@@ -153,7 +146,7 @@ number arguments.
 \begin{code}
   NumArgs : ℕ → Type
   NumArgs zero = `Nat
-  NumArgs (suc n) = `Nat `→ NumArgs n
+  NumArgs (suc n) = `Fun `Nat (const (NumArgs n))
   
   NumFun : Type
   NumFun = `Fun `Nat NumArgs
@@ -200,7 +193,7 @@ and \AgdaFun{update} for:
 
 Finally, we hope that seeing examples of writing both concrete and generic
 functions using infinitary inductive-recursive types will help future
-dependently functional programmers with writing their own functions
+dependently typed functional programmers with writing their own functions
 over this class of datatypes.
 
 \section{The problem}
@@ -209,7 +202,7 @@ over this class of datatypes.
 Before describing why writing functions over InfIR types is difficult,
 we first consider writing analogous functions over simpler
 datatypes. Thereafter we point out what becomes difficult in the
-InfIR scenario, and describe a general methodology of writing
+InfIR scenario, and describe a general methodology for writing
 total functions in a dependently typed language, which can be applied
 to successfully write InfIR functions.
 
@@ -269,9 +262,9 @@ indicates which argument to point to
 (we use 1 rather than 0 based indexing).
 
 Once we have defined \AgdaData{Path}s into a \AgdaData{Tree},
-it is straightforward to defined \AgdaFun{lookup} by following
-the \AgdaData{Path} until we arrive at the type appearing
-\AgdaCon{here}.
+it is straightforward to define \AgdaFun{lookup} by following
+the \AgdaData{Path} until we arrive at the subtree indicated by the
+\AgdaCon{here} constructor of \AgdaData{Path}.
 
 \begin{code}
   lookup : (A : Tree) → Path A → Tree
@@ -346,13 +339,13 @@ implicit argument explicitly.
 The \AgdaFun{Lookup} function \textit{computes} the return type
 of \AgdaFun{lookup}, allowing \AgdaFun{lookup} to return
 either a \AgdaData{List} or an \AgdaVar{A} (the base cases of
-\AgdaFun{Lookup}). I will refer to functions like
+\AgdaFun{Lookup}). We will refer to functions like
 \AgdaFun{Lookup} as \textit{computational return types}.
 
 In the colored version of this paper, you can spot a
 computational type because it is a light blue \AgdaFun{Function},
-whereas a non-computational (or static) \AgdaData{Datatype} is dark
-blue. Both computational and static types are capitalized by convention.
+whereas a non-computational) \AgdaData{Datatype} is dark
+blue. Both computational and non-computational types are capitalized by convention.
 
 
 \subsection{\AgdaFun{head} with a computational argument or return type}
@@ -371,7 +364,7 @@ complicated functions) over InfIR types is the subject of this
 paper. The solution (given in the next section) involves a more
 complicated version of the computational return type \AgdaFun{Lookup} above. 
 But, let us first consider a general
-methodology for turning a would-be partial function into a total
+methodology for turning a function that would otherwise be partial into a total
 function. For example, say we wanted to write a total version of the
 typically partial \AgdaFun{head} function.
 
@@ -478,7 +471,7 @@ To see the difference, consider a total version of a function that looks up
 once given a natural number (\AgdaData{ℕ}) index.
 
 \begin{code}
-  elem : {A : Set} (xs : List A) (n : ℕ) → length xs > n → A
+  elem : {A : Set} (xs : List A) (n : ℕ) → n < length xs → A
 \end{code}
 
 \AgdaHide{
@@ -488,7 +481,8 @@ once given a natural number (\AgdaData{ℕ}) index.
 
 Because the natural number \AgdaVar{n} may index outside the bounds
 of the list \AgdaVar{xs}, we need an extra argument serving as a
-precondition. If this precondition is satisfied, it computes to the unit
+precondition. If this precondition
+(established using \AgdaFun{<} above) is satisfied, it computes to the unit
 type (\AgdaData{⊤}),
 but if it fails it computes to the empty type (\AgdaData{⊥}). So,
 in the failure case the precondition (\AgdaData{⊥}) is
@@ -618,7 +612,7 @@ substitute \AgdaData{Type}, \AgdaFun{update} should return
 the original \AgdaData{Type} but with the substitute replacing
 what the \AgdaData{Path} pointed to. To make updating the InfIR
 \AgdaData{Type}
-more convenient, the type of the substitute will actually be
+more convenient (for the caller of update), the type of the substitute will actually be
 \AgdaData{Maybe Type}, where \AgdaCon{nothing}
 causes an identity update.
 We might expect to write a function like:
@@ -667,7 +661,7 @@ updated \AgdaVar{a}'s to their original type.
     (a : ⟦ A ⟧) → Update (B a) (f a)
   
   update A here X = maybe id A X
-  update (`Base A) thereBase X = maybe `Base (`Base A) X
+  update (`Base A) thereBase X = `Base (maybe id A X)
   update (`Fun A B) (thereFun₁ i) (X , f) =
     `Fun (update A i X) (λ a → B (f a))
   update (`Fun A B) (thereFun₂ f) h =
@@ -801,8 +795,8 @@ be \AgdaCon{zero}.
 \end{code}
 
 The \AgdaFun{lookup} function simply returns the
-\AgdaData{ℕ} pointed to by \AgdaData{Pathℕ}. It has a static
-return type (not a computational return type), because a
+\AgdaData{ℕ} pointed to by \AgdaData{Pathℕ}. It has a
+non-computational return type because a
 \AgdaData{Pathℕ} always points to a \AgdaData{ℕ}.
 
 \begin{code}
@@ -971,8 +965,7 @@ inductive-recursive Dybjer-Setzer code~\citep{dybjer:ir1,dybjer:ir2}.
 
 First let us recall the type of inductive-recursive codes
 developed by Dybjer and Setzer. We refer to values of
-\AgdaData{Desc} defined below as ``codes''.
-\footnote{
+\AgdaData{Desc} defined below as ``codes''.\footnote{
   We have renamed the original Dybjer-Setzer constructions to
   emphasize their meaning in English. The original names of our
   \AgdaData{Desc}/\AgdaCon{End}/\AgdaCon{Arg}/\AgdaCon{Rec}
@@ -1003,9 +996,9 @@ type \AgdaVar{A}, and the remainder of the \AgdaData{Desc} may depend
 on the value \AgdaVar{a}. \AgdaCon{Rec} is used to
 specify a recursive argument (of the type currently being
 specified). More generally, the recursive argument may be a function
-type whose codomain is the type currently being defined but whose
-domain may be non-recursive.
-\footnote{
+type (encoding an \textit{infinitary} argument)
+whose codomain is the type currently being defined but whose
+domain may be non-recursive.\footnote{
   The domain is restricted to be non-recursive to enforce that encoded
   datatypes are strictly positive.
 }
@@ -1036,7 +1029,7 @@ The abstract nature of \AgdaData{Desc} makes it somewhat difficult
 to understand at first, especially the \AgdaCon{Rec}
 constructor. Let's try to understand \AgdaData{Desc} better with an
 example, encoding \AgdaData{Arith} from
-\refsec{concretesmall} below .
+\refsec{concretesmall} below.
 
 \AgdaHide{
 \begin{code}
@@ -1061,6 +1054,17 @@ The \AgdaData{Desc} begins with an \AgdaCon{Arg},
 taking sub-\AgdaData{Desc}s for each element of the finite
 enumeration \AgdaData{ArithT}, representing the types of each
 \AgdaData{Arith} constructor.
+
+The second argument to \AgdaCon{Arg} is an anonymous function that
+makes use of Agda's pattern matching lambda syntax, where cases
+appear between braces and each case is separated by a
+semicolon.
+In this syntax the constructor being matched and the definition
+are separated by an Agda arrow (rather than an equal sign).
+Additionally, we note that the scope of Agda lambdas
+extends all the way to the right, allowing us to omit many
+parentheses for lambdas appearing after uses of
+\AgdaCon{Arg} and \AgdaCon{Rec}.
 
 The \AgdaCon{NumT} description uses
 \AgdaCon{Arg} to take a natural number
@@ -1107,14 +1111,14 @@ it encodes.
 \end{code}}
 
 \AgdaData{Data} is defined in terms of a single constructor
-\AgdaCon{con}, which holds a dependent product of all
-arguments of a particular constructor.
+\AgdaCon{con}, which holds a dependent product (nested dependent
+pairs) of all arguments of a particular constructor.
 The computational argument type
 \AgdaFun{Data′} computes the type of this product, dependent on
 the \AgdaData{Desc}ription that \AgdaData{Data} is
 parameterized by.
 
-For the remainder of the paper, we will establish a convention for
+For the remainder of the paper we employ a convention for
 functions ending with a prime, like \AgdaFun{Data′}. They will be
 defined by induction over a description, but must also use the
 original description they are inducting over in the \AgdaCon{Rec} case. Hence,
@@ -1163,7 +1167,7 @@ encoded constructor case. The \AgdaCon{Arg} and
 \AgdaCon{Rec} cases recurse, looking for an
 \AgdaCon{End}.
 
-\subsection{Schema for Generic Functions}
+\subsection{A schema for generic functions}
 
 In this section the schema used for writing a generic function is to
 write a pair of generic functions.
@@ -1333,7 +1337,7 @@ computational return type.
 \end{code}
 
 The \AgdaCon{thereArg₂} and \AgdaCon{thereRec₂} cases skip past one
-argument, looking for the type of a subsequent an argument pointed to
+argument, looking for the type of a subsequent argument pointed to
 by the index. The \AgdaCon{thereArg₁} case returns the type of the
 current non-recursive argument \AgdaVar{A}. The \AgdaCon{thereRec₁}
 asks for a continuation, represented as a function type from
@@ -1587,7 +1591,7 @@ Finally, note that the two code types and their meaning functions are
 all mutually defined.
 
 Finally, let's see a closed universe description encoding of
-\AgdaData{Arith} from \refsec{concretesmall} below .
+\AgdaData{Arith} from \refsec{concretesmall} below.
 
 \AgdaHide{
 \begin{code}
@@ -1619,7 +1623,7 @@ reason, \AgdaData{ArithD} is also encoded in terms
 of their \AgdaData{Set} counterparts whose definitions have been
 omitted.
 
-\subsection{Schema for Generic Functions}
+\subsection{A schema for generic functions}
 
 In this section the schema used for writing a generic function is to
 write a pair of generic functions like the following.
@@ -1936,8 +1940,8 @@ by its computational \AgdaFun{Update} argument. An interesting
 property of the computation argument type \AgdaFun{Update} is that it
 needs to be mutually defined with the function that uses it,
 \AgdaFun{update}. We are not aware of any other examples in literature
-that perform updates to InfIR types. With that out of the way, let's
-go over work related to retrieving information using InfIR types and
+that perform updates to InfIR types. The remainder of this section
+summarizes work related to retrieving information using InfIR types and
 computational argument types.
 
 \paragraph{File Formats}
@@ -1994,7 +1998,7 @@ perform generic programming in the domain of universal
 algebra. However, a custom restriction of the \AgdaData{Desc} universe
 is used for each algebra (e.g. one-sorted term algebras, many-sorted
 term algebras, parameterized term algebras, etc.). Some of these
-algebra restrict the universe to be finitary, some remain infinitary,
+algebras restrict the universe to be finitary, some remain infinitary,
 but all of them restrict the use of induction-recursion. As they
 state, their work could have been instead defined as restrictions over
 a universe of indexed inductive types without induction-recursion.
@@ -2085,8 +2089,8 @@ Along the way, we introduced a novel
 closed universe of inductive-recursive types. We also emphasized a
 methodology of writing total functions by either making one of their
 argument types or return type \emph{computational}. Computational
-types allow a would-be partial function to request extra information
-necessary to make it total.
+types allow functions that would otherwise be partial to request
+extra information necessary to make them total.
 
 Finally, we hope that examples of programming with InfIR types will inspire
 other dependently typed programmers to do the same.
