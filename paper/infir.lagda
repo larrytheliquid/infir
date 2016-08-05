@@ -717,7 +717,8 @@ because the codomain of its IR function \AgdaFun{⟦\_⟧} has type
 small InfIR type called \AgdaData{Arith} (it is called
 \textit{small} because the codomain of its IR function is \textit{not}
 \AgdaData{Set}), which is structurally similar to
-\AgdaData{Type}.
+\AgdaData{Type}. We borrow the \AgdaData{Arith} type from
+\citet{hancock2013small}.
 
 \subsection{\AgdaData{Arith}}
 
@@ -2078,7 +2079,8 @@ extending the rest.
 
 In this paper we define generic \AgdaFun{lookup} and
 \AgdaFun{update} functions for InfIR types.
-Our accompanying source code also contains a proof of a correctness theorem that
+Our accompanying source code also contains a proof of a correctness
+theorem (for all concrete and generic definitions) that
 we could not include herein because it would take several additional pages
 to explain. This theorem is a
 generalization of the following theorem for more simple types.
@@ -2109,8 +2111,9 @@ Finally, we hope that examples of programming with InfIR types will inspire
 other dependently typed programmers to do the same.
 
 
-%% \acks
-%% Acknowledgments, if needed.
+\acks
+We are grateful for feedback from anonymous reviewers, especially
+feedback about parts of the paper that needed further clarification.
 
 % We recommend abbrvnat bibliography style.
 
