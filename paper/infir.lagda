@@ -529,6 +529,7 @@ the \AgdaCon{`Base} types are parameters (of type \AgdaData{Set}) instead of bei
 \end{code}
 
 \subsection{\AgdaData{Path}}
+\label{sec:concretelarge:path}
 
 Let's reconsider what it means to be a \AgdaData{Path}.
 You can still point to a recursive \AgdaData{Type} using
@@ -700,6 +701,107 @@ rather than a computational type. If we had done so,
 then it would be an InfIR type with \AgdaFun{update} as its
 mutually defined function!
 
+\subsection{Universal versus Existential \AgdaData{Path}}
+
+\AgdaHide{
+\begin{code}
+module ExistsConcreteLarge where
+  mutual
+    data Type : Set₁ where
+      `Base : Set → Type
+      `Fun : (A : Type) (B : ⟦ A ⟧ → Type) → Type
+  
+    ⟦_⟧ : Type → Set
+    ⟦ `Base A ⟧ = A
+    ⟦ `Fun A B ⟧ = (a : ⟦ A ⟧) → ⟦ B a ⟧
+\end{code}}
+
+
+When you first encounter the \AgdaData{Path} datatype of
+\refsec{concretelarge:path}, its \AgdaCon{thereFun₂} constructor
+may seem confusing and unnecessarily complex. Its \AgdaCon{thereFun₂}
+constructor takes an infinitary argument, allowing you to index
+\textit{all} branches of the codomain of a \AgdaCon{`Fun}
+(hence we might call the \refsec{concretelarge:path} definition a
+\textit{universal} \AgdaData{Path}).
+The \refsec{concretelarge:path} \AgdaData{Path} is actually single
+path when indexing a normal argument,
+but a multipath when indexing an infinitary argument.
+
+You might wonder if we can get away with an arguably
+simpler \textit{existential} version of \AgdaData{Path}, where the
+\AgdaCon{thereFun₂} constructor has the following type.
+
+\AgdaHide{
+\begin{code}
+  data Path : Type → Set₁ where
+    here : ∀{A} → Path A
+    thereBase : ∀{A} → Path (`Base A)
+    thereFun₁ : ∀{A B}
+      (i : Path A)
+      → Path (`Fun A B)
+\end{code}}
+
+\begin{code}
+    thereFun₂ : ∀{A B}
+      (a : ⟦ A ⟧)
+      (i : Path (B a))
+      → Path (`Fun A B)
+\end{code}
+
+Above, \AgdaCon{thereFun₂} takes a single \AgdaVar{a} used to indicate
+which branch of \AgdaVar{B} to index (compare this to the function indexing
+all branches of \AgdaVar{B} in \refsec{concretelarge:path}).
+
+Now the \AgdaCon{thereFun₂} case of \AgdaFun{Lookup} merely
+recurses rather than returning a $\Pi$ type.
+
+\AgdaHide{
+\begin{code}
+  Lookup : (A : Type) → Path A → Set₁
+  Lookup A here = Type
+  Lookup (`Base A) thereBase = Set
+  Lookup (`Fun A B) (thereFun₁ i) = Lookup A i
+\end{code}}
+
+\begin{code}
+  Lookup (`Fun A B) (thereFun₂ a i) = Lookup (B a) i
+\end{code}
+
+Similarly, the \AgdaCon{thereFun₂} case of \AgdaFun{lookup} merely
+recurses rather than returning a function.
+
+\AgdaHide{
+\begin{code}
+  lookup : (A : Type) (i : Path A) → Lookup A i
+  lookup A here = A
+  lookup (`Base A) thereBase = A
+  lookup (`Fun A B) (thereFun₁ i) = lookup A i
+\end{code}}
+
+\begin{code}
+  lookup (`Fun A B) (thereFun₂ a i) = lookup (B a) i
+\end{code}
+
+Unfortunately, while existential \AgdaData{Path} \AgdaFun{lookup}
+works reasonably well, existential \AgdaData{Path} \AgdaFun{update}
+has a severe limitation. Imagine updating the codomain of a
+\AgdaCon{`Fun} whose domain is the type of natural numbers. Using an
+existential \AgdaData{Path}, we could start by updating the zero
+branch, then the one branch, then the two branch, etc. However, we
+would never be able to finish updating our \AgdaCon{`Fun} for
+\textit{all} natural number branches.
+
+We do not define existential \AgdaData{Path} \AgdaFun{update} below
+because of the aforementioned limitation, but even defining the limited version
+would be painful. In order to update a single branch but also use
+the old values for all other branches, we need to
+require decidable equality for the domain of branches. Such a
+decidable equality would exclude being able to update \AgdaCon{`Fun}
+values whose domain contains another \AgdaCon{`Fun}, yet another
+limitation of existential \AgdaData{Path} \AgdaFun{update}! It should
+now be apparent why we used a universal \AgdaData{Path} in
+\refsec{concretelarge:path} and the remaining parts of this paper.
 
 \section{Small InfIR \AgdaData{Arith}}
 \label{sec:concretesmall}
@@ -1283,9 +1385,9 @@ The \AgdaCon{thereArg₂} case points to a
 sub-argument, skipping past the
 non-recursive argument.
 
-The \AgdaCon{thereRec₁}
-points into a recursive argument. Because the recursive argument is a
-function whose is a value of type \AgdaVar{A}, the
+The \AgdaCon{thereRec₁} case
+points to a recursive argument. Because the recursive argument is a
+function whose domain is a value of type \AgdaVar{A}, the
 sub-\AgdaData{Path′} must also be a function taking an
 \AgdaVar{A}, hence \AgdaData{Path′} is an infinitary type.
 Thus, \AgdaCon{thereRec₁} is much like
@@ -1689,7 +1791,7 @@ concrete \AgdaData{Description}.
 
 The \AgdaCon{here} case points to the current value in our
 universe. The \AgdaCon{thereFun} case points to another value in a
-continuation. The \AgdaCon{thereData} case points into an argument of
+continuation. The \AgdaCon{thereData} case points to an argument of
 an inductive-recursive \AgdaCon{con}structor.
 
 \subsection{\AgdaData{Path′}}
@@ -1717,7 +1819,7 @@ meaning function \AgdaFun{⟪\_⟫}.
 
 The \AgdaCon{thereArg₁} case is the only constructor that behaves
 differently than the open universe \AgdaData{Path′} of
-\refsec{genericopen}. Crucially, it points into a non-recursive value
+\refsec{genericopen}. Crucially, it points to a non-recursive value
 by requiring a \AgdaData{Path} \AgdaVar{A} \AgdaVar{a} as an
 argument. In contrast, the open universe \AgdaCon{thereArg₁} does not
 take an argument, thus it always points to
@@ -1750,7 +1852,7 @@ inductive-recursive constructor of a \AgdaData{Desc}.
 
 As always, the \AgdaCon{here} case points to the current value. The
 \AgdaCon{thereFun} case points further within a continuation. The
-\AgdaCon{thereData} case points into a constructor argument via
+\AgdaCon{thereData} case points to a constructor argument via
 \AgdaFun{Lookup′}.
 
 \begin{code}
@@ -1834,7 +1936,7 @@ be mutually defined.
 The \AgdaCon{here} case returns a \AgdaData{Maybe} of the current
 value type \AgdaVar{A}. The
 \AgdaCon{thereFun} case points further within a continuation. The
-\AgdaCon{thereData} case points into a constructor argument via
+\AgdaCon{thereData} case points to a constructor argument via
 \AgdaFun{Update′}.
 
 \begin{code}
@@ -2113,7 +2215,9 @@ other dependently typed programmers to do the same.
 
 \acks
 We are grateful for feedback from anonymous reviewers, especially
-feedback about parts of the paper that needed further clarification.
+feedback about parts of the paper that needed further
+clarification. We are also grateful for feedback from Aaron Stump
+on an earlier draft of this paper.
 
 % We recommend abbrvnat bibliography style.
 
