@@ -344,7 +344,7 @@ either a \AgdaData{List} or an \AgdaVar{A} (the base cases of
 
 In the colored version of this paper, you can spot a
 computational type because it is a light blue \AgdaFun{Function},
-whereas a non-computational) \AgdaData{Datatype} is dark
+whereas a non-computational \AgdaData{Datatype} is dark
 blue. Both computational and non-computational types are capitalized by convention.
 
 
@@ -796,8 +796,8 @@ We do not define existential \AgdaData{Path} \AgdaFun{update} below
 because of the aforementioned limitation, but even defining the limited version
 would be painful. In order to update a single branch but also use
 the old values for all other branches, we need to
-require decidable equality for the domain of branches. Such a
-decidable equality would exclude being able to update \AgdaCon{`Fun}
+require decidable equality for the domain of branches. This
+decidable equality requirement would prevent updates of \AgdaCon{`Fun}
 values whose domain contains another \AgdaCon{`Fun}, yet another
 limitation of existential \AgdaData{Path} \AgdaFun{update}! It should
 now be apparent why we used a universal \AgdaData{Path} in
@@ -2218,6 +2218,7 @@ We are grateful for feedback from anonymous reviewers, especially
 feedback about parts of the paper that needed further
 clarification. We are also grateful for feedback from Aaron Stump
 on an earlier draft of this paper.
+This work was supported by NSF/CISE/CCF grant \#1320934.
 
 % We recommend abbrvnat bibliography style.
 
