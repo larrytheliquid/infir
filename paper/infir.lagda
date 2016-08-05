@@ -569,7 +569,11 @@ infinitary (just like the \AgdaData{Type} it indexes).
 
 We were able to write a total function to \AgdaFun{lookup} any
 sub\AgdaData{Tree}, but looking up a
-sub\AgdaData{Type} is not always possible. Using the methodology
+sub\AgdaData{Type} is not always possible.
+It is not possible because looking up a value in the
+codomain of a \AgdaCon{`Fun} requires extra information, namely the
+branch of the codomain containing our desired sub\AgdaData{Type}.
+Using the methodology
 from \refsec{problem:head}, we can make \AgdaFun{lookup} for
 \AgdaData{Type}s total by choosing to change the codomain,
 depending on the input \AgdaData{Type} and \AgdaData{Path}.
