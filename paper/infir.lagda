@@ -437,7 +437,7 @@ type of the extra argument, which is dependent on the input
   head₃ (cons x xs) tt = x
 \end{code}
 
-Second, let's use dependent types to conditonally change the
+Second, let's use dependent types to conditionally change the
 codomain. \AgdaFun{HeadRet} computes our new return type,
 conditionally dependent on the input list
 (it is a \emph{computational return type}).
@@ -1569,7 +1569,7 @@ The \AgdaCon{thereRec₁} case asks for a continuation to update the
 first component of the recursive argument, but also needs a translation
 function to \AgdaFun{update} the index in the codomain of the second
 component. The translation functions of \AgdaCon{thereArg₁} and
-\AgdaCon{therRec₁} are analogous to the forgetful function of
+\AgdaCon{thereRec₁} are analogous to the forgetful function of
 \AgdaFun{Update} in \refsec{concretelarge} for the \AgdaCon{thereFun₁}
 case, only differing in variance (translating versus forgetting) due
 to the way dependencies are captured as dependent products in
