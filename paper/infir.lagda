@@ -259,7 +259,7 @@ turn at a \AgdaCon{branch}, while
 adopt the convention that a numerical subscript after a
 \AgdaCon{there} constructor of a \AgdaData{Path}
 indicates which argument to point to
-(we use 1 rather than 0 based indexing).
+(we use one-based indexing rather than zero-based indexing).
 
 Once we have defined \AgdaData{Path}s into a \AgdaData{Tree},
 it is straightforward to define \AgdaFun{lookup} by following
@@ -734,8 +734,7 @@ the mutually defined function \AgdaFun{eval} returns a
   
     eval : Arith → ℕ
     eval (`Num n) = n
-    eval (`Prod a f) = prod (eval a)
-      λ a → prod (toℕ a) λ b → eval (f (inject b))
+    eval (`Prod a f) = prod (eval a) (λ a → eval (f a))
 \end{code}
 
 Values of type \AgdaData{Arith} encode ``Big Pi''
@@ -746,14 +745,24 @@ bound, such as the one below.
   \prod_{i=1}^{3} i
 \end{equation*}
 
+\AgdaHide{
+\begin{code}
+    num : ∀ {n} → Fin n → ℕ
+    num zero = suc zero
+    num (suc i) = suc (num i)
+\end{code}}
+
 \begin{code}
     six : Arith
-    six = `Prod (`Num 3) (λ i → `Num (toℕ i))
+    six = `Prod (`Num 3) (λ i → `Num (num i))
 \end{code}
-
 
 An \AgdaData{Arith} equation may be nested in its upper bound or body, but the lower
 bound is always the value 1.
+Note that above we define \AgdaFun{six} with the helper function
+\AgdaFun{num}, which converts the finite set value \AgdaVar{i} to a natural number
+using one-based indexing.
+
 The \AgdaFun{eval} function interprets the equation as a
 natural number, using the helper function \AgdaFun{prod} to
 multiply a finite number \AgdaVar{n} of other natural numbers
