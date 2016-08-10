@@ -52,11 +52,11 @@
 %% \subtitle{Generic Lookup and Update}
 
 \authorinfo{Larry Diehl}
-           {Portland State University}
+           {Portland State University, USA}
            {ldiehl@cs.pdx.edu}
            
 \authorinfo{Tim Sheard}
-           {Portland State University}
+           {Portland State University, USA}
            {sheard@cs.pdx.edu}
 
 \maketitle
@@ -196,7 +196,7 @@ functions using infinitary inductive-recursive types will help future
 dependently typed functional programmers with writing their own functions
 over this class of datatypes.
 
-\section{The problem}
+\section{The Problem}
 \label{sec:problem}
 
 Before describing why writing functions over InfIR types is difficult,
@@ -273,7 +273,7 @@ the \AgdaData{Path} until we arrive at the subtree indicated by the
   lookup (branch A B) (there₂ i) = lookup B i
 \end{code}
 
-\subsection{\AgdaFun{lookup} with a computational return type}
+\subsection{A \AgdaFun{lookup} with a Computational Return Type}
 \label{sec:problem:typechanging}
 
 \AgdaHide{
@@ -348,7 +348,7 @@ whereas a non-computational \AgdaData{Datatype} is dark
 blue. Both computational and non-computational types are capitalized by convention.
 
 
-\subsection{\AgdaFun{head} with a computational argument or return type}
+\subsection{A \AgdaFun{head} with a Computational Argument or Return Type}
 \label{sec:problem:head}
 
 Once we move from finitary non-dependent types like
@@ -797,7 +797,7 @@ because of the aforementioned limitation, but even defining the limited version
 would be painful. In order to update a single branch but also use
 the old values for all other branches, we need to
 require decidable equality for the domain of branches. This
-decidable equality requirement would prevent updates of \AgdaCon{`Fun}
+decidable equality requirement would disallow updates of \AgdaCon{`Fun}
 values whose domain contains another \AgdaCon{`Fun}, yet another
 limitation of existential \AgdaData{Path} \AgdaFun{update}! It should
 now be apparent why we used a universal \AgdaData{Path} in
@@ -1283,7 +1283,7 @@ encoded constructor case. The \AgdaCon{Arg} and
 \AgdaCon{Rec} cases recurse, looking for an
 \AgdaCon{End}.
 
-\subsection{A schema for generic functions}
+\subsection{A Schema for Generic Functions}
 
 In this section the schema used for writing a generic function is to
 write a pair of generic functions.
@@ -1739,7 +1739,7 @@ reason, \AgdaData{ArithD} is also encoded in terms
 of their \AgdaData{Set} counterparts whose definitions have been
 omitted.
 
-\subsection{A schema for generic functions}
+\subsection{A Schema for Generic Functions}
 
 In this section the schema used for writing a generic function is to
 write a pair of generic functions like the following.
