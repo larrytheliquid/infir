@@ -1,8 +1,12 @@
 open import Function
+open import Data.Char
+open import Data.String
 open import Data.Nat
-open import Data.Fin
+open import Data.Fin hiding ( _+_ )
 open import Data.Product
+open import Relation.Binary.PropositionalEquality
 open import Infir.Nat
+open import Infir.Char
 module Infir.Rose2 where
 
 ----------------------------------------------------------------------
@@ -15,8 +19,63 @@ module Alg where
   data Rose (A : Set) : Set where
     rose : A → List (Rose A) → Rose A
 
+  showR : Rose Char → String
+  showR' : List (Rose Char) → String
+  showR (rose x xss) = "rose " ++ (showC x) ++ " (" ++ showR' xss ++ ")"
+  showR' nil = "[]"
+  showR' (cons xs xss) = showR xs ++ ", " ++ showR' xss
+
 data Rose (A : Set) : Set where
   rose : (a : A) (n : ℕ) (f : Fin n → Rose A) → Rose A
+
+----------------------------------------------------------------------
+
+Vec : Set → ℕ → Set
+Vec A n = Fin n → A
+
+nil : {A : Set} → Vec A zero
+nil ()
+
+cons : {A : Set} {n : ℕ} → A → Vec A n → Vec A (suc n)
+cons x f zero = x
+cons x f (suc i) = f i
+
+append : {A : Set} {n m : ℕ} → Vec A n → Vec A m → Vec A (n + m)
+append {n = zero} f g i = g i
+append {n = suc n} f g zero = f zero
+append {n = suc n} f g (suc i) = append (f ∘ suc) g i
+
+snoc : {A : Set} {n : ℕ} → Vec A n → A → Vec A (suc n)
+snoc {n = zero} f x = cons x nil
+snoc {n = suc n} f x = cons x (snoc (f ∘ suc) x)
+
+{-# NO_TERMINATION_CHECK #-}
+showR : Rose Char → String
+showR' : (n : ℕ) → Vec (Rose Char) n → String
+
+showR (rose x zero f) = showC x
+showR (rose x n f) = showC x ++ "[" ++ showR' n f ++ "]"
+showR' zero f = ""
+showR' (suc zero) f = showR (f zero)
+showR' (suc n) f =
+  showR (f zero) ++ "," ++ showR' n (f ∘ suc)
+
+----------------------------------------------------------------------
+
+leafE leafC leafF leafG : Rose Char
+leafE = rose 'e' 0 nil
+leafC = rose 'c' 0 nil
+leafF = rose 'f' 0 nil
+leafG = rose 'g' 0 nil
+leafH = rose 'h' 0 nil
+
+branchB branchD branchA : Rose Char
+branchB = rose 'b' 1 (cons leafE nil)
+branchD = rose 'd' 2 (cons leafF (cons leafG nil))
+branchA = rose 'a' 3 (cons branchB (cons leafC (cons branchD nil)))
+
+test-showR : showR branchA ≡ "a[b[e],c,d[f,g]]"
+test-showR = refl
 
 ----------------------------------------------------------------------
 
@@ -30,18 +89,72 @@ data PathR {A : Set} : Rose A → Set where
     (g : (i : Fin n) → PathR (f i))
     → PathR (rose x n f)
 
-UpdateR : {A : Set} (xs : Rose A) → PathR xs → Set
-updateR : {A : Set} (xs : Rose A) (i : PathR xs) → UpdateR xs i → Rose A
+PathsR : {A : Set} → Rose A → Set
+PathsR (rose x n f) = (i : Fin n) → PathR (f i)
 
-UpdateR {A} xs here = Rose A
-UpdateR {A} (rose x n f) there₁ = A
-UpdateR (rose x n f) (there₂ i) = Σ ℕ (λ m → Fin (updateℕ n i m) → Fin n)
-UpdateR (rose x n f) (there₃ g) = (i : Fin n) → UpdateR (f i) (g i)
+module Forget where
+  UpdateR : {A : Set} (xs : Rose A) → PathR xs → Set
+  updateR : {A : Set} (xs : Rose A) (i : PathR xs) → UpdateR xs i → Rose A
+  
+  UpdateR {A} xs here = Rose A
+  UpdateR {A} (rose x n f) there₁ = A
+  UpdateR (rose x n f) (there₂ i) = Σ ℕ (λ m → Fin (updateℕ n i m) → Fin n)
+  UpdateR (rose x n f) (there₃ g) = (i : Fin n) → UpdateR (f i) (g i)
+  
+  updateR xs here ys = ys
+  updateR (rose x n f) there₁ y = rose y n f
+  updateR (rose x n f) (there₂ i) (m , g) = rose x (updateℕ n i m) (f ∘ g)
+  updateR (rose x n f) (there₃ g) h = rose x n (λ i → updateR (f i) (g i) (h i))
 
-updateR xs here ys = ys
-updateR (rose x n f) there₁ y = rose y n f
-updateR (rose x n f) (there₂ i) (m , g) = rose x (updateℕ n i m) (f ∘ g)
-updateR (rose x n f) (there₃ g) h = rose x n (λ i → updateR (f i) (g i) (h i))
+  ----------------------------------------------------------------------
+
+  pathD : PathR branchD
+  pathD = there₂ here
+    -- where
+    -- pathsD : PathsR branchD
+    -- pathsD zero = here
+    -- pathsD (suc zero) = here
+    -- pathsD (suc (suc ()))
+
+  -- pathD : PathR branchD
+  -- pathD = there₃ pathsD
+  --   where
+  --   pathsD : PathsR branchD
+  --   pathsD zero = here
+  --   pathsD (suc zero) = here
+  --   pathsD (suc (suc ()))
+
+  pathA : PathR branchA
+  pathA = there₃ pathsA
+    where
+    pathsA : PathsR branchA
+    pathsA zero = here
+    pathsA (suc zero) = here
+    pathsA (suc (suc zero)) = pathD
+    pathsA (suc (suc (suc ())))
+
+  changeA : UpdateR branchA pathA
+  changeA zero = {!!}
+  changeA (suc zero) = {!!}
+  changeA (suc (suc zero)) = 1 , raise 1
+  changeA (suc (suc (suc ())))
+
+  ----------------------------------------------------------------------
+
+module Update where
+  UpdateR : {A : Set} (xs : Rose A) → PathR xs → Set
+  updateR : {A : Set} (xs : Rose A) (i : PathR xs) → UpdateR xs i → Rose A
+  
+  UpdateR {A} xs here = Rose A
+  UpdateR {A} (rose x n f) there₁ = A
+  UpdateR {A} (rose x n f) (there₂ i) =
+    Σ ℕ (λ m → (Fin n → Rose A) → Fin (updateℕ n i m) → Rose A)
+  UpdateR (rose x n f) (there₃ g) = (i : Fin n) → UpdateR (f i) (g i)
+  
+  updateR xs here ys = ys
+  updateR (rose x n f) there₁ y = rose y n f
+  updateR (rose x n f) (there₂ i) (m , g) = rose x (updateℕ n i m) (g f)
+  updateR (rose x n f) (there₃ g) h = rose x n (λ i → updateR (f i) (g i) (h i))
 
 ----------------------------------------------------------------------
 

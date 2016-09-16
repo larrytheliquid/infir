@@ -16,3 +16,13 @@ update (cons x xs) here y = cons y xs
 update (cons x xs) (there i) y = cons x (update xs i y)
 
 ----------------------------------------------------------------------
+
+append : {A : Set} {n m : ℕ} → Vec A n → Vec A m → Vec A (n + m)
+append nil ys = ys
+append (cons x xs) ys = cons x (append xs ys)
+
+snoc : {A : Set} {n : ℕ} → Vec A n → A → Vec A (suc n)
+snoc nil y = cons y nil
+snoc (cons x xs) y = cons x (snoc xs y)
+
+----------------------------------------------------------------------
