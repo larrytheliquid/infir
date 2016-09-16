@@ -108,7 +108,11 @@ module MaybeInUpdate where
     updateR xs here ys = maybe id xs ys
     updateR (rose x n f) there₁ y = rose y n f
     updateR (rose x n f) (there₂ i) (m , g) = rose x (updateℕ n i m) (f ∘ g)
+    -- Goal: Fin (updateℕ n i m) → Rose A
+    -- ——————————————————————————————————
+    -- f  : Fin n → Rose A
     updateR (rose x n f) (there₃ g) h = rose x n (λ i → updateR (f i) (g i) (h i))
+    -- Goal: Fin n → Rose A
   
     ----------------------------------------------------------------------
   
