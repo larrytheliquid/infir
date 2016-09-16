@@ -1,4 +1,4 @@
-module Infir.Slides where
+module Infir where
 import Infir.AlgBackground
 import Infir.CompBackground
 import Infir.Nat
