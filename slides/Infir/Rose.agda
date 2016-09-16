@@ -3,7 +3,7 @@ open import Data.Char
 open import Data.String
 open import Data.Unit
 open import Data.Nat
-open import Data.Fin hiding ( _+_ )
+open import Data.Fin hiding ( _+_ ) renaming ( zero to here ; suc to there)
 open import Data.Maybe
 open import Data.Product
 open import Relation.Binary.PropositionalEquality
@@ -39,17 +39,17 @@ nil : {A : Set} → Vec A zero
 nil ()
 
 cons : {A : Set} {n : ℕ} → A → Vec A n → Vec A (suc n)
-cons x f zero = x
-cons x f (suc i) = f i
+cons x f here = x
+cons x f (there i) = f i
 
 append : {A : Set} {n m : ℕ} → Vec A n → Vec A m → Vec A (n + m)
 append {n = zero} f g i = g i
-append {n = suc n} f g zero = f zero
-append {n = suc n} f g (suc i) = append (f ∘ suc) g i
+append {n = suc n} f g here = f here
+append {n = suc n} f g (there i) = append (f ∘ there) g i
 
 snoc : {A : Set} {n : ℕ} → Vec A n → A → Vec A (suc n)
 snoc {n = zero} f x = cons x nil
-snoc {n = suc n} f x = cons (f zero) (snoc (f ∘ suc) x)
+snoc {n = suc n} f x = cons (f here) (snoc (f ∘ there) x)
 
 {-# NO_TERMINATION_CHECK #-}
 showR : Rose Char → String
@@ -58,9 +58,9 @@ showR' : (n : ℕ) → Vec (Rose Char) n → String
 showR (rose x zero f) = showC x
 showR (rose x n f) = showC x ++ "[" ++ showR' n f ++ "]"
 showR' zero f = ""
-showR' (suc zero) f = showR (f zero)
+showR' (suc zero) f = showR (f here)
 showR' (suc n) f =
-  showR (f zero) ++ "," ++ showR' n (f ∘ suc)
+  showR (f here) ++ "," ++ showR' n (f ∘ there)
 
 ----------------------------------------------------------------------
 
@@ -123,19 +123,19 @@ module MaybeInUpdate where
     pathA = there₃ pathsA
       where
       pathsA : PathsR branchA
-      pathsA zero = here
-      pathsA (suc zero) = here
-      pathsA (suc (suc zero)) = pathD
-      pathsA (suc (suc (suc ())))
+      pathsA here = here
+      pathsA (there here) = here
+      pathsA (there (there here)) = pathD
+      pathsA (there (there (there ())))
 
     patchD : Fin 1 → Fin 2
     patchD = raise 1
   
     patchA : UpdateR branchA pathA
-    patchA zero = nothing
-    patchA (suc zero) = nothing
-    patchA (suc (suc zero)) = 1 , patchD
-    patchA (suc (suc (suc ())))
+    patchA here = nothing
+    patchA (there here) = nothing
+    patchA (there (there here)) = 1 , patchD
+    patchA (there (there (there ())))
 
     branchA' : Rose Char
     branchA' = updateR branchA pathA patchA
@@ -167,19 +167,19 @@ module MaybeInUpdate where
     pathA = there₃ pathsA
       where
       pathsA : PathsR branchA
-      pathsA zero = here
-      pathsA (suc zero) = here
-      pathsA (suc (suc zero)) = pathD
-      pathsA (suc (suc (suc ())))
+      pathsA here = here
+      pathsA (there here) = here
+      pathsA (there (there here)) = pathD
+      pathsA (there (there (there ())))
 
     patchD : Vec (Rose Char) 2 → Vec (Rose Char) 3
     patchD xs = snoc xs leafH
 
     patchA : UpdateR branchA pathA
-    patchA zero = nothing
-    patchA (suc zero) = nothing
-    patchA (suc (suc zero)) = 3 , patchD
-    patchA (suc (suc (suc ())))
+    patchA here = nothing
+    patchA (there here) = nothing
+    patchA (there (there here)) = 3 , patchD
+    patchA (there (there (there ())))
   
     branchA' : Rose Char
     branchA' = updateR branchA pathA patchA
