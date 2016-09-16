@@ -1,8 +1,10 @@
 open import Function
 open import Data.Char
 open import Data.String
+open import Data.Unit
 open import Data.Nat
 open import Data.Fin hiding ( _+_ )
+open import Data.Maybe
 open import Data.Product
 open import Relation.Binary.PropositionalEquality
 open import Infir.Nat
@@ -47,7 +49,7 @@ append {n = suc n} f g (suc i) = append (f ∘ suc) g i
 
 snoc : {A : Set} {n : ℕ} → Vec A n → A → Vec A (suc n)
 snoc {n = zero} f x = cons x nil
-snoc {n = suc n} f x = cons x (snoc (f ∘ suc) x)
+snoc {n = suc n} f x = cons (f zero) (snoc (f ∘ suc) x)
 
 {-# NO_TERMINATION_CHECK #-}
 showR : Rose Char → String
@@ -79,82 +81,164 @@ test-showR = refl
 
 ----------------------------------------------------------------------
 
-data PathR {A : Set} : Rose A → Set where
-  here : ∀{xs} → PathR xs
-  there₁ : ∀{x n f} → PathR (rose x n f)
-  there₂ : ∀{x n f}
-    (i : Pathℕ n)
-    → PathR (rose x n f)
-  there₃ : ∀{x n f}
-    (g : (i : Fin n) → PathR (f i))
-    → PathR (rose x n f)
+module MaybeInUpdate where
 
-PathsR : {A : Set} → Rose A → Set
-PathsR (rose x n f) = (i : Fin n) → PathR (f i)
+  data PathR {A : Set} : Rose A → Set where
+    here : ∀{xs} → PathR xs
+    there₁ : ∀{x n f} → PathR (rose x n f)
+    there₂ : ∀{x n f}
+      (i : Pathℕ n)
+      → PathR (rose x n f)
+    there₃ : ∀{x n f}
+      (g : (i : Fin n) → PathR (f i))
+      → PathR (rose x n f)
+  
+  PathsR : {A : Set} → Rose A → Set
+  PathsR (rose x n f) = (i : Fin n) → PathR (f i)
+  
+  module Forget where
+    UpdateR : {A : Set} (xs : Rose A) → PathR xs → Set
+    updateR : {A : Set} (xs : Rose A) (i : PathR xs) → UpdateR xs i → Rose A
+    
+    UpdateR {A} xs here = Maybe (Rose A)
+    UpdateR {A} (rose x n f) there₁ = A
+    UpdateR (rose x n f) (there₂ i) = Σ ℕ (λ m → Fin (updateℕ n i m) → Fin n)
+    UpdateR (rose x n f) (there₃ g) = (i : Fin n) → UpdateR (f i) (g i)
+    
+    updateR xs here ys = maybe id xs ys
+    updateR (rose x n f) there₁ y = rose y n f
+    updateR (rose x n f) (there₂ i) (m , g) = rose x (updateℕ n i m) (f ∘ g)
+    updateR (rose x n f) (there₃ g) h = rose x n (λ i → updateR (f i) (g i) (h i))
+  
+    ----------------------------------------------------------------------
+  
+    pathD : PathR branchD
+    pathD = there₂ here
+  
+    pathA : PathR branchA
+    pathA = there₃ pathsA
+      where
+      pathsA : PathsR branchA
+      pathsA zero = here
+      pathsA (suc zero) = here
+      pathsA (suc (suc zero)) = pathD
+      pathsA (suc (suc (suc ())))
 
-module Forget where
-  UpdateR : {A : Set} (xs : Rose A) → PathR xs → Set
-  updateR : {A : Set} (xs : Rose A) (i : PathR xs) → UpdateR xs i → Rose A
+    patchD : Fin 1 → Fin 2
+    patchD = raise 1
   
-  UpdateR {A} xs here = Rose A
-  UpdateR {A} (rose x n f) there₁ = A
-  UpdateR (rose x n f) (there₂ i) = Σ ℕ (λ m → Fin (updateℕ n i m) → Fin n)
-  UpdateR (rose x n f) (there₃ g) = (i : Fin n) → UpdateR (f i) (g i)
+    patchA : UpdateR branchA pathA
+    patchA zero = nothing
+    patchA (suc zero) = nothing
+    patchA (suc (suc zero)) = 1 , patchD
+    patchA (suc (suc (suc ())))
+
+    branchA' : Rose Char
+    branchA' = updateR branchA pathA patchA
+
+    test-updateR : showR branchA' ≡ "a[b[e],c,d[g]]"
+    test-updateR = refl
   
-  updateR xs here ys = ys
-  updateR (rose x n f) there₁ y = rose y n f
-  updateR (rose x n f) (there₂ i) (m , g) = rose x (updateℕ n i m) (f ∘ g)
-  updateR (rose x n f) (there₃ g) h = rose x n (λ i → updateR (f i) (g i) (h i))
+    ----------------------------------------------------------------------
+  
+  module Replace where
+    UpdateR : {A : Set} (xs : Rose A) → PathR xs → Set
+    updateR : {A : Set} (xs : Rose A) (i : PathR xs) → UpdateR xs i → Rose A
+    
+    UpdateR {A} xs here = Maybe (Rose A)
+    UpdateR {A} (rose x n f) there₁ = A
+    UpdateR {A} (rose x n f) (there₂ i) =
+      Σ ℕ (λ m → (Fin n → Rose A) → Fin (updateℕ n i m) → Rose A)
+    UpdateR (rose x n f) (there₃ g) = (i : Fin n) → UpdateR (f i) (g i)
+    
+    updateR xs here ys = maybe id xs ys
+    updateR (rose x n f) there₁ y = rose y n f
+    updateR (rose x n f) (there₂ i) (m , g) = rose x (updateℕ n i m) (g f)
+    updateR (rose x n f) (there₃ g) h = rose x n (λ i → updateR (f i) (g i) (h i))
+
+    pathD : PathR branchD
+    pathD = there₂ here
+
+    pathA : PathR branchA
+    pathA = there₃ pathsA
+      where
+      pathsA : PathsR branchA
+      pathsA zero = here
+      pathsA (suc zero) = here
+      pathsA (suc (suc zero)) = pathD
+      pathsA (suc (suc (suc ())))
+
+    patchD : Vec (Rose Char) 2 → Vec (Rose Char) 3
+    patchD xs = snoc xs leafH
+
+    patchA : UpdateR branchA pathA
+    patchA zero = nothing
+    patchA (suc zero) = nothing
+    patchA (suc (suc zero)) = 3 , patchD
+    patchA (suc (suc (suc ())))
+  
+    branchA' : Rose Char
+    branchA' = updateR branchA pathA patchA
+
+    test-updateR : showR branchA' ≡ "a[b[e],c,d[f,g,h]]"
+    test-updateR = refl
 
   ----------------------------------------------------------------------
 
-  pathD : PathR branchD
-  pathD = there₂ here
-    -- where
-    -- pathsD : PathsR branchD
-    -- pathsD zero = here
-    -- pathsD (suc zero) = here
-    -- pathsD (suc (suc ()))
+module MaybeInPath where
 
-  -- pathD : PathR branchD
-  -- pathD = there₃ pathsD
-  --   where
-  --   pathsD : PathsR branchD
-  --   pathsD zero = here
-  --   pathsD (suc zero) = here
-  --   pathsD (suc (suc ()))
-
-  pathA : PathR branchA
-  pathA = there₃ pathsA
-    where
-    pathsA : PathsR branchA
-    pathsA zero = here
-    pathsA (suc zero) = here
-    pathsA (suc (suc zero)) = pathD
-    pathsA (suc (suc (suc ())))
-
-  changeA : UpdateR branchA pathA
-  changeA zero = {!!}
-  changeA (suc zero) = {!!}
-  changeA (suc (suc zero)) = 1 , raise 1
-  changeA (suc (suc (suc ())))
-
+  data PathR {A : Set} : Rose A → Set where
+    here : ∀{xs} → PathR xs
+    there₁ : ∀{x n f} → PathR (rose x n f)
+    there₂ : ∀{x n f}
+      (i : Pathℕ n)
+      → PathR (rose x n f)
+    there₃ : ∀{x n f}
+      (g : (i : Fin n) → Maybe (PathR (f i)))
+      → PathR (rose x n f)
+  
+  PathsR : {A : Set} → Rose A → Set
+  PathsR (rose x n f) = (i : Fin n) → Maybe (PathR (f i))
+  
+  module Forget where
+    UpdateR : {A : Set} (xs : Rose A) → PathR xs → Set
+    updateR : {A : Set} (xs : Rose A) (i : PathR xs) → UpdateR xs i → Rose A
+    
+    UpdateR {A} xs here = Rose A
+    UpdateR {A} (rose x n f) there₁ = A
+    UpdateR (rose x n f) (there₂ i) = Σ ℕ (λ m → Fin (updateℕ n i m) → Fin n)
+    UpdateR (rose x n f) (there₃ g) = (i : Fin n) →
+      maybe (UpdateR (f i)) ⊤ (g i)
+    
+    updateR xs here ys = ys
+    updateR (rose x n f) there₁ y = rose y n f
+    updateR (rose x n f) (there₂ i) (m , g) = rose x (updateℕ n i m) (f ∘ g)
+    updateR {A = A} (rose x n f) (there₃ g) h = rose x n xs where
+      xs : Fin n → Rose A
+      xs i with g i | h i
+      ... | nothing | tt = f i
+      ... | just j | hi = updateR (f i) j hi
+  
+    ----------------------------------------------------------------------
+  
+  module Replace where
+    UpdateR : {A : Set} (xs : Rose A) → PathR xs → Set
+    updateR : {A : Set} (xs : Rose A) (i : PathR xs) → UpdateR xs i → Rose A
+    
+    UpdateR {A} xs here = Rose A
+    UpdateR {A} (rose x n f) there₁ = A
+    UpdateR {A} (rose x n f) (there₂ i) =
+      Σ ℕ (λ m → (Fin n → Rose A) → Fin (updateℕ n i m) → Rose A)
+    UpdateR (rose x n f) (there₃ g) = (i : Fin n) →
+      maybe (UpdateR (f i)) ⊤ (g i)
+    
+    updateR xs here ys = ys
+    updateR (rose x n f) there₁ y = rose y n f
+    updateR (rose x n f) (there₂ i) (m , g) = rose x (updateℕ n i m) (g f)
+    updateR {A} (rose x n f) (there₃ g) h = rose x n xs where
+      xs : Fin n → Rose A
+      xs i with g i | h i
+      ... | nothing | tt = f i
+      ... | just j | hi = updateR (f i) j hi
+  
   ----------------------------------------------------------------------
-
-module Update where
-  UpdateR : {A : Set} (xs : Rose A) → PathR xs → Set
-  updateR : {A : Set} (xs : Rose A) (i : PathR xs) → UpdateR xs i → Rose A
-  
-  UpdateR {A} xs here = Rose A
-  UpdateR {A} (rose x n f) there₁ = A
-  UpdateR {A} (rose x n f) (there₂ i) =
-    Σ ℕ (λ m → (Fin n → Rose A) → Fin (updateℕ n i m) → Rose A)
-  UpdateR (rose x n f) (there₃ g) = (i : Fin n) → UpdateR (f i) (g i)
-  
-  updateR xs here ys = ys
-  updateR (rose x n f) there₁ y = rose y n f
-  updateR (rose x n f) (there₂ i) (m , g) = rose x (updateℕ n i m) (g f)
-  updateR (rose x n f) (there₃ g) h = rose x n (λ i → updateR (f i) (g i) (h i))
-
-----------------------------------------------------------------------
-
