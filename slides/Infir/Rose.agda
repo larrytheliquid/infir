@@ -35,6 +35,9 @@ data Rose (A : Set) : Set where
 Vec : Set → ℕ → Set
 Vec A n = Fin n → A
 
+List : Set → Set
+List A = Σ ℕ (Vec A)
+
 nil : {A : Set} → Vec A zero
 nil ()
 

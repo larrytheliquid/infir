@@ -19,13 +19,16 @@ updateR : {A : Set} (xs : Rose A) (i : PathR xs) → UpdateR xs i → Rose A
 
 UpdateR {A} xs here = Maybe (Rose A)
 UpdateR {A} (rose x n f) there₁ = A
-UpdateR {A} (rose x n f) (there₂ i) =
-  Σ ℕ (λ m → (Fin n → Rose A) → Fin (updateℕ n i m) → Rose A)
+UpdateR {A} (rose x n f) (there₂ i) =  Σ ℕ λ m →
+  (Fin n → Rose A) → Fin (updateℕ n i m) → Rose A
 UpdateR (rose x n f) (there₃ g) = (i : Fin n) → UpdateR (f i) (g i)
 
 updateR xs here ys = maybe id xs ys
 updateR (rose x n f) there₁ y = rose y n f
+-- f  : Fin n → Rose A
+-- g : (Fin n → Rose A) → Fin (updateℕ n i m) → Rose A
 updateR (rose x n f) (there₂ i) (m , g) = rose x (updateℕ n i m) (g f)
+-- Goal: Fin (updateℕ n i m) → Rose A
 updateR (rose x n f) (there₃ g) h = rose x n (λ i → updateR (f i) (g i) (h i))
 
 pathD : PathR branchD
