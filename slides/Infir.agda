@@ -6,6 +6,8 @@ import Infir.HeadBackground
 import Infir.Nat
 import Infir.List
 import Infir.Rose
+import Infir.Rose.Forget
+import Infir.Rose.Replace
 
 
 
