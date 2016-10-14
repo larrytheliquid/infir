@@ -4,7 +4,7 @@
 \usepackage{lipsum}
 \usepackage{todonotes}
 
-\usepackage{amsfonts,amssymb,textgreek,stmaryrd}
+\usepackage{amsmath,amsfonts,amssymb,textgreek,stmaryrd}
 \usepackage{bbm}
 \usepackage[greek,english]{babel}
 \usepackage{ucs}

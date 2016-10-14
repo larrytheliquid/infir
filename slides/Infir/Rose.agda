@@ -4,7 +4,7 @@ open import Data.String
 open import Data.Unit
 open import Data.Nat
 open import Data.Fin hiding ( _+_ ) renaming ( zero to here ; suc to there)
-open import Data.Maybe
+open import Data.Maybe hiding ( All )
 open import Data.Product
 open import Relation.Binary.PropositionalEquality
 open import Infir.Nat
@@ -67,7 +67,7 @@ showR' (suc n) f =
 
 ----------------------------------------------------------------------
 
-leafE leafC leafF leafG : Rose Char
+leafE leafC leafF leafG leafH : Rose Char
 leafE = rose 'e' 0 nil
 leafC = rose 'c' 0 nil
 leafF = rose 'f' 0 nil
@@ -83,6 +83,9 @@ test-showR : showR branchA ≡ "a[b[e],c,d[f,g]]"
 test-showR = refl
 
 ----------------------------------------------------------------------
+
+All : {A : Set} {n : ℕ} (P : A → Set) → Vec A n → Set
+All {n = n} P f = (i : Fin n) → P (f i)
 
 data PathR {A : Set} : Rose A → Set where
   here : ∀{xs} → PathR xs

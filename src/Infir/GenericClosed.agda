@@ -33,9 +33,9 @@ subst-id P refl p = refl
 ----------------------------------------------------------------------
 
 data Desc (O : Set) : Set₁ where
-  End : (o : O) → Desc O
-  Arg : (A : Set) (D : (a : A) → Desc O) → Desc O
-  Rec : (A : Set) (D : (o : A → O) → Desc O) → Desc O
+  End : (o : O) → Desc O -- ι
+  Arg : (A : Set) (D : (a : A) → Desc O) → Desc O -- σ
+  Rec : (A : Set) (D : (o : A → O) → Desc O) → Desc O -- δ
 
 mutual
   data Data {O : Set} (D : Desc O) : Set where

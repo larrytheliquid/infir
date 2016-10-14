@@ -21,6 +21,8 @@ UpdateR {A} xs here = Maybe (Rose A)
 UpdateR {A} (rose x n f) there₁ = A
 UpdateR {A} (rose x n f) (there₂ i) =  Σ ℕ λ m →
   (Fin n → Rose A) → Fin (updateℕ n i m) → Rose A
+  -- could ask for infinitary there₃ arg and continue updating
+  -- but then forced to update all args when doing generically
 UpdateR (rose x n f) (there₃ g) = (i : Fin n) → UpdateR (f i) (g i)
 
 updateR xs here ys = maybe id xs ys

@@ -4,6 +4,8 @@ open import Data.Product
 open import Data.Bool
 open import Data.Sum
 open import Data.Nat
+open import Data.Char
+open import Relation.Binary.PropositionalEquality
 module Infir.CompBackground where
 
 ----------------------------------------------------------------------
@@ -11,6 +13,9 @@ module Infir.CompBackground where
 Vec : (A : Set) → ℕ → Set
 Vec A zero = ⊤
 Vec A (suc n) = A × Vec A n
+
+testVec : Vec Char 2 ≡ (Char × Char × ⊤)
+testVec = refl
 
 nil : {A : Set} → Vec A zero
 nil = tt
@@ -23,6 +28,9 @@ cons x xs = x , xs
 Fin : ℕ → Set
 Fin zero = ⊥
 Fin (suc n) = ⊤ ⊎ Fin n
+
+testFin : Fin 2 ≡ (⊤ ⊎ ⊤ ⊎ ⊥)
+testFin = refl
 
 here : {n : ℕ} → Fin (suc n)
 here = inj₁ tt
