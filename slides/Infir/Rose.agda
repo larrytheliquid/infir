@@ -54,7 +54,7 @@ snoc : {A : Set} {n : ℕ} → Vec A n → A → Vec A (suc n)
 snoc {n = zero} f x = cons x nil
 snoc {n = suc n} f x = cons (f here) (snoc (f ∘ there) x)
 
-{-# NO_TERMINATION_CHECK #-}
+{-# TERMINATING #-}
 showR : Rose Char → String
 showR' : (n : ℕ) → Vec (Rose Char) n → String
 
